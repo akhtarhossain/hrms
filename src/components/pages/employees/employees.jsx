@@ -1,7 +1,9 @@
 import React from 'react';
 import { FiDownload, FiUpload, FiPlus } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const Employees = () => {
+  const navigate = useNavigate()
   return (
     <div className="p-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
       <div className="py-4 px-2 flex justify-between items-center mb-3">
@@ -24,6 +26,7 @@ const Employees = () => {
           </button>
           <button
             title="Create"
+            onClick={() => navigate('/employee-form')}
             className="p-2 rounded shadow"
             style={{ backgroundColor: '#A294F9' }}
 
