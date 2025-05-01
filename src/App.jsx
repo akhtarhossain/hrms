@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import './App.css'
-import Navbar from './shared/Navbar'
+import Sidebar from './shared/Sidebar'
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
     <>
-<Navbar />
+<Sidebar />
     </>
   )
 }
