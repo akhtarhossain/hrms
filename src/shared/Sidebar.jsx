@@ -23,53 +23,9 @@ function Sidebar() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const menuItems = [
-    {
-      name: 'Dashboard',
-      icon: <FiHome className="w-5 h-5" />,
-      dropdown: false
-    },
-    {
-      name: 'Employees',
-      icon: <FiUsers className="w-5 h-5" />,
-      dropdown: true,
-      subItems: ['Employee List', 'Add/Edit Employee', 'Employee Profile']
-    },
-    {
-      name: 'Attendance',
-      icon: <FiClock className="w-5 h-5" />,
-      dropdown: true,
-      subItems: ['Attendance Records', 'Time Tracking', 'Absence Management']
-    },
-    {
-      name: 'Request',
-      icon: <FiMail className="w-5 h-5" />,
-      dropdown: true,
-      subItems: ['Leave Requests', 'Overtime Requests', 'Permission Requests,Leave Requests', 'Overtime Requests', 'Permission Requests,Leave Requests', 'Overtime Requests', 'Permission Requests,Leave Requests', 'Overtime Requests', 'Permission Requests,Leave Requests', 'Overtime Requests', 'Permission Requests,Leave Requests', 'Overtime Requests', 'Permission Requests']
-    },
-    {
-      name: 'Salary',
-      icon: <FiDollarSign className="w-5 h-5" />,
-      dropdown: true,
-      subItems: ['Payroll', 'Salary Slips', 'Deductions & Bonuses']
-    },
-    {
-      name: 'Event & Holiday',
-      icon: <FiCalendar className="w-5 h-5" />,
-      dropdown: true,
-      subItems: ['Company Events', 'Holiday Calendar', 'Time-off Planner']
-    },
-    {
-      name: 'Reports',
-      icon: <FiFileText className="w-5 h-5" />,
-      dropdown: true,
-      subItems: ['Monthly Reports', 'Annual Reports', 'Custom Reports']
-    }
-  ];
-
   return (
     <>
-      <nav className="fixed top-0 z-40 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+      <nav className="fixed top-0 z-40 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700"         style={{ backgroundColor: '#E5D9F2' }}>
         <div className="px-3 py-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-start rtl:justify-end">
@@ -104,60 +60,240 @@ function Sidebar() {
 
       <aside 
         id="logo-sidebar" 
-        className={`fixed top-0 left-0 z-30 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700 ${
+        className={`fixed top-0 left-0 z-30 w-64 h-screen pt-20 transition-transform border-r border-gray-200 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } sm:translate-x-0`} 
+        style={{ backgroundColor: '#E5D9F2' }}
         aria-label="Sidebar"
       >
-        <div className="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+        <div className="h-full px-3 pb-4 overflow-y-auto">
           <ul className="space-y-2 font-medium">
-            {menuItems.map((item, index) => (
-              <li key={index}>
-                {item.dropdown ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => toggleDropdown(item.name)}
-                      className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                    >
-                      <span className="text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
-                        {item.icon}
-                      </span>
-                      <span className="flex-1 ms-3 text-left whitespace-nowrap">{item.name}</span>
-                      {openDropdown === item.name ? (
-                        <FiChevronDown className="w-4 h-4" />
-                      ) : (
-                        <FiChevronRight className="w-4 h-4" />
-                      )}
-                    </button>
-                    {openDropdown === item.name && (
-                      <ul className="py-2 space-y-2 pl-11">
-                        {item.subItems.map((subItem, subIndex) => (
-                          <li key={subIndex}>
-                            <a
-                              href="#"
-                              className="flex items-center p-2 text-gray-900 rounded-lg group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                            >
-                              <span className="flex-1 whitespace-nowrap">{subItem}</span>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
+            {/* Dashboard */}
+            <li>
+              <a
+                href="#"
+                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiHome className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="ms-3">Dashboard</span>
+              </a>
+            </li>
+
+            {/* Employees */}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown('Employees')}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiUsers className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Employees</span>
+                {openDropdown === 'Employees' ? (
+                  <FiChevronDown className="w-4 h-4" />
                 ) : (
-                  <a
-                    href="#"
-                    className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-                  >
-                    <span className="text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
-                      {item.icon}
-                    </span>
-                    <span className="ms-3">{item.name}</span>
-                  </a>
+                  <FiChevronRight className="w-4 h-4" />
                 )}
-              </li>
-            ))}
+              </button>
+              {openDropdown === 'Employees' && (
+                <ul className="py-2 space-y-2 pl-11">
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Employee List</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Add/Edit Employee</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Employee Profile</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            {/* Attendance */}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown('Attendance')}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiClock className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Attendance</span>
+                {openDropdown === 'Attendance' ? (
+                  <FiChevronDown className="w-4 h-4" />
+                ) : (
+                  <FiChevronRight className="w-4 h-4" />
+                )}
+              </button>
+              {openDropdown === 'Attendance' && (
+                <ul className="py-2 space-y-2 pl-11">
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Attendance Records</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Time Tracking</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Absence Management</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            {/* Request */}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown('Request')}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiMail className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Request</span>
+                {openDropdown === 'Request' ? (
+                  <FiChevronDown className="w-4 h-4" />
+                ) : (
+                  <FiChevronRight className="w-4 h-4" />
+                )}
+              </button>
+              {openDropdown === 'Request' && (
+                <ul className="py-2 space-y-2 pl-11">
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Leave Requests</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Overtime Requests</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Permission Requests</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            {/* Salary */}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown('Salary')}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Salary</span>
+                {openDropdown === 'Salary' ? (
+                  <FiChevronDown className="w-4 h-4" />
+                ) : (
+                  <FiChevronRight className="w-4 h-4" />
+                )}
+              </button>
+              {openDropdown === 'Salary' && (
+                <ul className="py-2 space-y-2 pl-11">
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Payroll</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Salary Slips</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Deductions & Bonuses</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            {/* Event & Holiday */}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown('Event')}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiCalendar className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Event & Holiday</span>
+                {openDropdown === 'Event' ? (
+                  <FiChevronDown className="w-4 h-4" />
+                ) : (
+                  <FiChevronRight className="w-4 h-4" />
+                )}
+              </button>
+              {openDropdown === 'Event' && (
+                <ul className="py-2 space-y-2 pl-11">
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Company Events</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Holiday Calendar</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Time-off Planner</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
+            </li>
+
+            {/* Reports */}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown('Reports')}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiFileText className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">Reports</span>
+                {openDropdown === 'Reports' ? (
+                  <FiChevronDown className="w-4 h-4" />
+                ) : (
+                  <FiChevronRight className="w-4 h-4" />
+                )}
+              </button>
+              {openDropdown === 'Reports' && (
+                <ul className="py-2 space-y-2 pl-11">
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Monthly Reports</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Annual Reports</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      <span className="flex-1 whitespace-nowrap">Custom Reports</span>
+                    </a>
+                  </li>
+                </ul>
+              )}
+            </li>
           </ul>
         </div>
       </aside>
