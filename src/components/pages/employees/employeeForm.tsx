@@ -73,7 +73,7 @@ const EmployeeForm = () => {
         placeholder={placeholder}
         value={type !== 'file' ? formData[name] || '' : undefined}
         onChange={handleChange}
-        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#A294F9]"
       />
     </div>
   )
@@ -85,18 +85,18 @@ const EmployeeForm = () => {
   ];
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-[#F5EFFF] min-h-screen">
       {/* Header */}
       <div className="py-4 px-2 flex justify-between items-center mb-6">
         <h2 className="text-3xl font-semibold text-gray-800">Employees Form</h2>
         <div className="flex space-x-2">
-          <button title="Import" className="p-2 bg-green-600 rounded shadow">
+          <button title="Import" className="p-2 bg-[#A294F9] rounded shadow">
             <FiUpload className="text-white" />
           </button>
-          <button title="Export" className="p-2 bg-green-600 rounded shadow">
+          <button title="Export" className="p-2 bg-[#A294F9] rounded shadow">
             <FiDownload className="text-white" />
           </button>
-          <button title="Create" className="p-2 bg-green-600 rounded shadow">
+          <button title="Create" className="p-2 bg-[#A294F9] rounded shadow">
             <FiPlus className="text-white" />
           </button>
         </div>
@@ -105,23 +105,23 @@ const EmployeeForm = () => {
       {/* Step Progress */}
       <div className="relative flex justify-center mb-10">
         {/* Line behind icons */}
-        <div className="absolute top-5 w-full max-w-4xl h-1 bg-gray-300 z-0"></div>
+        <div className="absolute top-5 w-full max-w-6xl h-1 bg-gray-300 z-0"></div>
         {/* Green progress line */}
         <div
-          className="absolute top-5 h-1 bg-green-500 z-10 transition-all duration-300"
+          className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-300"
           style={{ width: `${(step - 1) / (steps.length - 1) * 100}%`, maxWidth: '100%' }}
         ></div>
 
         {/* Step Icons */}
-        <div className="flex w-full max-w-4xl items-center justify-between z-20">
+        <div className="flex w-full max-w-6xl items-center justify-between z-20">
           {steps.map((s, index) => (
             <div key={index} className="flex flex-col items-center flex-1 text-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   step === index + 1
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-[#A294F9] text-white'
                     : step > index + 1
-                    ? 'bg-green-400 text-white'
+                    ? 'bg-[#A294F9] text-white'
                     : 'bg-gray-300 text-gray-600'
                 }`}
               >
@@ -135,7 +135,7 @@ const EmployeeForm = () => {
 
       {/* Form Content */}
       <div className="flex justify-center">
-        <div className="bg-white p-8 rounded-lg shadow w-full max-w-4xl">
+        <div className="p-8 rounded-lg shadow w-full max-w-6xl">
           <h3 className="text-xl font-semibold mb-6 text-gray-800">
             {step === 1 && 'Personal Information'}
             {step === 2 && 'Contact Information'}
@@ -204,14 +204,14 @@ const EmployeeForm = () => {
           <button
             type="button"
             onClick={handleNext}
-            className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 transition"
+            className="bg-[#A294F9] text-white px-5 py-2 rounded-md transition"
           >
             Next
           </button>
         ) : (
           <button
             type="submit"
-            className="bg-green-600 text-white px-5 py-2 rounded-md hover:bg-green-700 transition"
+            className="bg-[#A294F9] text-white px-5 py-2 rounded-md transition"
           >
             Submit
           </button>

@@ -7,10 +7,10 @@ function App() {
   return (
     <Router>
       <div className="flex h-screen">
-        <div className="w-60 bg-red text-white">
+        <div className="w-60">
           <Sidebar />
         </div>
-        <div className="flex-1 bg-gray-100 py-9 px-8 overflow-auto">
+        <div className="flex-1 my-9">
           <Routes>
             <Route path="/" element={<Employees />} />
             <Route path="/employee-form" element={<EmployeeForm />} />
