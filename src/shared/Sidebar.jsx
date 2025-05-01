@@ -10,11 +10,12 @@ import {
   FiChevronDown,
   FiChevronRight
 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 function Sidebar() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const navigate = useNavigate()
   const toggleDropdown = (menu) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
   };
@@ -97,7 +98,9 @@ function Sidebar() {
               {openDropdown === 'Employees' && (
                 <ul className="py-2 space-y-2 pl-11">
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a 
+                    onClick={() => navigate('/employees')}
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
                       <span className="flex-1 whitespace-nowrap">Employee List</span>
                     </a>
                   </li>
