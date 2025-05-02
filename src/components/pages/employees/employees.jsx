@@ -20,7 +20,6 @@ const Employees = () => {
             title="Export"
             className="p-2 rounded shadow"
             style={{ backgroundColor: '#A294F9' }}
-
           >
             <FiDownload className="text-white" />
           </button>
@@ -29,19 +28,16 @@ const Employees = () => {
             onClick={() => navigate('/employee-form')}
             className="p-2 rounded shadow"
             style={{ backgroundColor: '#A294F9' }}
-
           >
             <FiPlus className="text-white" />
           </button>
         </div>
       </div>
-
-      <div className="rounded-lg shadow overflow-x-auto p-3 border-radius-100px">
+      <div className="overflow-x-auto p-3 border-radius-100px">
         <div className="flex justify-between items-center mb-3">
           <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
             Showing <span className="font-semibold text-gray-800">1</span> to <span className="font-semibold text-gray-800">10</span> of <span className="font-semibold text-gray-800">50</span> entries
           </div>
-
           {/* Search (Right) */}
           <div>
             <input
