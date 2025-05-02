@@ -1,9 +1,25 @@
-import React from 'react';
+import React , { useState , useEffect } from 'react';
 import { FiDownload, FiUpload, FiPlus } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import employeeService from '../../../services/employeeService';
 
 const Employees = () => {
   const navigate = useNavigate()
+  const [employees, setEmployees] = useState([]);
+
+  useEffect(() => {
+    employeeService.getEmployee()
+      .then((response) => {
+        console.log('Employee Data:', response);
+        setEmployees(response); 
+        console.log(employees , "test employess");
+        
+      })
+      .catch((error) => {
+        console.error('Error fetching employee data:', error);
+      });
+  }, []);
+
   return (
     <div className="p-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
       <div className="py-4 px-2 flex justify-between items-center mb-3">
@@ -53,72 +69,27 @@ const Employees = () => {
               <th className="px-4 py-3 text-left">Employee ID</th>
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Email</th>
-              <th className="px-4 py-3 text-left">Branch</th>
               <th className="px-4 py-3 text-left">Department</th>
               <th className="px-4 py-3 text-left">Designation</th>
-              <th className="px-4 py-3 text-left">Date Of Joining</th>
               <th className="px-4 py-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody>
-            <tr className="border-t hover:bg-[#CDC1FF] text-gray-600">
-              <td className="px-4 py-3">EMP001</td>
-              <td className="px-4 py-3">John Doe</td>
-              <td className="px-4 py-3">john@example.com</td>
-              <td className="px-4 py-3">NY Branch</td>
-              <td className="px-4 py-3">HR</td>
-              <td className="px-4 py-3">Manager</td>
-              <td className="px-4 py-3">2022-01-15</td>
-              <td className="px-4 py-3">
-                <button className="text-blue-600 hover:underline transition">
-                  Edit
-                </button>
-              </td>
-            </tr>
-            <tr className="border-t hover:bg-[#CDC1FF] text-gray-600">
-              <td className="px-4 py-3">EMP001</td>
-              <td className="px-4 py-3">John Doe</td>
-              <td className="px-4 py-3">john@example.com</td>
-              <td className="px-4 py-3">NY Branch</td>
-              <td className="px-4 py-3">HR</td>
-              <td className="px-4 py-3">Manager</td>
-              <td className="px-4 py-3">2022-01-15</td>
-              <td className="px-4 py-3">
-                <button className="text-blue-600 hover:underline transition">
-                  Edit
-                </button>
-              </td>
-            </tr>
-            <tr className="border-t hover:bg-[#CDC1FF] text-gray-600">
-              <td className="px-4 py-3">EMP001</td>
-              <td className="px-4 py-3">John Doe</td>
-              <td className="px-4 py-3">john@example.com</td>
-              <td className="px-4 py-3">NY Branch</td>
-              <td className="px-4 py-3">HR</td>
-              <td className="px-4 py-3">Manager</td>
-              <td className="px-4 py-3">2022-01-15</td>
-              <td className="px-4 py-3">
-                <button className="text-blue-600 hover:underline transition">
-                  Edit
-                </button>
-              </td>
-            </tr>
-            <tr className="border-t hover:bg-[#CDC1FF] text-gray-600">
-              <td className="px-4 py-3">EMP001</td>
-              <td className="px-4 py-3">John Doe</td>
-              <td className="px-4 py-3">john@example.com</td>
-              <td className="px-4 py-3">NY Branch</td>
-              <td className="px-4 py-3">HR</td>
-              <td className="px-4 py-3">Manager</td>
-              <td className="px-4 py-3">2022-01-15</td>
-              <td className="px-4 py-3">
-                <button className="text-blue-600 hover:underline transition">
-                  Edit
-                </button>
-              </td>
-            </tr>
-            {/* Add more rows dynamically as needed */}
-          </tbody>
+            {employees.map((employee, index) => (
+                <tr key={index} className="border-t hover:bg-[#CDC1FF] text-gray-600">
+                <td className="px-4 py-3">{employee.employeeId || `EMP${index + 1}`}</td>
+                <td className="px-4 py-3">{employee.firstName}</td>
+                <td className="px-4 py-3">{employee.email}</td>
+                <td className="px-4 py-3">{employee.department}</td>
+                <td className="px-4 py-3">{employee.designation}</td>
+                <td className="px-4 py-3">
+                    <button className="text-blue-600 hover:underline transition">
+                    Edit
+                    </button>
+                </td>
+                </tr>
+            ))}
+            </tbody>
         </table>
       </div>
     </div>
