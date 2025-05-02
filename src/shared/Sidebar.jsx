@@ -11,6 +11,7 @@ import {
   FiChevronRight
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import logo from '../../src/assets/logo.png'
 
 function Sidebar() {
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -26,7 +27,7 @@ function Sidebar() {
 
   return (
     <>
-      <nav className="fixed top-0 z-40 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700"         style={{ backgroundColor: '#E5D9F2' }}>
+      <nav className="fixed top-0 z-40 w-full bg-white border-b border-[#A294F9] dark:bg-gray-800 dark:border-gray-700"         style={{ backgroundColor: '#E5D9F2' }}>
         <div className="px-3 py-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-start rtl:justify-end">
@@ -41,8 +42,8 @@ function Sidebar() {
                 </svg>
               </button>
               <a href="#" className="flex ms-2 md:me-24">
-                <img src="https://flowbite.com/docs/images/logo.svg" className="h-8 me-3" alt="FlowBite Logo" />
-                <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">HR Portal</span>
+              <img src={logo} className="h-12 ml-5 w-auto me-3" alt="Logo" />
+                {/* <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">HR Portal</span> */}
               </a>
             </div>
             <div className="flex items-center">
@@ -96,21 +97,28 @@ function Sidebar() {
                 )}
               </button>
               {openDropdown === 'Employees' && (
-                <ul className="py-2 space-y-2 pl-11">
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
                   <li>
                     <a 
-                    onClick={() => navigate('/employees')}
-                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                      onClick={() => navigate('/employees')}
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
                       <span className="flex-1 whitespace-nowrap">Employee List</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a 
+                      href="#" 
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
                       <span className="flex-1 whitespace-nowrap">Add/Edit Employee</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a 
+                      href="#" 
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
                       <span className="flex-1 whitespace-nowrap">Employee Profile</span>
                     </a>
                   </li>
@@ -134,19 +142,19 @@ function Sidebar() {
                 )}
               </button>
               {openDropdown === 'Attendance' && (
-                <ul className="py-2 space-y-2 pl-11">
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Attendance Records</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Time Tracking</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Absence Management</span>
                     </a>
                   </li>
@@ -170,19 +178,19 @@ function Sidebar() {
                 )}
               </button>
               {openDropdown === 'Request' && (
-                <ul className="py-2 space-y-2 pl-11">
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Leave Requests</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Overtime Requests</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Permission Requests</span>
                     </a>
                   </li>
@@ -206,19 +214,19 @@ function Sidebar() {
                 )}
               </button>
               {openDropdown === 'Salary' && (
-                <ul className="py-2 space-y-2 pl-11">
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Payroll</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Salary Slips</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Deductions & Bonuses</span>
                     </a>
                   </li>
@@ -242,19 +250,19 @@ function Sidebar() {
                 )}
               </button>
               {openDropdown === 'Event' && (
-                <ul className="py-2 space-y-2 pl-11">
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Company Events</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Holiday Calendar</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Time-off Planner</span>
                     </a>
                   </li>
@@ -278,19 +286,19 @@ function Sidebar() {
                 )}
               </button>
               {openDropdown === 'Reports' && (
-                <ul className="py-2 space-y-2 pl-11">
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Monthly Reports</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Annual Reports</span>
                     </a>
                   </li>
                   <li>
-                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group">
+                    <a href="#" className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2">
                       <span className="flex-1 whitespace-nowrap">Custom Reports</span>
                     </a>
                   </li>

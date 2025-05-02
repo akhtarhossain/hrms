@@ -12,7 +12,7 @@ function App() {
         <div className="w-60">
           <Sidebar />
         </div>
-        <div className="flex-1 my-9">
+        <div className="flex-1 my-13">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/employees" element={<Employees />} />
