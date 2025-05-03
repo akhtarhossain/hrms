@@ -3,11 +3,14 @@ import { FiDownload, FiUpload, FiPlus, FiList, FiFilter } from 'react-icons/fi';
 import { BsPerson, BsTelephone, BsBriefcase, BsBook } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
   const [preview, setPreview] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -34,7 +37,7 @@ const EmployeeForm = () => {
 
     dateOfBirth: '',
     
-    profilePicture: "https://via.placeholder.com/150",
+    profilePicture: imageUrl,
     documentUpload: "https://via.placeholder.com/150",
     yearOfPassing: 2020,
     gradePercentage: 30,
@@ -111,11 +114,12 @@ const EmployeeForm = () => {
     employeeService.createEmployee(formData)
       .then((response) => {
         console.log('Employee created successfully:', response);
-        alert('Form submitted successfully!');
+        toast.success('Form submitted successfully!');
+        navigate('/employees')
       })
       .catch((error) => {
         console.error('Error creating employee:', error);
-        alert('Error submitting form. Please try again.');
+        toast.error('Error submitting form. Please try again.');
       });
   };
 
@@ -241,7 +245,69 @@ const EmployeeForm = () => {
     { label: 'Employment', icon: <BsBriefcase size={20} /> },
     { label: 'Education', icon: <BsBook size={20} /> },
   ];
-
+  const handleFileUpload = async (e) => {
+    const file = e.target?.files?.[0] || e; // Support both `event` and direct `file` input
+  
+    if (!file) return;
+  
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'video/mp4', 'video/3gp', 'text/srt'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('File type not supported. Allowed: jpg, jpeg, png, webp, mp4, 3gp, srt.');
+      return;
+    }
+  
+    try {
+      // Step 1: Request upload URL from backend
+      const projectData = {
+        name: file.name,
+        access: "public-read",
+      };
+  
+      const response = await employeeService.uploadImage(projectData);
+  
+      if (response?.message && Array.isArray(response.message)) {
+        response.message.forEach((msg) => toast.error(msg));
+        return;
+      }
+  
+      const uploadUrl = response.location;
+      if (!uploadUrl) {
+        toast.error("No upload URL received.");
+        return;
+      }
+  
+      // Step 2: Upload the file to S3 or similar using the received URL
+      const source = axios.CancelToken.source();
+      await axios.put(uploadUrl, file, {
+        headers: {
+          "Content-Type": file.type,
+          "x-amz-acl": "public-read",
+        },
+        cancelToken: source.token,
+      });
+  
+      const trimmedUrl = uploadUrl.split("?")[0];
+      console.log(trimmedUrl , "trim url");
+      setImageUrl(trimmedUrl)
+      toast.success("File uploaded successfully!");
+  
+      // Optional: Set the image/file URL in your form or state
+      setFormData?.((prev) => ({
+        ...prev,
+        profilePicture: trimmedUrl, // or use another state key depending on context
+      }));
+  
+    } catch (err) {
+      if (axios.isCancel(err)) {
+        console.log("Upload cancelled:", err.message);
+      } else {
+        console.error("Upload failed:", err);
+        toast.error("Upload failed! Please try again.");
+      }
+    }
+  }; 
+  
+  
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
@@ -298,9 +364,8 @@ const EmployeeForm = () => {
                       className="relative h-44 border-2 border-gray-300 hover:border-indigo-300 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-[#F5EFFF] focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
                       onClick={() => document.getElementById('profilePicture')?.click()}
                     >
-                    <p className="text-sm text-gray-600 mb-2">Drag & drop or select</p>
-                      <FiUpload className="w-7 h-7 text-white mb-2 p-2 rounded shadow"
-                        style={{ backgroundColor: '#A294F9' }}/>
+                      <p className="text-sm text-gray-600 mb-2">Drag & drop or select</p>
+                      <FiUpload className="w-7 h-7 text-white mb-2 p-2 rounded shadow" style={{ backgroundColor: '#A294F9' }} />
                       <p className="text-sm text-gray-500">Click to upload image</p>
 
                       <input
@@ -308,8 +373,8 @@ const EmployeeForm = () => {
                         name="profilePicture"
                         type="file"
                         className="hidden"
-                        accept="image/*"
-                        onChange={handleChange} 
+                        accept="image/"
+                        onChange={handleFileUpload} // Only use onChange for handling file upload
                       />
                     </div>
                 </div>
@@ -319,8 +384,8 @@ const EmployeeForm = () => {
                   <div className="flex flex-col items-center">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
                     <img
-                      src={preview || "../../../../assets/dummy-2.png"}
-                      alt="Profile Preview"
+                      src={preview || "../../../../assets/dummy-1.png"}
+                      alt=""
                       className="h-32 w-32 object-cover rounded-full border border-gray-300 shadow"
                     />
                   </div>
@@ -362,7 +427,7 @@ const EmployeeForm = () => {
               <div className="flex flex-wrap -mx-2">
                 {renderInput('Degree Title', 'degreeTitle')}
                 {renderInput('Institute / University', 'institute')}
-                {renderInput('Year of Passing', 'yearOfPassing', 'date')}
+                {renderInput('Year of Passing', 'yearOfPassing')}
                 {renderInput('Grade / Percentage', 'gradePercentage')}
                 {renderInput('Major Subjects', 'majorSubjects')}
                 {/* {renderInput('Document Upload', 'document2', 'file')} */}
