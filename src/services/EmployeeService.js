@@ -1,5 +1,7 @@
 import { toast } from 'react-toastify';
 import { HttpService } from "./HttpClient.service";
+import axios from 'axios';
+
 class EmployeeService extends HttpService {
   constructor() {
     super();
@@ -23,8 +25,18 @@ class EmployeeService extends HttpService {
   }
 
   deleteEmployee(EmployeeId) {
-    return this.delete(`/license-rights/${EmployeeId}`);
+    return this.delete(`/employ/${EmployeeId}`);
   }
+  async uploadImage( projectData) {
+    try {
+      const response = await axios.post(`http://192.168.10.5:3001/upload`, projectData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
+
 }
 
 export default new EmployeeService();
