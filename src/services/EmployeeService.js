@@ -15,6 +15,14 @@ class EmployeeService extends HttpService {
           throw error;
         });
   }
+    getEmployeeById(employeeId) {
+      return this.get(`/employ/${employeeId}`).then((response) => response.data)
+        .catch((error) => {
+          console.error('Error fetching employee data:', error);
+          toast.error(`${error}`);
+          throw error;
+        });
+    }  
 
   createEmployee(EmployeeData) {
     return this.post('/employ', EmployeeData);
@@ -29,7 +37,17 @@ class EmployeeService extends HttpService {
   }
   async uploadImage( projectData) {
     try {
-      const response = await axios.post(`http://192.168.10.5:3001/upload`, projectData);
+      const response = await axios.post(`http://localhost:3000/upload`, projectData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
+
+  async uploadDocument( projectData) {
+    try {
+      const response = await axios.post(`http://localhost:3000/upload`, projectData);
       return response.data;
     } catch (error) {
       this.handleError(error);
