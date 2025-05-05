@@ -5,6 +5,7 @@ import EmployeeForm from './components/pages/employees/employeeForm';
 import Dashboard from './components/pages/dashboard/Dashboard';
 import Footer from './shared/Footer';
 import { ToastContainer } from 'react-toastify';
+import EmployeePreview from './components/pages/employees/employeePreview';
 
 function App() {
   return (
@@ -25,7 +26,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/employees" element={<Employees />} />
             <Route path="/employee-form" element={<EmployeeForm />} />
-            <Route path="/employee-form/:id" element={<EmployeeForm />} />
+            <Route path="/employee-preview/:id" element={<EmployeePreview />} />
           </Routes>
         <Footer />
         </div>

@@ -1,8 +1,9 @@
-import React , { useState , useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiDownload, FiUpload, FiPlus } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
 import { FaEdit, FaTrashAlt, FaEye } from 'react-icons/fa'; // Import required icons
+import { Pagination } from '../../../shared/common/Pagination';
 
 const Employees = () => {
   const navigate = useNavigate()
@@ -12,9 +13,9 @@ const Employees = () => {
     employeeService.getEmployee()
       .then((response) => {
         console.log('Employee Data:', response);
-        setEmployees(response); 
-        console.log(employees , "test employess");
-        
+        setEmployees(response);
+        console.log(employees, "test employess");
+
       })
       .catch((error) => {
         console.error('Error fetching employee data:', error);
@@ -26,7 +27,7 @@ const Employees = () => {
         .then((response) => {
           console.log("Employee deleted successfully", response);
           // Remove employee from the state after deletion
-          setEmployees((prevEmployees) => 
+          setEmployees((prevEmployees) =>
             prevEmployees.filter((employee) => employee.employeeId !== employeeId)
           );
         })
@@ -36,7 +37,7 @@ const Employees = () => {
     }
   };
   return (
-    <div className="p-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
+    <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
       <div className="py-4 px-2 flex justify-between items-center mb-3">
         <h2 className="text-3xl font-bold text-gray-800">Employees</h2>
         <div className="flex space-x-2">
@@ -70,12 +71,9 @@ const Employees = () => {
             Showing <span className="font-semibold text-gray-800">1</span> to <span className="font-semibold text-gray-800">10</span> of <span className="font-semibold text-gray-800">50</span> entries
           </div>
           {/* Search (Right) */}
-          <div>
-            <input
-              type="text"
-              placeholder="Search employees..."
-              className="px-4 py-2 border border-[#A294F9] rounded-full shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#A294F9] placeholder-gray-400"
-            />
+          {/* Pagination Section */}
+          <div className="mt-4 flex justify-end">
+            <Pagination />
           </div>
         </div>
         <table className="min-w-full table-auto text-sm">
@@ -110,35 +108,35 @@ const Employees = () => {
                 <td className="px-4 py-3">{employee.department}</td>
                 <td className="px-4 py-3">{employee.designation}</td>
                 <td className="px-4 py-3">
-                <div className="flex space-x-2">
-                  <button
-                    title="Edit"
-                    className="p-2 rounded shadow"
-                    style={{ backgroundColor: '#A294F9' }}
-                  >
-                    <FaEdit className="text-white" />
-                  </button>
-                  <button
-                    title="Delete"
-                    className="p-2 rounded shadow"
-                    style={{ backgroundColor: '#F87171' }} 
-                    onClick={() => deleteEmployee(employee._id)} 
-                  >
-                    <FaTrashAlt className="text-white" />
-                  </button>
-                  <button
-                    title="Preview"
-                    className="p-2 rounded shadow"
-                    style={{ backgroundColor: '#34D399' }}
-                  >
-                    <FaEye className="text-white" />
-                  </button>
-                </div>
+                  <div className="flex space-x-2">
+                    <button
+                      title="Edit"
+                      className="p-2 rounded shadow"
+                      style={{ backgroundColor: '#A294F9' }}
+                    >
+                      <FaEdit className="text-white" />
+                    </button>
+                    <button
+                      title="Delete"
+                      className="p-2 rounded shadow"
+                      style={{ backgroundColor: '#F87171' }}
+                      onClick={() => deleteEmployee(employee._id)}
+                    >
+                      <FaTrashAlt className="text-white" />
+                    </button>
+                    <button
+                      title="Preview"
+                      className="p-2 rounded shadow"
+                      style={{ backgroundColor: '#34D399' }}
+                      onClick={() => navigate(`/employee-preview/${employee._id}`)}
+                    >
+                      <FaEye className="text-white" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
-
         </table>
       </div>
     </div>
