@@ -29,7 +29,7 @@ class EmployeeService extends HttpService {
   }
   async uploadImage( projectData) {
     try {
-      const response = await axios.post(`http://192.168.10.5:3001/upload`, projectData);
+      const response = await axios.post(`http://localhost:3000/upload`, projectData);
       return response.data;
     } catch (error) {
       this.handleError(error);
