@@ -6,8 +6,6 @@ import employeeService from '../../../services/employeeService';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { FaTrash } from 'react-icons/fa6';
-import { Certificate } from 'crypto';
-import { url } from 'inspector';
 
 interface Education {
   institute: string;
@@ -59,7 +57,6 @@ const EmployeeForm = () => {
     institute: '',
     certificates: [{}],
     educations: [{}],
-    presetId: '3T38KHGK',
     dateOfBirth: '',
     profilePicture: imageUrl,
     documentUpload: "https://via.placeholder.com/150",
@@ -74,7 +71,8 @@ const EmployeeForm = () => {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
     3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus'],
-    4: ['educationType', 'institute', 'yearOfPassing', 'gradePercentage'],
+    4: ['educations'],
+    5: ['certificates'],
   };
 
   const handleNext = () => {
