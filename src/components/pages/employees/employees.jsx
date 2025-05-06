@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
 import { FaEdit, FaTrashAlt, FaEye } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
+import { toast } from 'react-toastify';
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -25,20 +26,25 @@ const Employees = () => {
       });
   }, []);
 
-  const deleteEmployee = (employeeId) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
-      employeeService.deleteEmployee(employeeId)
-        .then((response) => {
-          console.log("Employee deleted successfully", response);
-          setEmployees((prevEmployees) =>
-            prevEmployees.filter((employee) => employee.employeeId !== employeeId)
-          );
-        })
-        .catch((error) => {
-          console.error('Error deleting employee:', error);
-        });
-    }
-  };
+    const deleteEmployee = (employeeId) => {
+      if (window.confirm("Are you sure you want to delete this employee?")) {
+        employeeService.deleteEmployee(employeeId)
+          .then((response) => {
+            console.log("Employee deleted successfully", response);
+            toast.success("Employee deleted successfully");
+    
+            // Use correct property name (_id)
+            setEmployees((prevEmployees) =>
+              prevEmployees.filter((employee) => employee._id !== employeeId)
+            );
+          })
+          .catch((error) => {
+            console.error('Error deleting employee:', error);
+            toast.error('Failed to delete employee');
+          });
+      }
+    };
+  
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;

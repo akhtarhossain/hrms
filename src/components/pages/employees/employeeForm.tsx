@@ -486,6 +486,12 @@ const EmployeeForm = () => {
 
     const newEducation = { institute, yearOfPassing, gradePercentage, educationType };
     setEducationList((prevList) => [...prevList, newEducation]);
+    setFormData((prevData) => ({
+      ...prevData,
+      institute: '',
+      yearOfPassing: '',
+      gradePercentage: '',
+    }));
   };
 
   const handleDeleteEducation = (index) => {
@@ -725,7 +731,7 @@ const EmployeeForm = () => {
                 <div className="mt-4 w-full">
                   {educationList.length > 0 && (
                     <div className="rounded-md">
-                      <h3 className="text-2xl font-bold text-gray-800">Education List</h3>
+                      <h3 className="text-xl font-bold text-gray-800 mb-2">Education List</h3>
                       <table className="min-w-full table-auto text-sm">
                         <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
                           <tr>
@@ -743,7 +749,7 @@ const EmployeeForm = () => {
                               <td className="px-6 py-3 border">{edu.educationType}</td>
                               <td className="px-6 py-3 border">{edu.yearOfPassing}</td>
                               <td className="px-6 py-3 border">{edu.gradePercentage}</td>
-                              <td className="px-6 py-3 border">
+                              <td className="px-6 py-3 border text-center">
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteEducation(index)}
@@ -765,7 +771,6 @@ const EmployeeForm = () => {
             {step === 5 && (
               <>
                 <div className="flex flex-wrap -mx-2 w-full">
-                  {/* Select input */}
                   <div className="w-full sm:w-1/2 px-2 mb-4">
                     <label className="block text-sm font-medium mb-1 text-gray-700">Document Type</label>
                     <select
@@ -781,8 +786,6 @@ const EmployeeForm = () => {
                       <option value="Other">Other</option>
                     </select>
                   </div>
-
-                  {/* File input */}
                   <div className="w-full md:w-1/2 px-2 mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Upload Document <span className="text-red-500">*</span>
@@ -794,9 +797,7 @@ const EmployeeForm = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm"
                     />
                   </div>
-
                 </div>
-                {/* Add/Remove Buttons */}
                 <div className="w-full flex flex-col sm:flex-row justify-end gap-3 px-2">
                   <button
                     type="button"
@@ -806,13 +807,12 @@ const EmployeeForm = () => {
                     + Add Document
                   </button>
                 </div>
-                {/* Document List Table */}
                 <div className="mt-6 w-full px-2">
                   {documentList.length > 0 && (
                     <div className="rounded-md">
                       <h3 className="text-xl font-bold text-gray-800 mb-2">Document List</h3>
-                      <table className="min-w-full table-auto text-sm border border-gray-300">
-                        <thead className="text-gray-700 uppercase text-xs font-medium bg-gray-100">
+                      <table className="min-w-full table-auto text-sm">
+                      <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
                           <tr>
                             <th className="px-4 py-2 border">Document Type</th>
                             <th className="px-4 py-2 border">File Name</th>
