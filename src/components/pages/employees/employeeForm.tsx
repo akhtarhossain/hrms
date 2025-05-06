@@ -55,7 +55,6 @@ const EmployeeForm = () => {
     institute: '',
     certificates: [{}],
     educations: [{}],
-    presetId:'3T38KHGK',
     dateOfBirth: '',
     profilePicture: imageUrl,
     documentUpload: "https://via.placeholder.com/150",
@@ -70,7 +69,8 @@ const EmployeeForm = () => {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'permanentAddress', 'city'],
     3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus'],
-    4: ['degreeTitle', 'institute', 'yearOfPassing', 'gradePercentage'],
+    4: ['educations'],
+    5: ['certificates'],
   };
 
   const handleNext = () => {
