@@ -29,7 +29,7 @@ class EmployeeService extends HttpService {
   }
 
   updateEmployee(EmployeeId, EmployeeData) {
-    return this.patch(`/license-rights/${EmployeeId}`, EmployeeData);
+    return this.patch(`/employ/${EmployeeId}`, EmployeeData);
   }
 
   deleteEmployee(EmployeeId) {

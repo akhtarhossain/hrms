@@ -19,7 +19,7 @@ export function Pagination() {
     <div className="flex items-center justify-end gap-4 px-4 py-3">
       {/* Previous Button */}
       <button
-        className="flex items-center gap-2 px-3 py-1 text-sm rounded-full border border-[#A294F9] text-[#A294F9] hover:bg-[#A294F9] hover:text-white disabled:opacity-50"
+        className="flex items-center gap-2 px-3 py-1 text-sm rounded-full border border-[#A294F9] text-[#A294F9] hover:bg-[#A294F9] hover:text-white disabled:opacity-50 cursor-pointer"
         onClick={prev}
         disabled={active === 1}
       >
@@ -31,7 +31,7 @@ export function Pagination() {
         {[1, 2, 3, 4, 5].map((page) => (
           <button
             key={page}
-            className={`px-3 py-1 text-sm rounded-full transition-all duration-200 
+            className={`px-3 py-1 text-sm rounded-full transition-all duration-200 cursor-pointer
               ${
                 active === page
                   ? "bg-[#A294F9] text-white"
@@ -46,7 +46,7 @@ export function Pagination() {
 
       {/* Next Button */}
       <button
-        className="flex items-center gap-2 px-3 py-1 text-sm rounded-full border border-[#A294F9] text-[#A294F9] hover:bg-[#A294F9] hover:text-white disabled:opacity-50"
+        className="flex items-center gap-2 px-3 py-1 text-sm rounded-full border border-[#A294F9] text-[#A294F9] hover:bg-[#A294F9] hover:text-white disabled:opacity-50 cursor-pointer"
         onClick={next}
         disabled={active === totalPages}
       >

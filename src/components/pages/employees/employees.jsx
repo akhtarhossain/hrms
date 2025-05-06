@@ -15,12 +15,9 @@ const Employees = () => {
     designation: ''
   });
 
-  
-
   useEffect(() => {
     employeeService.getEmployee()
       .then((response) => {
-        console.log('Employee Data:', response);
         setEmployees(response);
       })
       .catch((error) => {
@@ -71,7 +68,7 @@ const Employees = () => {
         <div className="flex space-x-2">
           <button
             title="filter"
-            className="p-2 bg-[#A294F9] rounded shadow"
+            className="p-2 bg-[#A294F9] rounded shadow cursor-pointer"
             onClick={() => setShowFilter(!showFilter)}
           >
             <FiFilter className="text-white" />
@@ -79,7 +76,7 @@ const Employees = () => {
           <button
             title="Create"
             onClick={() => navigate('/employee-form')}
-            className="p-2 rounded shadow"
+            className="p-2 rounded shadow cursor-pointer"
             style={{ backgroundColor: '#A294F9' }}
           >
             <FiPlus className="text-white" />
@@ -189,14 +186,15 @@ const Employees = () => {
                   <div className="flex space-x-2">
                     <button
                       title="Edit"
-                      className="p-2 rounded shadow"
+                      className="p-2 rounded shadow cursor-pointer"
                       style={{ backgroundColor: '#A294F9' }}
+                      onClick={() => navigate(`/employee-form/${employee._id}`)}
                     >
                       <FaEdit className="text-white" />
                     </button>
                     <button
                       title="Delete"
-                      className="p-2 rounded shadow"
+                      className="p-2 rounded shadow cursor-pointer"
                       style={{ backgroundColor: '#F87171' }}
                       onClick={() => deleteEmployee(employee._id)}
                     >
@@ -204,7 +202,7 @@ const Employees = () => {
                     </button>
                     <button
                       title="Preview"
-                      className="p-2 rounded shadow"
+                      className="p-2 rounded shadow cursor-pointer"
                       style={{ backgroundColor: '#34D399' }}
                       onClick={() => navigate(`/employee-preview/${employee._id}`)}
                     >

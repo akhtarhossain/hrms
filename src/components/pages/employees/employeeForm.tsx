@@ -19,6 +19,40 @@ type DocumentItem = {
   fileUrl?: string;
 };
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  fatherOrHusbandName: string;
+  gender: string;
+  cnic: string;
+  maritalStatus: string;
+  nationality: string;
+  mobileNumber: string;
+  email: string;
+  country: string;
+  emergencyContactName: string;
+  emergencyContactRelation: string;
+  emergencyContactMobile: string;
+  permanentAddress: string;
+  city: string;
+  employeeId: string;
+  department: string;
+  designation: string;
+  dateOfJoining: string;
+  employmentType: string;
+  employeeStatus: string;
+  degreeTitle: string;
+  institute: string;
+  certificates: any[];
+  educations: any[];
+  dateOfBirth: string;
+  profilePicture: string;
+  documentUpload: string;
+  yearOfPassing: string;
+  gradePercentage: string;
+  educationType: string;
+}
+
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
@@ -31,7 +65,7 @@ const EmployeeForm = () => {
   const [imageName, setImageName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [DocuUrl, setDocuUrl] = useState('');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     fatherOrHusbandName: '',
@@ -55,17 +89,94 @@ const EmployeeForm = () => {
     employeeStatus: '',
     degreeTitle: '',
     institute: '',
-    certificates: [{}],
-    educations: [{}],
+    certificates: [],
+    educations: [],
     dateOfBirth: '',
-    profilePicture: imageUrl,
-    documentUpload: "https://via.placeholder.com/150",
+    profilePicture: '',
+    documentUpload: '',
     yearOfPassing: '',
     gradePercentage: '',
     educationType: '',
   });
 
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  useEffect(() => {
+    if (id) {
+      employeeService.getEmployeeById(id)
+        .then((response) => {
+          const employeeData = response;
+
+          // Format dates from ISO string to input-friendly format (YYYY-MM-DD)
+          const formatDateForInput = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+          };
+
+          setFormData({
+            firstName: employeeData.firstName || '',
+            lastName: employeeData.lastName || '',
+            fatherOrHusbandName: employeeData.fatherOrHusbandName || '',
+            gender: employeeData.gender || '',
+            cnic: employeeData.cnic || '',
+            maritalStatus: employeeData.maritalStatus || '',
+            nationality: employeeData.nationality || '',
+            mobileNumber: employeeData.mobileNumber || '',
+            email: employeeData.email || '',
+            country: employeeData.country || '',
+            emergencyContactName: employeeData.emergencyContactName || '',
+            emergencyContactRelation: employeeData.emergencyContactRelation || '',
+            emergencyContactMobile: employeeData.emergencyContactMobile || '',
+            permanentAddress: employeeData.permanentAddress || '',
+            city: employeeData.city || '',
+            employeeId: employeeData.employeeId || '',
+            department: employeeData.department || '',
+            designation: employeeData.designation || '',
+            dateOfJoining: formatDateForInput(employeeData.dateOfJoining),
+            employmentType: employeeData.employmentType || '',
+            employeeStatus: employeeData.employeeStatus || '',
+            degreeTitle: employeeData.degreeTitle || '',
+            institute: employeeData.institute || '',
+            certificates: employeeData.certificates || [],
+            educations: employeeData.educations || [],
+            dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
+            profilePicture: employeeData.profilePicture || '',
+            documentUpload: employeeData.documentUpload || '',
+            yearOfPassing: employeeData.yearOfPassing || '',
+            gradePercentage: employeeData.gradePercentage || '',
+            educationType: employeeData.educationType || '',
+          });
+
+          // Set education list if exists
+          if (employeeData.educations && employeeData.educations.length > 0) {
+            setEducationList(employeeData.educations);
+          }
+
+          // Set document list if exists
+          if (employeeData.certificates && employeeData.certificates.length > 0) {
+            setDocumentList(employeeData.certificates.map(doc => ({
+              type: doc.type,
+              fileUrl: doc.fileUrl,
+              // If you need to maintain file object for existing docs
+              file: { name: doc.fileUrl?.split('/').pop() || 'document' } as File
+            })));
+          }
+
+          // Set profile picture if exists
+          if (employeeData.profilePicture) {
+            setImageUrl(employeeData.profilePicture);
+            setImageName(employeeData.profilePicture.split('/').pop() || 'profile');
+            setUploadStatus('uploaded');
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching employee data:', error);
+          toast.error('Failed to load employee data');
+        });
+    }
+  }, [id]);
 
   const requiredFields = {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
@@ -128,23 +239,41 @@ const EmployeeForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     const finalData = {
       ...formData,
       educations: educationList,
       certificates: documentList,
+      profilePicture: imageUrl, // Make sure to include the image URL
     };
-    console.log('Final Form Data:', formData);
 
-    employeeService.createEmployee(finalData)
-      .then((response) => {
-        console.log('Employee created successfully:', response);
-        toast.success('Form submitted successfully!');
-        navigate('/employees')
-      })
-      .catch((error) => {
-        console.error('Error creating employee:', error);
-        toast.error('Error submitting form. Please try again.');
-      });
+    console.log('Final Form Data:', finalData);
+
+    if (id) {
+      // Update existing employee
+      employeeService.updateEmployee(id, finalData)
+        .then((response) => {
+          console.log('Employee updated successfully:', response);
+          toast.success('Employee updated successfully!');
+          navigate('/employees');
+        })
+        .catch((error) => {
+          console.error('Error updating employee:', error);
+          toast.error('Error updating employee. Please try again.');
+        });
+    } else {
+      // Create new employee
+      employeeService.createEmployee(finalData)
+        .then((response) => {
+          console.log('Employee created successfully:', response);
+          toast.success('Employee created successfully!');
+          navigate('/employees');
+        })
+        .catch((error) => {
+          console.error('Error creating employee:', error);
+          toast.error('Error creating employee. Please try again.');
+        });
+    }
   };
 
   const renderInput = (label, name, type = 'text', placeholder = '', onChangeHandler = null) => {
@@ -441,8 +570,7 @@ const EmployeeForm = () => {
     const updatedList = documentList.filter((_, i) => i !== index);
     setDocumentList(updatedList);
   };
-
-
+  //....
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
@@ -456,26 +584,49 @@ const EmployeeForm = () => {
           </button>
         </div>
       </div>
-      <div className="relative flex justify-center mb-4">
-        <div className="absolute top-5 w-full max-w-4xl h-1 bg-gray-300 z-10"></div>
-        <div className="absolute top-5 h-1 bg-[#A294F9] max-w-6xl z-10 transition-all w-full duration-300"
-          style={{ width: `${(step - 1) / (steps.length - 1) * 73}%`, maxWidth: '73%' }}></div>
-        <div className="flex w-full max-w-6xl items-center justify-between z-20">
-          {steps.map((s, index) => (
-            <div key={index} className="flex flex-col items-center flex-1 text-center">
+      <div className="relative flex flex-col items-center mb-8 px-4">
+        <div className="w-full max-w-5xl relative">
+          <div
+            className="absolute top-5 h-1 bg-gray-300 z-10"
+            style={{
+              left: '50px',
+              right: '50px',
+            }}
+          ></div>
+          <div
+            className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500"
+            style={{
+              left: '50px',
+              width: `${(step - 1) / (steps.length - 1) * 100}%`,
+              maxWidth: 'calc(100% - 100px)',
+            }}
+          ></div>
+          <div className="flex justify-between relative z-20">
+            {steps.map((s, index) => (
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${step === index + 1
-                  ? 'bg-[#A294F9] text-white'
-                  : step > index + 1
-                    ? 'bg-[#A294F9] text-white'
-                    : 'bg-gray-300 text-gray-600'
-                  }`}
+                key={index}
+                className="flex flex-col items-center"
+                style={{
+                  flex: index === 0 || index === steps.length - 1 ? '0 0 auto' : '1',
+                }}
               >
-                {s.icon}
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${step === index + 1
+                    ? 'bg-[#A294F9] text-white border-2 border-[#A294F9]'
+                    : step > index + 1
+                      ? 'bg-[#A294F9] text-white'
+                      : 'bg-white border-2 border-gray-300 text-gray-600'
+                    }`}
+                >
+                  {s.icon}
+                </div>
+                <span className={`mt-2 text-xs sm:text-sm font-medium ${step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
+                  }`}>
+                  {s.label}
+                </span>
               </div>
-              <span className="mt-2 text-sm">{s.label}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
       <div className="flex justify-center">
