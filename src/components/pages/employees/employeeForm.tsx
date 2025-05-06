@@ -115,14 +115,14 @@ const EmployeeForm = () => {
     let valid = true;
     const newErrors = {};
 
-    for (let field of fields) {
-      if (!formData[field] || formData[field].toString().trim() === '') {
-        newErrors[field] = 'This field is required';
-        valid = false;
-      }
-    }
+    // for (let field of fields) {
+    //   if (!formData[field] || formData[field].toString().trim() === '') {
+    //     newErrors[field] = 'This field is required';
+    //     valid = false;
+    //   }
+    // }
 
-    setErrors(newErrors);
+    // setErrors(newErrors);
     return valid;
   };
 
@@ -448,10 +448,6 @@ const EmployeeForm = () => {
       <div className="py-4 px-2 flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-gray-800">Employees Form</h2>
         <div className="flex space-x-2">
-          <button
-            title="fillter" className="p-2 bg-[#A294F9] rounded shadow">
-            <FiFilter className="text-white" />
-          </button>
           <button
             onClick={() => navigate('/employees')}
             title="List"
