@@ -16,14 +16,8 @@ const EmployeePreview = () => {
   useEffect(() => {
     const fetchEmployeeData = async () => {
       try {
-        const response = await employeeService.getEmployee();
-        const foundEmployee = response.find(emp => emp._id === id);
-        
-        if (foundEmployee) {
-          setEmployee(foundEmployee);
-        } else {
-          setError('Employee not found');
-        }
+        const response = await employeeService.getEmployeeById(id);
+        setEmployee(response);
       } catch (err) {
         setError('Failed to fetch employee data');
         console.error('Error:', err);
@@ -38,31 +32,27 @@ const EmployeePreview = () => {
   const handleDownloadCV = () => {
     if (!employee) return;
   
-    // Create a new jsPDF instance
     const doc = new jsPDF();
   
-    // Add title
+    // Title
     doc.setFontSize(20);
-    doc.setTextColor(40, 53, 147); // Purple color
+    doc.setTextColor(40, 53, 147);
     doc.text(`${employee.firstName} ${employee.lastName} - CV`, 105, 20, { align: 'center' });
   
-    // Add subtitle
+    // Subtitle
     doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0); // Black color
+    doc.setTextColor(0, 0, 0);
     doc.text(employee.designation, 105, 30, { align: 'center' });
   
-    // Add a line separator
-    doc.setDrawColor(162, 148, 249); // Light purple
+    // Line separator
+    doc.setDrawColor(162, 148, 249);
     doc.setLineWidth(0.5);
     doc.line(20, 35, 190, 35);
   
-    // Add profile picture if available
+    // Profile picture
     if (employee.profilePicture) {
-      // Note: This is a simplified version. For actual implementation, you might need to:
-      // 1. Convert the image to a data URL if it's not already
-      // 2. Handle the image loading properly
       try {
-        doc.addImage(employee.profilePicture, 'JPEG', 20, 40, 30, 30);
+        doc.addImage(employee.profilePicture, 'PNG', 20, 40, 30, 30);
       } catch (error) {
         console.error('Error adding profile image:', error);
       }
@@ -70,7 +60,6 @@ const EmployeePreview = () => {
   
     // Contact Information
     doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
     doc.text('Contact Information', 20, 80);
     
     const contactInfo = [
@@ -78,12 +67,12 @@ const EmployeePreview = () => {
       [`Phone: ${employee.mobileNumber}`],
       [`Address: ${employee.permanentAddress}`],
       [`City: ${employee.city}`],
-      [`CNIC: ${employee.cnic}`]
+      [`CNIC: ${employee.cnic}`],
+      [`Emergency Contact: ${employee.emergencyContactName} (${employee.emergencyContactRelation}) - ${employee.emergencyContactMobile}`]
     ];
     
     autoTable(doc, {
       startY: 85,
-      head: [],
       body: contactInfo,
       theme: 'grid',
       headStyles: { fillColor: [162, 148, 249] },
@@ -93,16 +82,16 @@ const EmployeePreview = () => {
   
     // Professional Summary
     doc.setFontSize(12);
-    doc.text('Professional Summary', 20, 130);
+    doc.text('Professional Summary', 20, doc.lastAutoTable.finalY + 15);
     
     const summaryText = `${employee.firstName} ${employee.lastName} is a ${employee.designation} in the ${employee.department} department with employee ID ${employee.employeeId}.`;
     
     doc.setFontSize(10);
-    doc.text(summaryText, 20, 140, { maxWidth: 170 });
+    doc.text(summaryText, 20, doc.lastAutoTable.finalY + 25, { maxWidth: 170 });
   
     // Employment Details
     doc.setFontSize(12);
-    doc.text('Employment Details', 20, 150);
+    doc.text('Employment Details', 20, doc.lastAutoTable.finalY + 35);
     
     const employmentDetails = [
       ['Employee ID', employee.employeeId],
@@ -114,7 +103,7 @@ const EmployeePreview = () => {
     ];
     
     autoTable(doc, {
-      startY: 155,
+      startY: doc.lastAutoTable.finalY + 40,
       head: [['Detail', 'Value']],
       body: employmentDetails,
       theme: 'grid',
@@ -127,18 +116,17 @@ const EmployeePreview = () => {
     doc.setFontSize(12);
     doc.text('Education', 20, doc.lastAutoTable.finalY + 15);
     
-    const educationDetails = [
-      ['Degree Title', employee.degreeTitle],
-      ['Institute', employee.institute],
-      ['Year of Passing', employee.yearOfPassing],
-      ['Grade/Percentage', employee.gradePercentage],
-      ['Major Subjects', employee.majorSubjects]
-    ];
+    const educationData = employee.educations.map(edu => [
+      edu.educationType,
+      edu.institute,
+      edu.yearOfPassing,
+      edu.gradePercentage
+    ]);
     
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 20,
-      head: [['Detail', 'Value']],
-      body: educationDetails,
+      head: [['Degree', 'Institute', 'Year', 'Grade']],
+      body: educationData,
       theme: 'grid',
       headStyles: { fillColor: [162, 148, 249] },
       styles: { fontSize: 10 },
@@ -153,7 +141,8 @@ const EmployeePreview = () => {
       ['Date of Birth', new Date(employee.dateOfBirth).toLocaleDateString()],
       ['Gender', employee.gender],
       ['Marital Status', employee.maritalStatus],
-      ['Nationality', employee.nationality]
+      ['Nationality', employee.nationality],
+      ['Father/Husband Name', employee.fatherOrHusbandName]
     ];
     
     autoTable(doc, {
@@ -205,8 +194,6 @@ const EmployeePreview = () => {
           <span className="text-white">Back</span>
         </button>
         
-        <h2 className="text-3xl font-bold text-gray-800">Employee Profile</h2>
-        
         <button
           onClick={handleDownloadCV}
           className="p-2 rounded shadow flex items-center space-x-2"
@@ -255,8 +242,11 @@ const EmployeePreview = () => {
               <p className="text-sm text-gray-600 mb-3">
                 <span className="font-medium">City:</span> {employee.city}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mb-3">
                 <span className="font-medium">CNIC:</span> {employee.cnic}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Emergency Contact:</span> {employee.emergencyContactName} ({employee.emergencyContactRelation}) - {employee.emergencyContactMobile}
               </p>
             </div>
           </div>
@@ -313,32 +303,34 @@ const EmployeePreview = () => {
               <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
                 Education
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-3 rounded">
-                  <p className="text-sm text-gray-500">Degree Title</p>
-                  <p className="font-medium">{employee.degreeTitle}</p>
-                </div>
-                <div className="p-3 rounded">
-                  <p className="text-sm text-gray-500">Institute</p>
-                  <p className="font-medium">{employee.institute}</p>
-                </div>
-                <div className="p-3 rounded">
-                  <p className="text-sm text-gray-500">Year of Passing</p>
-                  <p className="font-medium">{employee.yearOfPassing}</p>
-                </div>
-                <div className="p-3 rounded">
-                  <p className="text-sm text-gray-500">Grade/Percentage</p>
-                  <p className="font-medium">{employee.gradePercentage}</p>
-                </div>
-                <div className="md:col-span-2 p-3 rounded">
-                  <p className="text-sm text-gray-500">Major Subjects</p>
-                  <p className="font-medium">{employee.majorSubjects}</p>
-                </div>
+              <div className="space-y-4">
+                {employee.educations.map((edu, index) => (
+                  <div key={index} className="p-4 rounded-lg border border-purple-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <p className="text-sm text-gray-500">Degree Title</p>
+                        <p className="font-medium">{edu.educationType}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Institute</p>
+                        <p className="font-medium">{edu.institute}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Year of Passing</p>
+                        <p className="font-medium">{edu.yearOfPassing}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Grade/Percentage</p>
+                        <p className="font-medium">{edu.gradePercentage}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Personal Information */}
-            <div>
+            <div className="mb-8">
               <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
                 Personal Information
               </h3>
@@ -361,8 +353,36 @@ const EmployeePreview = () => {
                   <p className="text-sm text-gray-500">Nationality</p>
                   <p className="font-medium">{employee.nationality}</p>
                 </div>
+                <div className="p-3 rounded">
+                  <p className="text-sm text-gray-500">Father/Husband Name</p>
+                  <p className="font-medium">{employee.fatherOrHusbandName}</p>
+                </div>
               </div>
             </div>
+
+            {/* Certificates */}
+            {employee.certificates && employee.certificates.length > 0 && (
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
+                  Certificates
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {employee.certificates.map((cert, index) => (
+                    <div key={index} className="p-3 rounded border border-purple-100">
+                      <p className="text-sm text-gray-500">{cert.type}</p>
+                      <a 
+                        href={cert.fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-purple-600 hover:underline"
+                      >
+                        View Certificate
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
