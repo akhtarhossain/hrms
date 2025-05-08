@@ -813,29 +813,31 @@ const EmployeeForm = () => {
         </div>
       </div>
       <div className="relative flex flex-col items-center mb-8 px-4">
-        <div className="w-full max-w-5xl relative">
+        <div className="w-full max-w-6xl relative">
           <div
-            className="absolute top-5 h-1 bg-gray-300 z-10"
+            className="absolute top-5 h-1 bg-gray-300 z-10 hidden sm:block"
             style={{
-              left: '50px',
-              right: '50px',
+              left: '6vw',
+              right: '6vw',
             }}
           ></div>
           <div
-            className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500"
+            className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500 hidden sm:block"
             style={{
-              left: '50px',
-              width: `${(step - 1) / (steps.length - 1) * 100}%`,
-              maxWidth: 'calc(100% - 100px)',
+              left: '6vw',
+              width: step === steps.length
+                ? 'calc(100% - 13vw)'
+                : `calc(${(step - 1) / (steps.length - 1) * 100}% - 10vw)`,
+              maxWidth: 'calc(100% - 13vw)',
             }}
           ></div>
-          <div className="flex justify-between relative z-20">
+          <div className="flex flex-col sm:flex-row justify-between items-center relative z-20 space-y-4 sm:space-y-0 sm:space-x-4">
             {steps.map((s, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center"
+                className="flex flex-col items-center flex-1 sm:flex-auto"
                 style={{
-                  flex: index === 0 || index === steps.length - 1 ? '0 0 auto' : '1',
+                  minWidth: index === 0 || index === steps.length - 1 ? '10vw' : 'auto',
                 }}
               >
                 <div
@@ -848,8 +850,10 @@ const EmployeeForm = () => {
                 >
                   {s.icon}
                 </div>
-                <span className={`mt-2 text-xs sm:text-sm font-medium ${step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
-                  }`}>
+                <span
+                  className={`mt-2 text-xs sm:text-sm font-medium ${step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
+                    }`}
+                >
                   {s.label}
                 </span>
               </div>
