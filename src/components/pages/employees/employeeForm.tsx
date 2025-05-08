@@ -702,8 +702,8 @@ const EmployeeForm = () => {
         cancelToken: source.token,
       });
 
-      const trimmedUrl = uploadUrl.split("?")[0];
-      setDocuUrl(trimmedUrl);
+      const trimmedDOCUrl = uploadUrl.split("?")[0];
+      setDocuUrl(trimmedDOCUrl);
       setImageName(file.name);
       setUploadedFile(file);
       setUploadStatus('uploaded');
@@ -729,17 +729,15 @@ const EmployeeForm = () => {
     if (isEditingDoc && editIndexDoc !== null) {
       const updatedList = [...documentList];
       updatedList[editIndexDoc] = newDocument;
-      setDocumentList(updatedList); // ✅ Apply updated list
+      setDocumentList(updatedList);
       setIsEditingDoc(false);
       setEditIndexDoc(null);
     } else {
       setDocumentList(prevList => [...prevList, newDocument]);
     }
 
-    // Reset fields after add/update
     setSelectedDocType('');
     setImageName('');
-    setImageUrl('');
     setUploadedFile(null);
     setDocuUrl('');
   };
@@ -1050,6 +1048,7 @@ const EmployeeForm = () => {
                       Upload Document <span className="text-red-500">*</span>
                     </label>
                     <input
+                      name='document'
                       type="file"
                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       onChange={handleDocumentUpload}

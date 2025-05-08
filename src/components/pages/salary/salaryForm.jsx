@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { FiList, FiPlus, FiTrash2 } from "react-icons/fi";
 import employeeService from "../../../services/employeeService";
 import SalaryService from "../../../services/SalaryService";
+import { toast } from 'react-toastify';
 
 const allowanceTypes = [
   { value: "Housing", label: "Housing Allowance" },
@@ -42,6 +43,48 @@ const SalaryForm = () => {
     allowances: [{ type: "", amount: "" }],
     deductions: [{ type: "", amount: "" }],
   });
+
+  useEffect(() => {
+    if (id) {
+      SalaryService.getSalaryById(id)
+        .then((response) => {
+          const salaryData = response;
+          console.log(salaryData , "salary data");
+          
+          // Format dates from ISO string to input-friendly format (YYYY-MM-DD)
+          const formatDateForInput = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+          };
+
+          setFormData({
+            employeeId: salaryData.employeeId?._id || '',
+            firstName: salaryData.employeeId?.firstName || '',
+            lastName: salaryData.employeeId?.lastName || '',
+            profilePicture: salaryData.employeeId?.profilePicture || '',
+            salaryAmount: salaryData.salaryAmount || '',
+            salaryType: salaryData.salaryType || '',
+            totalSalary: salaryData.totalSalary || '',
+            date: formatDateForInput(salaryData.date),
+            allowances: salaryData.allowances || [], // Array of objects
+            deductions: salaryData.deductions || [], // Array of objects
+          });
+          
+          if (salaryData.employeeId?.profilePicture) {
+            setImageUrl(salaryData.employeeId.profilePicture);
+            setImageName(salaryData.employeeId.profilePicture.split('/').pop() || 'profile');
+            setUploadStatus('uploaded');
+          }
+          
+        })
+        .catch((error) => {
+          console.error('Error fetching employee data:', error);
+          toast.error('Failed to load employee data');
+        });
+    }
+  }, [id]);
+
 
   useEffect(() => {
     fetchEmployees();
@@ -145,6 +188,19 @@ const SalaryForm = () => {
         })),
       totalSalary: totalSalary
     };
+    console.log(salaryData , "date");
+    if (id) {
+      SalaryService.updateSalary(id, salaryData)
+        .then((response) => {
+          console.log('Salary updated successfully:', response);
+          toast.success('Salary updated successfully!');
+          navigate('/Salary');
+        })
+        .catch((error) => {
+          console.error('Error updating employee:', error);
+          toast.error('Error updating employee. Please try again.');
+        });
+    } else {
     SalaryService.createSalary(salaryData)
       .then(response => {
         console.log("Salary saved successfully:", response);
@@ -156,6 +212,7 @@ const SalaryForm = () => {
         console.error("Error saving salary:", error);
         toast.error("Error saving salary. Please try again.");
       });
+    }
   };
 
   return (

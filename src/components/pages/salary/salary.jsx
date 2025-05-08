@@ -5,12 +5,16 @@ import { FaEdit, FaTrashAlt, FaEye, FaSearch } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
 import salaryService from '../../../services/SalaryService';
+import DeleteModal from '../../../shared/common/DeleteConfirmation';
 
 const SalaryList = () => {
   const navigate = useNavigate();
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedSalaryId, setSelectedSalaryId] = useState(null);
+
   const [filters, setFilters] = useState({
     employeeName: '',
     month: '',
@@ -26,7 +30,7 @@ const SalaryList = () => {
     salaryService.getSalary()
       .then((data) => {
         setSalaries(data || []);
-        console.log(data); // Log the actual data
+        console.log(data ,  "data"); // Log the actual data
       })
       .catch((error) => {
         console.error('Error fetching salaries:', error);
@@ -37,6 +41,14 @@ const SalaryList = () => {
       });
   };
   
+  const fetchEmployees = () => {
+    employeeService
+      .getEmployee()
+      .then((response) => setEmployees(response))
+      .catch((error) => console.error("Error fetching employees:", error));
+      console.log(fetchEmployees);
+      
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -71,19 +83,28 @@ const SalaryList = () => {
     fetchSalaries(); // Reset to all records
   };
 
-  const deleteSalary = (salaryId) => {
-    if (window.confirm("Are you sure you want to delete this salary record?")) {
-      salaryService.deleteSalary(salaryId)
-        .then((response) => {
-          toast.success("Salary record deleted successfully");
-          setSalaries(prev => prev.filter(salary => salary._id !== salaryId));
-        })
-        .catch((error) => {
-          console.error('Error deleting salary:', error);
-          toast.error('Failed to delete salary record');
-        });
-    }
+  const handleDeleteClick = (salaryId) => {
+    setSelectedSalaryId(salaryId);
+    setShowDeleteModal(true);
   };
+  
+
+  const confirmDelete = () => {
+    salaryService.deleteSalary(selectedSalaryId)
+      .then(() => {
+        toast.success("Salary record deleted successfully");
+        setSalaries(prev => prev.filter(s => s._id !== selectedSalaryId));
+      })
+      .catch((error) => {
+        console.error('Error deleting salary:', error);
+        toast.error('Failed to delete salary record');
+      })
+      .finally(() => {
+        setShowDeleteModal(false);
+        setSelectedSalaryId(null);
+      });
+  };
+  
 
   if (loading) {
     return (
@@ -94,6 +115,7 @@ const SalaryList = () => {
   }
 
   return (
+    <>
     <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
       <div className="py-4 px-2 flex justify-between items-center mb-3">
         <h2 className="text-3xl font-bold text-gray-800">Salary Records</h2>
@@ -192,6 +214,7 @@ const SalaryList = () => {
         <table className="min-w-full table-auto text-sm">
           <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
             <tr>
+              <th className="px-4 py-3 text-left">Profile</th>
               <th className="px-4 py-3 text-left">Employee</th>
               <th className="px-4 py-3 text-left">Date</th>
               <th className="px-4 py-3 text-left">Basic Salary</th>
@@ -205,15 +228,59 @@ const SalaryList = () => {
             {salaries.length > 0 ? (
               salaries.map((salary) => (
                 <tr key={salary._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
+                  <td className="px-4 py-3">
+                    {salary?.employeeId?.profilePicture ? (
+                      <img
+                        src={salary.employeeId.profilePicture}
+                        alt="Profile"
+                      className="w-15 h-15 rounded-full object-cover border"
+                      />
+                    ) : (
+                      <span className="text-gray-400 italic">No image</span>
+                    )}
+                  </td>           
                   <td className="px-4 py-3">{salary.employeeId.firstName} {salary.employeeId.lastName}</td>
                   <td className="px-4 py-3">{new Date(salary.date).toLocaleDateString()}</td>
                   <td className="px-4 py-3">{salary.salaryAmount.toFixed(2)}</td>
-                  <td className="px-4 py-3">{salary.allowances.map(a => a.type).join(', ')}</td>
-                  <td className="px-4 py-3">{salary.deductions.map(d => d.type).join(', ')}</td>
+                  <td className="px-4 py-4">
+                    {salary.allowances.map((a, index) => (
+                      <div key={index}>{a.type}: {a.amount}</div>
+                    ))}
+                  </td>
+
+                  <td className="px-5 py-4">
+                    {salary.deductions.map((d, index) => (
+                      <div key={index}>{d.type}: {d.amount}</div>
+                    ))}
+                  </td>
                   <td className="px-4 py-3 font-semibold text-[#A294F9]">{salary.totalSalary.toFixed(2)}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => navigate(`/salary-form/${salary._id}`)}>Edit</button>
-                    <button onClick={() => deleteSalary(salary._id)}>Delete</button>
+                    <div className="flex space-x-2">
+                      <button
+                        title="Edit"
+                        className="p-2 rounded shadow cursor-pointer"
+                        style={{ backgroundColor: '#A294F9' }}
+                        onClick={() => navigate(`/salary-form/${salary._id}`)}
+                      >
+                        <FaEdit className="text-white" />
+                      </button>
+                      <button
+                        title="Delete"
+                        className="p-2 rounded shadow cursor-pointer"
+                        style={{ backgroundColor: '#F87171' }}
+                        onClick={() => handleDeleteClick(salary._id)}
+                      >
+                        <FaTrashAlt className="text-white" />
+                      </button>
+                      <button
+                        title="Preview"
+                        className="p-2 rounded shadow cursor-pointer"
+                        style={{ backgroundColor: '#34D399' }}
+                        onClick={() => navigate(`/employee-preview/${employee._id}`)}
+                      >
+                        <FaEye className="text-white" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -226,6 +293,12 @@ const SalaryList = () => {
         </table>
       </div>
     </div>
+    <DeleteModal
+    isOpen={showDeleteModal}
+    onClose={() => setShowDeleteModal(false)}
+    onConfirm={confirmDelete}
+  />
+  </>
   );
 };
 
