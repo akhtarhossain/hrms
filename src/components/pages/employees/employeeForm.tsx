@@ -62,7 +62,6 @@ const EmployeeForm = () => {
   const [editIndexDoc, setEditIndexDoc] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingDoc, setIsEditingDoc] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -71,6 +70,8 @@ const EmployeeForm = () => {
   const [yearOfPassing, setYearOfPassing] = useState('');
   const [gradePercentage, setGradePercentage] = useState('');
   const [educationType, setEducationType] = useState('');
+  const [documentUploadStatus, setDocumentUploadStatus] = useState<'idle' | 'uploading' | 'uploaded'>('idle');
+  const [documentName, setDocumentName] = useState('');
 
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -103,9 +104,7 @@ const EmployeeForm = () => {
   const [educationList, setEducationList] = useState<Education[]>([]);
   const navigate = useNavigate();
   const { id } = useParams();
-
   countries.registerLocale(enLocale);
-
   const countryOptions = Object.entries(countries.getNames('en', { select: 'official' })).map(
     ([code, name]) => ({ value: code, label: name })
   );
@@ -151,11 +150,9 @@ const EmployeeForm = () => {
             dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
             profilePicture: employeeData.profilePicture || '',
           });
-
           if (employeeData.educations && employeeData.educations.length > 0) {
             setEducationList(employeeData.educations);
           }
-
           if (employeeData.certificates && employeeData.certificates.length > 0) {
             setDocumentList(employeeData.certificates.map(doc => ({
               type: doc.type,
@@ -164,7 +161,6 @@ const EmployeeForm = () => {
             })));
           }
 
-          // Set profile picture if exists
           if (employeeData.profilePicture) {
             setImageUrl(employeeData.profilePicture);
             setImageName(employeeData.profilePicture.split('/').pop() || 'profile');
@@ -196,16 +192,13 @@ const EmployeeForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
-
     if (type === 'file') {
       const file = files && files[0];
-
       if (file) {
         setFormData((prev) => ({
           ...prev,
           [name]: file,
         }));
-
       }
     } else {
       setFormData((prev) => ({
@@ -224,30 +217,17 @@ const EmployeeForm = () => {
     const fields = requiredFields[step] || [];
     let valid = true;
     const newErrors = {};
-
-    // for (let field of fields) {
-    //   if (!formData[field] || formData[field].toString().trim() === '') {
-    //     newErrors[field] = 'This field is required';
-    //     valid = false;
-    //   }
-    // }
-
-    // setErrors(newErrors);
     return valid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     const finalData = {
       ...formData,
       educations: educationList,
       certificates: documentList,
       profilePicture: imageUrl, // Make sure to include the image URL
     };
-
-    console.log('Final Form Data:', finalData);
-
     if (id) {
       // Update existing employee
       employeeService.updateEmployee(id, finalData)
@@ -329,6 +309,30 @@ const EmployeeForm = () => {
       );
     }
 
+    if (name === 'emergencyContactRelation') {
+      return (
+        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name={name}
+            value={formData[name]}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          >
+            <option value="">Select Relation</option>
+            <option value="Father">Father</option>
+            <option value="Mother">Mother</option>
+            <option value="Brother">Brother</option>
+            <option value="Uncle">Uncle</option>
+            <option value="Friend">Friend</option>
+          </select>
+          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+        </div>
+      );
+    }
+
     if (name === 'gender') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -394,7 +398,7 @@ const EmployeeForm = () => {
           {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
         </div>
       );
-    }  
+    }
 
     if (name === 'employeeStatus') {
       return (
@@ -442,6 +446,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
+
     if (name === 'institute') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -460,8 +465,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
-  
-    // ✅ New: Year of Passing Input
+
     if (name === 'yearOfPassing') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -480,8 +484,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
-  
-    // ✅ New: Grade Percentage Input
+
     if (name === 'gradePercentage') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -503,16 +506,16 @@ const EmployeeForm = () => {
     if (name === 'cnic') {
       return (
         <div className="w-full sm:w-1/2 px-2 mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">CNIC / National ID Number</label>
-        <input
-          type="text"
-          value={formData.cnic}
-          onChange={handleCnicChange}
-          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          placeholder="XXXXX-XXXXXXX-X"
-          maxLength={15} 
-        />
-      </div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">CNIC / National ID Number</label>
+          <input
+            type="text"
+            value={formData.cnic}
+            onChange={handleCnicChange}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+            placeholder="XXXXX-XXXXXXX-X"
+            maxLength={15}
+          />
+        </div>
       );
     }
     return (
@@ -540,40 +543,34 @@ const EmployeeForm = () => {
     { label: 'Education', icon: <BsBook size={20} /> },
     { label: 'Documents', icon: <BsFileEarmarkText size={20} /> },
   ];
+
   const handleFileUpload = async (e) => {
     const file = e.target?.files?.[0] || e;
     if (!file) return;
-
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'video/mp4', 'video/3gp', 'text/srt'];
     if (!allowedTypes.includes(file.type)) {
       toast.error('File type not supported. Allowed: jpg, jpeg, png, webp, mp4, 3gp, srt.');
       return;
     }
-
     setImageName(file.name);
     setUploadStatus('uploading'); // show loader while uploading
-
     try {
       const projectData = {
         name: file.name,
         access: "public-read",
       };
-
       const response = await employeeService.uploadImage(projectData);
-
       if (response?.message && Array.isArray(response.message)) {
         response.message.forEach((msg) => toast.error(msg));
         setUploadStatus('idle'); // reset if failed
         return;
       }
-
       const uploadUrl = response.location;
       if (!uploadUrl) {
         toast.error("No upload URL received.");
         setUploadStatus('idle');
         return;
       }
-
       const source = axios.CancelToken.source();
       await axios.put(uploadUrl, file, {
         headers: {
@@ -584,17 +581,13 @@ const EmployeeForm = () => {
         onUploadProgress: (progressEvent) => {
           const total = progressEvent.total ?? 1; // fallback to 1 to avoid division by zero
           const percent = Math.round((progressEvent.loaded * 100) / total);
-          setUploadProgress(percent);
         }
       });
-
       const trimmedUrl = uploadUrl.split("?")[0];
       console.log(trimmedUrl, "trim url");
       setImageUrl(trimmedUrl);
-
       setUploadStatus('uploaded');
       toast.success("File uploaded successfully!");
-
       setFormData?.((prev) => ({
         ...prev,
         profilePicture: trimmedUrl,
@@ -616,14 +609,14 @@ const EmployeeForm = () => {
       toast.error('Please fill all education fields before adding.');
       return;
     }
-  
-    const newEducation: Education = { 
-      institute, 
-      yearOfPassing, 
-      gradePercentage, 
-      educationType 
+
+    const newEducation: Education = {
+      institute,
+      yearOfPassing,
+      gradePercentage,
+      educationType
     };
-  
+
     if (isEditing && editIndex !== null) {
       const updatedList = [...educationList];
       updatedList[editIndex] = newEducation;
@@ -639,7 +632,6 @@ const EmployeeForm = () => {
     setGradePercentage('');
     setEducationType('');
   };
-  
 
   const handleDeleteEducation = (index) => {
     const newList = [...educationList];
@@ -664,53 +656,57 @@ const EmployeeForm = () => {
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target?.files?.[0];
     if (!file) return;
-
+    setDocumentName('');
+    setDocumentUploadStatus('uploading');
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/webp',
-      'image/jpg', 'video/mp4', 'video/3gpp', 'text/srt'
+      'image/jpg', 'video/mp4', 'video/3gpp', 'text/srt',
+      'application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
+
     if (!allowedTypes.includes(file.type)) {
       toast.error('File type not supported.');
+      setDocumentUploadStatus('idle');
       return;
     }
 
     try {
-      const projectData = {
-        name: file.name,
-        access: "public-read",
-      };
-
+      setDocumentName(file.name);
+      const projectData = { name: file.name, access: "public-read" };
       const response = await employeeService.uploadDocument(projectData);
 
       if (response?.message && Array.isArray(response.message)) {
         response.message.forEach((msg: string) => toast.error(msg));
+        setDocumentUploadStatus('idle');
         return;
       }
 
       const uploadUrl = response.location;
       if (!uploadUrl) {
         toast.error("No upload URL received.");
+        setDocumentUploadStatus('idle');
         return;
       }
 
-      const source = axios.CancelToken.source();
       await axios.put(uploadUrl, file, {
         headers: {
           "Content-Type": file.type,
           "x-amz-acl": "public-read",
-        },
-        cancelToken: source.token,
+        }
       });
 
       const trimmedUrl = uploadUrl.split("?")[0];
       setDocuUrl(trimmedUrl);
-      setImageName(file.name);
       setUploadedFile(file);
-      setUploadStatus('uploaded');
-      toast.success("File uploaded successfully!");
+      setDocumentUploadStatus('uploaded');
+      toast.success("Document uploaded successfully!");
     } catch (err) {
       console.error("Upload failed:", err);
+      setDocumentUploadStatus('idle');
       toast.error("Upload failed! Please try again.");
+    } finally {
+      e.target.value = '';
     }
   };
 
@@ -736,14 +732,12 @@ const EmployeeForm = () => {
       setDocumentList(prevList => [...prevList, newDocument]);
     }
 
-    // Reset fields after add/update
     setSelectedDocType('');
     setImageName('');
     setImageUrl('');
     setUploadedFile(null);
     setDocuUrl('');
   };
-
 
   const handleDeleteDocument = (index: number) => {
     const updatedList = documentList.filter((_, i) => i !== index);
@@ -761,21 +755,17 @@ const EmployeeForm = () => {
   const handleDownloadEducation = async (index: number) => {
     const edu = documentList[index];
     if (!edu || !edu.fileUrl || !edu.type) return;
-
     try {
       const response = await fetch(edu.fileUrl);
       const blob = await response.blob();
-
       const extension = edu.type.split('/')[1] || 'file';
       const fileName = `document-${index + 1}.${extension}`;
-
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
-
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl); // Clean up
     } catch (error) {
@@ -785,19 +775,16 @@ const EmployeeForm = () => {
 
   const handleCnicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ''); // Remove all non-digits
-  
     if (value.length > 13) value = value.slice(0, 13); // Max 13 digits
-  
     let formatted = value;
     if (value.length > 5 && value.length <= 12) {
       formatted = `${value.slice(0, 5)}-${value.slice(5)}`;
     } else if (value.length > 12) {
       formatted = `${value.slice(0, 5)}-${value.slice(5, 12)}-${value.slice(12)}`;
     }
-  
     setFormData(prev => ({ ...prev, cnic: formatted }));
   };
-  
+
 
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
@@ -889,10 +876,10 @@ const EmployeeForm = () => {
                   >
                     <FiUpload className="w-7 h-7 text-white mb-2 p-2 rounded shadow" style={{ backgroundColor: '#A294F9' }} />
                     <p className={`text-sm ${uploadStatus === 'uploaded'
-                        ? 'text-green-600'
-                        : uploadStatus === 'uploading'
-                          ? 'text-blue-900'
-                          : 'text-gray-500'
+                      ? 'text-green-600'
+                      : uploadStatus === 'uploading'
+                        ? 'text-blue-900'
+                        : 'text-gray-500'
                       }`}>
                       {uploadStatus === 'uploaded' && 'Image uploaded successfully'}
                       {uploadStatus === 'uploading' && 'Uploading image...'}
@@ -940,7 +927,6 @@ const EmployeeForm = () => {
                   {renderInput('City', 'city')}
                   {renderInput('Country', 'country')}
                 </div>
-
                 {/* Emergency Contact Section */}
                 <h2 className="text-xl font-semibold mt-2 mb-4 text-gray-800">Emergency Contact</h2>
                 <div className="flex flex-wrap -mx-2">
@@ -950,7 +936,6 @@ const EmployeeForm = () => {
                 </div>
               </div>
             )}
-
             {step === 3 && (
               <div className="flex flex-wrap -mx-2">
                 {renderInput('Employee ID', 'employeeId')}
@@ -969,7 +954,6 @@ const EmployeeForm = () => {
                   {renderInput('Institute Name', 'institute')}
                   {renderInput('Year of Passing', 'yearOfPassing')}
                   {renderInput('Grade Percentage', 'gradePercentage')}
-
                 </div>
                 <button
                   type="button"
@@ -978,7 +962,6 @@ const EmployeeForm = () => {
                 >
                   {isEditing ? 'Update Education' : '+ Add Education'}
                 </button>
-
                 <div className="mt-4 w-full">
                   {educationList.length > 0 && (
                     <div className="rounded-md">
@@ -1049,12 +1032,42 @@ const EmployeeForm = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Upload Document <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={handleDocumentUpload}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm"
-                    />
+                    <div
+                      className="relative h-10 border-2 border-gray-300 hover:border-indigo-300 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-[#F5EFFF] focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+                      onClick={() => document.getElementById('documentUpload')?.click()}
+                    >
+                      {documentName ? (
+                        <div className="flex items-center space-x-2 max-w-full">
+                          <span className="text-sm text-gray-600 truncate max-w-xs">{documentName}</span>
+                          {documentUploadStatus === 'uploading' && (
+                            <div className="relative w-6 h-6 bg-indigo-100 rounded-md flex items-center justify-center">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-4 h-4 text-indigo-600 animate-bounce"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500">Please choose document</span>
+                      )}
+                      <input
+                        id="documentUpload"
+                        name="documentUpload"
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleDocumentUpload}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="w-full flex flex-col sm:flex-row justify-end gap-3 px-2">
