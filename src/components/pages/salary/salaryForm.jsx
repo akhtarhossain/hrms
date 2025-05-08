@@ -331,8 +331,8 @@ const SalaryForm = () => {
                 </button>
               </div>
             ))}
-            <div className="p-2 bg-gray-100 rounded mt-2">
-              <span className="font-semibold">Total Allowances: </span>${totalAllowances.toFixed(2)}
+            <div className="p-2 rounded mt-2">
+              <span className="font-semibold">Total Allowances: </span>{totalAllowances.toFixed(2)}
             </div>
           </div>
           <div className="mb-4">
@@ -378,12 +378,12 @@ const SalaryForm = () => {
                 </button>
               </div>
             ))}
-            <div className="p-2 bg-gray-100 rounded mt-2">
-              <span className="font-semibold">Total Deductions: </span>${totalDeductions.toFixed(2)}
+            <div className="p-2 rounded mt-2">
+              <span className="font-semibold">Total Deductions: </span>{totalDeductions.toFixed(2)}
             </div>
           </div>
-          <div className="p-4 rounded mb-4 bg-gray-100">
-            <span className="font-semibold">Total Salary: </span>${totalSalary.toFixed(2)}
+          <div className="p-4 rounded mb-4">
+            <span className="font-semibold">Total Salary: </span>{totalSalary.toFixed(2)}
           </div>
           <div className="flex justify-end">
             <button
