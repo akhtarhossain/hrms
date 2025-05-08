@@ -5,7 +5,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { FaTrash } from 'react-icons/fa6';
+import { FaDownload, FaTrash } from 'react-icons/fa6';
+import { FaEdit } from 'react-icons/fa';
+import countries from 'i18n-iso-countries';
+import enLocale from 'i18n-iso-countries/langs/en.json';
 
 interface Education {
   institute: string;
@@ -42,29 +45,33 @@ interface FormData {
   employmentType: string;
   employeeStatus: string;
   degreeTitle: string;
-  institute: string;
   certificates: any[];
   educations: any[];
   dateOfBirth: string;
   profilePicture: string;
-  documentUpload: string;
-  yearOfPassing: string;
-  gradePercentage: string;
-  educationType: string;
+
 }
 
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
   const [uploadStatus, setUploadStatus] = useState('idle');
-  const [educationList, setEducationList] = useState<Education[]>([]);
   const [documentList, setDocumentList] = useState<DocumentItem[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedDocType, setSelectedDocType] = useState('');
+  const [editIndex, setEditIndex] = useState(null);
+  const [editIndexDoc, setEditIndexDoc] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingDoc, setIsEditingDoc] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [imageName, setImageName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [DocuUrl, setDocuUrl] = useState('');
+  const [institute, setInstitute] = useState('');
+  const [yearOfPassing, setYearOfPassing] = useState('');
+  const [gradePercentage, setGradePercentage] = useState('');
+  const [educationType, setEducationType] = useState('');
+
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -88,19 +95,20 @@ const EmployeeForm = () => {
     employmentType: '',
     employeeStatus: '',
     degreeTitle: '',
-    institute: '',
     certificates: [],
     educations: [],
     dateOfBirth: '',
     profilePicture: '',
-    documentUpload: '',
-    yearOfPassing: '',
-    gradePercentage: '',
-    educationType: '',
   });
-
+  const [educationList, setEducationList] = useState<Education[]>([]);
   const navigate = useNavigate();
   const { id } = useParams();
+
+  countries.registerLocale(enLocale);
+
+  const countryOptions = Object.entries(countries.getNames('en', { select: 'official' })).map(
+    ([code, name]) => ({ value: code, label: name })
+  );
 
   useEffect(() => {
     if (id) {
@@ -138,28 +146,20 @@ const EmployeeForm = () => {
             employmentType: employeeData.employmentType || '',
             employeeStatus: employeeData.employeeStatus || '',
             degreeTitle: employeeData.degreeTitle || '',
-            institute: employeeData.institute || '',
             certificates: employeeData.certificates || [],
             educations: employeeData.educations || [],
             dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
             profilePicture: employeeData.profilePicture || '',
-            documentUpload: employeeData.documentUpload || '',
-            yearOfPassing: employeeData.yearOfPassing || '',
-            gradePercentage: employeeData.gradePercentage || '',
-            educationType: employeeData.educationType || '',
           });
 
-          // Set education list if exists
           if (employeeData.educations && employeeData.educations.length > 0) {
             setEducationList(employeeData.educations);
           }
 
-          // Set document list if exists
           if (employeeData.certificates && employeeData.certificates.length > 0) {
             setDocumentList(employeeData.certificates.map(doc => ({
               type: doc.type,
               fileUrl: doc.fileUrl,
-              // If you need to maintain file object for existing docs
               file: { name: doc.fileUrl?.split('/').pop() || 'document' } as File
             })));
           }
@@ -182,7 +182,6 @@ const EmployeeForm = () => {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
     3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus'],
-    4: ['educations'],
     5: ['certificates'],
   };
 
@@ -277,6 +276,59 @@ const EmployeeForm = () => {
   };
 
   const renderInput = (label, name, type = 'text', placeholder = '', onChangeHandler = null) => {
+    if (name === 'country') {
+      return (
+        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name={name}
+            value={formData[name]}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          >
+            <option value="">Select Nationality</option>
+            {countryOptions.map((country) => (
+              <option key={country.value} value={country.value}>
+                {country.label}
+              </option>
+            ))}
+          </select>
+          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+        </div>
+      );
+    }
+
+    if (name === 'nationality') {
+      return (
+        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} <span className="text-red-500">*</span>
+          </label>
+          <select
+            name={name}
+            value={formData[name]}
+            onChange={handleChange}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          >
+            <option value="">Select Nationality</option>
+            <option value="Pakistani">Pakistani</option>
+            <option value="Indian">Indian</option>
+            <option value="Bangladeshi">Bangladeshi</option>
+            <option value="Afghan">Afghan</option>
+            <option value="American">American</option>
+            <option value="British">British</option>
+            <option value="Canadian">Canadian</option>
+            <option value="Chinese">Chinese</option>
+            <option value="German">German</option>
+            <option value="Other">Other</option>
+          </select>
+          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+        </div>
+      );
+    }
+
     if (name === 'gender') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -321,7 +373,6 @@ const EmployeeForm = () => {
         </div>
       );
     }
-
     if (name === 'employmentType') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -343,7 +394,7 @@ const EmployeeForm = () => {
           {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
         </div>
       );
-    }
+    }  
 
     if (name === 'employeeStatus') {
       return (
@@ -375,8 +426,8 @@ const EmployeeForm = () => {
           </label>
           <select
             name={name}
-            value={formData[name]}
-            onChange={handleChange}
+            value={educationType}
+            onChange={(e) => setEducationType(e.target.value)}
             className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
           >
             <option value="">Select Education Type</option>
@@ -389,6 +440,79 @@ const EmployeeForm = () => {
           </select>
           {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
         </div>
+      );
+    }
+    if (name === 'institute') {
+      return (
+        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name={name}
+            placeholder="Institute Name"
+            value={institute}
+            onChange={(e) => setInstitute(e.target.value)}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          />
+          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+        </div>
+      );
+    }
+  
+    // ✅ New: Year of Passing Input
+    if (name === 'yearOfPassing') {
+      return (
+        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            name={name}
+            placeholder="Year of Passing"
+            value={yearOfPassing}
+            onChange={(e) => setYearOfPassing(e.target.value)}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          />
+          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+        </div>
+      );
+    }
+  
+    // ✅ New: Grade Percentage Input
+    if (name === 'gradePercentage') {
+      return (
+        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name={name}
+            placeholder="Grade Percentage"
+            value={gradePercentage}
+            onChange={(e) => setGradePercentage(e.target.value)}
+            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          />
+          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+        </div>
+      );
+    }
+    if (name === 'cnic') {
+      return (
+        <div className="w-full sm:w-1/2 px-2 mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">CNIC / National ID Number</label>
+        <input
+          type="text"
+          value={formData.cnic}
+          onChange={handleCnicChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          placeholder="XXXXX-XXXXXXX-X"
+          maxLength={15} 
+        />
+      </div>
       );
     }
     return (
@@ -426,6 +550,9 @@ const EmployeeForm = () => {
       return;
     }
 
+    setImageName(file.name);
+    setUploadStatus('uploading'); // show loader while uploading
+
     try {
       const projectData = {
         name: file.name,
@@ -436,12 +563,14 @@ const EmployeeForm = () => {
 
       if (response?.message && Array.isArray(response.message)) {
         response.message.forEach((msg) => toast.error(msg));
+        setUploadStatus('idle'); // reset if failed
         return;
       }
 
       const uploadUrl = response.location;
       if (!uploadUrl) {
         toast.error("No upload URL received.");
+        setUploadStatus('idle');
         return;
       }
 
@@ -452,16 +581,20 @@ const EmployeeForm = () => {
           "x-amz-acl": "public-read",
         },
         cancelToken: source.token,
+        onUploadProgress: (progressEvent) => {
+          const total = progressEvent.total ?? 1; // fallback to 1 to avoid division by zero
+          const percent = Math.round((progressEvent.loaded * 100) / total);
+          setUploadProgress(percent);
+        }
       });
 
       const trimmedUrl = uploadUrl.split("?")[0];
       console.log(trimmedUrl, "trim url");
-      setImageUrl(trimmedUrl)
+      setImageUrl(trimmedUrl);
+
+      setUploadStatus('uploaded');
       toast.success("File uploaded successfully!");
-      if (file) {
-        setImageName(file.name);
-        setUploadStatus('uploaded');
-      }
+
       setFormData?.((prev) => ({
         ...prev,
         profilePicture: trimmedUrl,
@@ -474,30 +607,58 @@ const EmployeeForm = () => {
         console.error("Upload failed:", err);
         toast.error("Upload failed! Please try again.");
       }
+      setUploadStatus('idle'); // reset on error
     }
   };
-  const handleAddEducation = () => {
-    const { institute, yearOfPassing, gradePercentage, educationType } = formData;
 
+  const handleAddEducation = () => {
     if (!institute || !yearOfPassing || !gradePercentage || !educationType) {
       toast.error('Please fill all education fields before adding.');
       return;
     }
+  
+    const newEducation: Education = { 
+      institute, 
+      yearOfPassing, 
+      gradePercentage, 
+      educationType 
+    };
+  
+    if (isEditing && editIndex !== null) {
+      const updatedList = [...educationList];
+      updatedList[editIndex] = newEducation;
+      setEducationList(updatedList);
+      setIsEditing(false);
+      setEditIndex(null);
+    } else {
+      setEducationList((prevList) => [...prevList, newEducation]);
+    }
 
-    const newEducation = { institute, yearOfPassing, gradePercentage, educationType };
-    setEducationList((prevList) => [...prevList, newEducation]);
-    setFormData((prevData) => ({
-      ...prevData,
-      institute: '',
-      yearOfPassing: '',
-      gradePercentage: '',
-    }));
+    setInstitute('');
+    setYearOfPassing('');
+    setGradePercentage('');
+    setEducationType('');
   };
+  
 
   const handleDeleteEducation = (index) => {
     const newList = [...educationList];
     newList.splice(index, 1);
     setEducationList(newList);
+    toast.success("Education deleted successfully!")
+  };
+
+  const handleEditEducation = (index) => {
+    const edu = educationList[index];
+    setFormData((prev) => ({
+      ...prev,
+      institute: edu.institute,
+      yearOfPassing: edu.yearOfPassing,
+      gradePercentage: edu.gradePercentage,
+      educationType: edu.educationType,
+    }));
+    setIsEditing(true);
+    setEditIndex(index);
   };
 
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -565,18 +726,79 @@ const EmployeeForm = () => {
       fileUrl: DocuUrl,
     };
 
-    setDocumentList(prev => [...prev, newDocument]);
+    if (isEditingDoc && editIndexDoc !== null) {
+      const updatedList = [...documentList];
+      updatedList[editIndexDoc] = newDocument;
+      setDocumentList(updatedList); // ✅ Apply updated list
+      setIsEditingDoc(false);
+      setEditIndexDoc(null);
+    } else {
+      setDocumentList(prevList => [...prevList, newDocument]);
+    }
+
+    // Reset fields after add/update
     setSelectedDocType('');
     setImageName('');
     setImageUrl('');
     setUploadedFile(null);
+    setDocuUrl('');
   };
+
 
   const handleDeleteDocument = (index: number) => {
     const updatedList = documentList.filter((_, i) => i !== index);
     setDocumentList(updatedList);
   };
-  //....
+
+  const handleEditDocuments = (index) => {
+    const doc = documentList[index];
+    setSelectedDocType(doc.type);
+    setUploadedFile(doc.file);
+    setIsEditingDoc(true);
+    setEditIndexDoc(index);
+  };
+
+  const handleDownloadEducation = async (index: number) => {
+    const edu = documentList[index];
+    if (!edu || !edu.fileUrl || !edu.type) return;
+
+    try {
+      const response = await fetch(edu.fileUrl);
+      const blob = await response.blob();
+
+      const extension = edu.type.split('/')[1] || 'file';
+      const fileName = `document-${index + 1}.${extension}`;
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl); // Clean up
+    } catch (error) {
+      toast.error('File download failed', error);
+    }
+  };
+
+  const handleCnicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, ''); // Remove all non-digits
+  
+    if (value.length > 13) value = value.slice(0, 13); // Max 13 digits
+  
+    let formatted = value;
+    if (value.length > 5 && value.length <= 12) {
+      formatted = `${value.slice(0, 5)}-${value.slice(5)}`;
+    } else if (value.length > 12) {
+      formatted = `${value.slice(0, 5)}-${value.slice(5, 12)}-${value.slice(12)}`;
+    }
+  
+    setFormData(prev => ({ ...prev, cnic: formatted }));
+  };
+  
+
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
@@ -651,7 +873,6 @@ const EmployeeForm = () => {
           <form onSubmit={handleSubmit}>
             {step === 1 && (
               <div className="flex flex-wrap -mx-2">
-                {/* Rest of the form fields */}
                 {renderInput('First Name', 'firstName')}
                 {renderInput('Last Name', 'lastName')}
                 {renderInput("Father’s / Husband’s Name", 'fatherOrHusbandName')}
@@ -663,17 +884,40 @@ const EmployeeForm = () => {
                 <div className="w-full sm:w-1/0 px-2 mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
                   <div
-                    className="relative h-24 border-2 border-gray-300 hover:border-indigo-300 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-[#F5EFFF] focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
+                    className="relative h-30 border-2 border-gray-300 hover:border-indigo-300 rounded-lg flex flex-col items-center justify-center cursor-pointer bg-[#F5EFFF] focus:outline-none focus:ring-2 focus:ring-indigo-300 transition"
                     onClick={() => document.getElementById('profilePicture')?.click()}
                   >
                     <FiUpload className="w-7 h-7 text-white mb-2 p-2 rounded shadow" style={{ backgroundColor: '#A294F9' }} />
-                    <p className={`text-sm ${uploadStatus === 'uploaded' ? 'text-green-600' : 'text-gray-500'}`}>
-                      {uploadStatus === 'uploaded' ? 'Image uploaded successfully' : 'Click to upload image'}
+                    <p className={`text-sm ${uploadStatus === 'uploaded'
+                        ? 'text-green-600'
+                        : uploadStatus === 'uploading'
+                          ? 'text-blue-900'
+                          : 'text-gray-500'
+                      }`}>
+                      {uploadStatus === 'uploaded' && 'Image uploaded successfully'}
+                      {uploadStatus === 'uploading' && 'Uploading image...'}
+                      {uploadStatus === 'idle' && 'Click to upload image'}
                     </p>
-
-                    {/* Only show image name, no preview */}
-                    {uploadStatus === 'uploaded' && (
-                      <p className="text-sm text-gray-500 mt-2">{imageName}</p>
+                    {imageName && (
+                      <div className="flex items-center mt-2 space-x-2">
+                        <span className="text-sm text-gray-600">{imageName}</span>
+                        {uploadStatus === 'uploading' && (
+                          <div className="relative w-6 h-6 bg-indigo-100 rounded-md flex items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-4 h-4 text-indigo-600 animate-bounce"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
                     )}
                     <input
                       id="profilePicture"
@@ -693,8 +937,8 @@ const EmployeeForm = () => {
                   {renderInput('Mobile Number', 'mobileNumber', 'number')}
                   {renderInput('Permanent Address', 'permanentAddress')}
                   {renderInput('Email', 'email')}
-                  {renderInput('Country', 'country')}
                   {renderInput('City', 'city')}
+                  {renderInput('Country', 'country')}
                 </div>
 
                 {/* Emergency Contact Section */}
@@ -706,6 +950,7 @@ const EmployeeForm = () => {
                 </div>
               </div>
             )}
+
             {step === 3 && (
               <div className="flex flex-wrap -mx-2">
                 {renderInput('Employee ID', 'employeeId')}
@@ -721,17 +966,19 @@ const EmployeeForm = () => {
                 {/* Form Fields */}
                 <div className="flex flex-wrap -mx-2">
                   {renderInput('Education Type', 'educationType')}
-                  {renderInput('Institute / University', 'institute')}
+                  {renderInput('Institute Name', 'institute')}
                   {renderInput('Year of Passing', 'yearOfPassing')}
-                  {renderInput('Grade / Percentage', 'gradePercentage')}
+                  {renderInput('Grade Percentage', 'gradePercentage')}
+
                 </div>
                 <button
                   type="button"
                   onClick={handleAddEducation}
                   className="bg-[#A294F9] text-white px-5 py-2 rounded-md transition self-end"
                 >
-                  + Add Education
+                  {isEditing ? 'Update Education' : '+ Add Education'}
                 </button>
+
                 <div className="mt-4 w-full">
                   {educationList.length > 0 && (
                     <div className="rounded-md">
@@ -753,14 +1000,22 @@ const EmployeeForm = () => {
                               <td className="px-6 py-3 border">{edu.educationType}</td>
                               <td className="px-6 py-3 border">{edu.yearOfPassing}</td>
                               <td className="px-6 py-3 border">{edu.gradePercentage}</td>
-                              <td className="px-6 py-3 border text-center">
+                              <td className="px-6 py-3 border text-center space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditEducation(index)}
+                                  className="p-2 rounded shadow cursor-pointer"
+                                  style={{ backgroundColor: '#A294F9' }}
+                                >
+                                  <FaEdit className='text-white' />
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteEducation(index)}
-
-                                  className="text-red-500 hover:text-red-700 text-sm"
+                                  className="p-2 rounded shadow cursor-pointer"
+                                  style={{ backgroundColor: '#F87171' }}
                                 >
-                                  <FaTrash />
+                                  <FaTrash className='text-white' />
                                 </button>
                               </td>
                             </tr>
@@ -808,7 +1063,7 @@ const EmployeeForm = () => {
                     onClick={handleAddDocument}
                     className="bg-[#A294F9] text-white px-5 py-2 rounded-md transition self-end"
                   >
-                    + Add Document
+                    {isEditingDoc ? 'Update Documents' : '+ Add Documents'}
                   </button>
                 </div>
                 <div className="mt-6 w-full px-2">
@@ -828,13 +1083,30 @@ const EmployeeForm = () => {
                             <tr key={index} className="border-t hover:bg-gray-100 text-gray-600">
                               <td className="px-4 py-2 border">{doc.type}</td>
                               <td className="px-4 py-2 border">{doc.file?.name || 'No file selected'}</td>
-                              <td className="px-4 py-2 border text-center">
+                              <td className="px-4 py-2 border text-center space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditDocuments(index)}
+                                  className="p-2 rounded shadow cursor-pointer"
+                                  style={{ backgroundColor: '#A294F9' }}
+                                >
+                                  <FaEdit className='text-white' />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadEducation(index)}
+                                  className="p-2 rounded shadow cursor-pointer"
+                                  style={{ backgroundColor: '#34D399' }}
+                                >
+                                  <FaDownload className='text-white' />
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteDocument(index)}
-                                  className="text-red-500 hover:text-red-700 text-sm"
+                                  className="p-2 rounded shadow cursor-pointer"
+                                  style={{ backgroundColor: '#F87171' }}
                                 >
-                                  <FaTrash />
+                                  <FaTrash className='text-white' />
                                 </button>
                               </td>
                             </tr>
