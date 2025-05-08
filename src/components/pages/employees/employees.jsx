@@ -26,25 +26,25 @@ const Employees = () => {
       });
   }, []);
 
-    const deleteEmployee = (employeeId) => {
-      if (window.confirm("Are you sure you want to delete this employee?")) {
-        employeeService.deleteEmployee(employeeId)
-          .then((response) => {
-            console.log("Employee deleted successfully", response);
-            toast.success("Employee deleted successfully");
-    
-            // Use correct property name (_id)
-            setEmployees((prevEmployees) =>
-              prevEmployees.filter((employee) => employee._id !== employeeId)
-            );
-          })
-          .catch((error) => {
-            console.error('Error deleting employee:', error);
-            toast.error('Failed to delete employee');
-          });
-      }
-    };
-  
+  const deleteEmployee = (employeeId) => {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      employeeService.deleteEmployee(employeeId)
+        .then((response) => {
+          console.log("Employee deleted successfully", response);
+          toast.success("Employee deleted successfully");
+
+          // Use correct property name (_id)
+          setEmployees((prevEmployees) =>
+            prevEmployees.filter((employee) => employee._id !== employeeId)
+          );
+        })
+        .catch((error) => {
+          console.error('Error deleting employee:', error);
+          toast.error('Failed to delete employee');
+        });
+    }
+  };
+
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -101,7 +101,7 @@ const Employees = () => {
                 name="name"
                 value={filters.name}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9]"
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                 placeholder="Search by name"
               />
             </div>
@@ -112,7 +112,7 @@ const Employees = () => {
                 name="department"
                 value={filters.department}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                 placeholder="Search by department"
               />
             </div>
@@ -123,7 +123,7 @@ const Employees = () => {
                 name="designation"
                 value={filters.designation}
                 onChange={handleFilterChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:border-transparent"
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                 placeholder="Search by designation"
               />
             </div>
