@@ -696,8 +696,9 @@ const EmployeeForm = () => {
         }
       });
 
-      const trimmedUrl = uploadUrl.split("?")[0];
-      setDocuUrl(trimmedUrl);
+      const trimmedDOCUrl = uploadUrl.split("?")[0];
+      setDocuUrl(trimmedDOCUrl);
+      setImageName(file.name);
       setUploadedFile(file);
       setDocumentUploadStatus('uploaded');
       toast.success("Document uploaded successfully!");
@@ -725,7 +726,7 @@ const EmployeeForm = () => {
     if (isEditingDoc && editIndexDoc !== null) {
       const updatedList = [...documentList];
       updatedList[editIndexDoc] = newDocument;
-      setDocumentList(updatedList); // ✅ Apply updated list
+      setDocumentList(updatedList);
       setIsEditingDoc(false);
       setEditIndexDoc(null);
     } else {
@@ -734,7 +735,6 @@ const EmployeeForm = () => {
 
     setSelectedDocType('');
     setImageName('');
-    setImageUrl('');
     setUploadedFile(null);
     setDocuUrl('');
   };

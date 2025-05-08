@@ -89,7 +89,8 @@ function Sidebar() {
                 className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
               >
                 <FiUsers className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="flex-1 ms-3 text-left whitespace-nowrap">Employees</span>
+                <span className="flex-1 ms-3 text-left whitespace-nowrap" onClick={() => navigate('/employees')}>
+                Employees</span>
                 {openDropdown === 'Employees' ? (
                   <FiChevronDown className="w-4 h-4" />
                 ) : (
@@ -206,7 +207,9 @@ function Sidebar() {
                 className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
               >
                 <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="flex-1 ms-3 text-left whitespace-nowrap">Salary</span>
+                <span className="flex-1 ms-3 text-left whitespace-nowrap"
+                onClick={() => navigate('/salary')}
+                >Salary</span>
                 {openDropdown === 'Salary' ? (
                   <FiChevronDown className="w-4 h-4" />
                 ) : (

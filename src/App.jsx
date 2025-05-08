@@ -31,6 +31,7 @@ function App() {
             <Route path="/employee-preview/:id" element={<EmployeePreview />} />
             <Route path="/employee-form/:id?" element={<EmployeeForm />} />
             <Route path="/salary-form" element={<SalaryForm />} />
+            <Route path="/salary-form/:id" element={<SalaryForm />} />
             <Route path="/salary" element={<SalaryList />} />
           </Routes>
         <Footer />
