@@ -252,12 +252,13 @@ const EmployeePreview = () => {
           </div>
 
           {/* Main Content */}
-          <div className="w-full md:w-2/3">
+          <div className="w-full md:w-2/3 ">
             {/* Professional Summary */}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
-                Professional Summary
-              </h3>
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 px-4 py-2 border-l-4 border-purple-400 bg-[#E5D9F2] rounded shadow-sm">
+              Professional Summary
+            </h3>
+
               <p className="text-gray-700">
                 {employee.firstName} {employee.lastName} is a {employee.designation} in the {employee.department} department with employee ID {employee.employeeId}.
               </p>
@@ -265,7 +266,7 @@ const EmployeePreview = () => {
 
             {/* Employment Details */}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 px-4 py-2 border-l-4 border-purple-400 bg-[#E5D9F2] rounded shadow-sm">
                 Employment Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -300,7 +301,7 @@ const EmployeePreview = () => {
 
             {/* Education */}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
+               <h3 className="text-xl font-semibold text-gray-800 mb-4 px-4 py-2 border-l-4 border-purple-400 bg-[#E5D9F2] rounded shadow-sm">
                 Education
               </h3>
               <div className="space-y-4">
@@ -331,7 +332,7 @@ const EmployeePreview = () => {
 
             {/* Personal Information */}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 px-4 py-2 border-l-4 border-purple-400 bg-[#E5D9F2] rounded shadow-sm">
                 Personal Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -363,7 +364,7 @@ const EmployeePreview = () => {
             {/* Certificates */}
             {employee.certificates && employee.certificates.length > 0 && (
               <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b border-purple-200">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4 px-4 py-2 border-l-4 border-purple-400 bg-[#E5D9F2] rounded shadow-sm">
                   Certificates
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

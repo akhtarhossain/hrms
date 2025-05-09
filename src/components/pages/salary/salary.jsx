@@ -88,7 +88,6 @@ const SalaryList = () => {
     setShowDeleteModal(true);
   };
   
-
   const confirmDelete = () => {
     salaryService.deleteSalary(selectedSalaryId)
       .then(() => {

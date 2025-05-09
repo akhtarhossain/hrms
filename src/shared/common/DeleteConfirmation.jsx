@@ -23,7 +23,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
       >
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Delete Confirmation</h2>
         <p className="text-gray-600 text-lg">
-          Are you sure you want to delete this <span className="font-semibold text-red-500">salary record</span>? This action cannot be undone.
+          Are you sure you want to delete this <span className="font-semibold text-red-500">this Record</span>? This action cannot be undone.
         </p>
         <div className="flex justify-end mt-8 space-x-4">
           <button
