@@ -5,11 +5,15 @@ import employeeService from '../../../services/employeeService';
 import { FaEdit, FaTrashAlt, FaEye } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
+import DeleteModal from '../../../shared/common/DeleteConfirmation';
 
 const Employees = () => {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [showFilter, setShowFilter] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+
   const [filters, setFilters] = useState({
     name: '',
     department: '',
@@ -42,6 +46,27 @@ const Employees = () => {
         });
     }
   };
+    const handleDeleteClick = (employeeId) => {
+      setSelectedEmployeeId(employeeId);
+      setShowDeleteModal(true);
+    };
+    
+    const confirmDelete = () => {
+      employeeService.deleteEmployee(selectedEmployeeId)
+        .then(() => {
+          toast.success("Employee deleted successfully");
+          setEmployees(prev => prev.filter(s => s._id !== selectedEmployeeId));
+        })
+        .catch((error) => {
+          console.error('Error deleting Employee:', error);
+          toast.error('Failed to delete Employee record');
+        })
+        .finally(() => {
+          setShowDeleteModal(false);
+          setSelectedEmployeeId(null);
+        });
+    };
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
@@ -64,6 +89,7 @@ const Employees = () => {
   };
 
   return (
+    <>
     <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
       <div className="py-4 px-2 flex justify-between items-center mb-3">
         <h2 className="text-3xl font-bold text-gray-800">Employees</h2>
@@ -198,7 +224,7 @@ const Employees = () => {
                       title="Delete"
                       className="p-2 rounded shadow cursor-pointer"
                       style={{ backgroundColor: '#F87171' }}
-                      onClick={() => deleteEmployee(employee._id)}
+                      onClick={() => handleDeleteClick(employee._id)}
                     >
                       <FaTrashAlt className="text-white" />
                     </button>
@@ -218,6 +244,12 @@ const Employees = () => {
         </table>
       </div>
     </div>
+     <DeleteModal
+      isOpen={showDeleteModal}
+      onClose={() => setShowDeleteModal(false)}
+      onConfirm={confirmDelete}
+    />
+    </>
   );
 };
 

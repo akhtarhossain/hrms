@@ -67,6 +67,7 @@ import OtpPage from './auth/OtpPage';
 import ResetPasswordPage from './auth/ResetPasswordPage';
 import ChangePasswordPage from './auth/ChangePasswordPage';
 import './App.css';
+import EmploySalaryForm from './components/pages/salary/employSalary';
 
 function AppContent() {
   const location = useLocation();
@@ -83,6 +84,7 @@ function AppContent() {
           <Route path="/employee-preview/:id" element={<EmployeePreview />} />
           <Route path="/employee-form/:id?" element={<EmployeeForm />} />
           <Route path="/salary-form" element={<SalaryForm />} />
+          <Route path="/employSalaryform" element={<EmploySalaryForm />} />
           {/* <Route path="/salary-form/:id" element={<SalaryForm />} /> */}
           <Route path="/salary" element={<SalaryList />} />
           <Route path="/login" element={<LoginPage />} />

@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrashAlt, FaEye, FaSearch } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
-import salaryService from '../../../services/SalaryService';
 import DeleteModal from '../../../shared/common/DeleteConfirmation';
+import EmploySalaryService from '../../../services/EmploySalaryService';
 
-const SalaryList = () => {
+const EmploySalaryList = () => {
   const navigate = useNavigate();
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ const SalaryList = () => {
 
   const fetchSalaries = () => {
     setLoading(true);
-    salaryService.getSalary()
+    EmploySalaryService.getSalary()
       .then((data) => {
         setSalaries(data || []);
         console.log(data ,  "data"); // Log the actual data
@@ -60,7 +60,7 @@ const SalaryList = () => {
 
   const applyFilters = () => {
     setLoading(true);
-    salaryService.getSalary(filters)
+    EmploySalaryService.getSalary(filters)
       .then((response) => {
         setSalaries(response.data || []);
         setLoading(false);
@@ -88,9 +88,8 @@ const SalaryList = () => {
     setShowDeleteModal(true);
   };
   
-
   const confirmDelete = () => {
-    salaryService.deleteSalary(selectedSalaryId)
+    EmploySalaryService.deleteSalary(selectedSalaryId)
       .then(() => {
         toast.success("Salary record deleted successfully");
         setSalaries(prev => prev.filter(s => s._id !== selectedSalaryId));
@@ -129,7 +128,7 @@ const SalaryList = () => {
           </button>
           <button
             title="Create Salary"
-            onClick={() => navigate('/salary-form')}
+            onClick={() => navigate('/employSalaryform')}
             className="p-2 rounded shadow cursor-pointer"
             style={{ backgroundColor: '#A294F9' }}
           >
@@ -218,9 +217,6 @@ const SalaryList = () => {
               <th className="px-4 py-3 text-left">Employee</th>
               <th className="px-4 py-3 text-left">Date</th>
               <th className="px-4 py-3 text-left">Basic Salary</th>
-              <th className="px-4 py-3 text-left">Allowances</th>
-              <th className="px-4 py-3 text-left">Deductions</th>
-              <th className="px-4 py-3 text-left">Net Salary</th>
               <th className="px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
@@ -242,18 +238,6 @@ const SalaryList = () => {
                   <td className="px-4 py-3">{salary.employeeId.firstName} {salary.employeeId.lastName}</td>
                   <td className="px-4 py-3">{new Date(salary.date).toLocaleDateString()}</td>
                   <td className="px-4 py-3">{salary.salaryAmount.toFixed(2)}</td>
-                  <td className="px-4 py-4">
-                    {salary.allowances.map((a, index) => (
-                      <div key={index}>{a.type}: {a.amount}</div>
-                    ))}
-                  </td>
-
-                  <td className="px-5 py-4">
-                    {salary.deductions.map((d, index) => (
-                      <div key={index}>{d.type}: {d.amount}</div>
-                    ))}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-[#A294F9]">{salary.totalSalary.toFixed(2)}</td>
                   <td className="px-4 py-3">
                     <div className="flex space-x-2">
                       <button
@@ -302,4 +286,4 @@ const SalaryList = () => {
   );
 };
 
-export default SalaryList;
+export default EmploySalaryList;
