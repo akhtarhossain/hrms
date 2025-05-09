@@ -32,8 +32,6 @@ const Employees = () => {
         .then((response) => {
           console.log("Employee deleted successfully", response);
           toast.success("Employee deleted successfully");
-
-          // Use correct property name (_id)
           setEmployees((prevEmployees) =>
             prevEmployees.filter((employee) => employee._id !== employeeId)
           );
@@ -44,8 +42,6 @@ const Employees = () => {
         });
     }
   };
-
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
