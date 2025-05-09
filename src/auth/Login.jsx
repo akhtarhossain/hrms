@@ -4,26 +4,6 @@ import { FaUser, FaLock } from "react-icons/fa";
 export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-      
-      {/* Equal Split Background with Wave */}
-<div className="absolute inset-0 -z-10">
-  <svg
-    className="w-full h-full"
-    viewBox="0 0 1440 800"
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="none"
-  >
-    {/* Top Half Background */}
-    <rect width="1440" height="800" fill="#CDC1FF" />
-
-    {/* Diagonal Wave Shape */}
-    <path
-      d="M1440,0 L0,800 L0,800 L1440,2000 Z"
-      fill="#A294F9"
-    />
-  </svg>
-</div>
-
 
       {/* Login Card */}
       <div className="rounded-2xl shadow-xl px-10 py-14 w-full max-w-md z-30" style={{ backgroundColor: '#F5EFFF' }}>
