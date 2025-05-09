@@ -284,9 +284,9 @@ function Sidebar() {
               >
                 <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
                 <span className="flex-1 ms-3 text-left whitespace-nowrap"
-                onClick={() => navigate('/salary')}
+                onClick={() => navigate('/employSalaryform')}
                 >Salary</span>
-                {openDropdown === 'Salary' ? (
+                {openDropdown === 'employSalaryform' ? (
                   <FiChevronDown className="w-4 h-4" />
                 ) : (
                   <FiChevronRight className="w-4 h-4" />
