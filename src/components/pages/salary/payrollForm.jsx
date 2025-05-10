@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiList, FiPlus, FiTrash2 } from "react-icons/fi";
-import employeeService from "../../../services/employeeService";
-import SalaryService from "../../../services/SalaryService";
+import PayrollService from "../../../services/PayrollService";
 import { toast } from 'react-toastify';
+import EmploySalaryService from "../../../services/EmploySalaryService";
+import { FaTrashAlt } from "react-icons/fa";
 
 const allowanceTypes = [
   { value: "Housing", label: "Housing Allowance" },
@@ -27,13 +28,14 @@ const salaryTypes = [
   { value: "hourly", label: "Hourly" },
 ];
 
-const SalaryForm = () => {
+const PayrollForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [employees, setEmployees] = useState([]);
+  const [salaries, setSalaries] = useState([]);
   const [totalSalary, setTotalSalary] = useState(0);
   const [totalAllowances, setTotalAllowances] = useState(0);
   const [totalDeductions, setTotalDeductions] = useState(0);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -45,19 +47,19 @@ const SalaryForm = () => {
   });
 
   useEffect(() => {
+    fetchSalaries();
+  }, []);
+
+  useEffect(() => {
     if (id) {
-      SalaryService.getSalaryById(id)
+      PayrollService.getPayrollById(id)
         .then((response) => {
           const salaryData = response;
-          console.log(salaryData , "salary data");
-          
-          // Format dates from ISO string to input-friendly format (YYYY-MM-DD)
           const formatDateForInput = (dateString) => {
             if (!dateString) return '';
             const date = new Date(dateString);
             return date.toISOString().split('T')[0];
           };
-
           setFormData({
             employeeId: salaryData.employeeId?._id || '',
             firstName: salaryData.employeeId?.firstName || '',
@@ -67,56 +69,61 @@ const SalaryForm = () => {
             salaryType: salaryData.salaryType || '',
             totalSalary: salaryData.totalSalary || '',
             date: formatDateForInput(salaryData.date),
-            allowances: salaryData.allowances || [], // Array of objects
-            deductions: salaryData.deductions || [], // Array of objects
+            allowances: salaryData.allowances || [],
+            deductions: salaryData.deductions || [],
           });
-          
-          if (salaryData.employeeId?.profilePicture) {
-            setImageUrl(salaryData.employeeId.profilePicture);
-            setImageName(salaryData.employeeId.profilePicture.split('/').pop() || 'profile');
-            setUploadStatus('uploaded');
+          // Set the selected employee for display
+          if (salaryData.employeeId) {
+            setSelectedEmployee(salaryData.employeeId);
           }
-          
         })
         .catch((error) => {
-          console.error('Error fetching employee data:', error);
-          toast.error('Failed to load employee data');
+          console.error('Error fetching salary data:', error);
+          toast.error('Failed to load salary data');
         });
     }
   }, [id]);
-
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
 
   useEffect(() => {
     calculateTotals();
   }, [formData]);
 
-  const fetchEmployees = () => {
-    employeeService
-      .getEmployee()
-      .then((response) => setEmployees(response))
-      .catch((error) => console.error("Error fetching employees:", error));
+  const fetchSalaries = () => {
+    EmploySalaryService.getSalary()
+      .then((response) => {
+        setSalaries(response);
+      })
+      .catch((error) => {
+        console.error("Error fetching salaries:", error);
+        toast.error("Failed to load salary data");
+      });
+  };
+
+  const handleEmployeeSelect = (e) => {
+    const employeeId = e.target.value;
+    const selectedSalary = salaries.find(s => s.employeeId._id === employeeId);
+    if (selectedSalary) {
+      setSelectedEmployee(selectedSalary.employeeId);
+      setFormData({
+        ...formData,
+        employeeId: employeeId,
+        salaryAmount: selectedSalary.salaryAmount || '',
+        salaryType: selectedSalary.salaryType || 'monthly'
+      });
+    }
   };
 
   const calculateTotals = () => {
-    // Calculate allowances total
     let allowancesTotal = 0;
     formData.allowances.forEach((allowance) => {
       allowancesTotal += Number(allowance.amount) || 0;
     });
     setTotalAllowances(allowancesTotal);
-
-    // Calculate deductions total
     let deductionsTotal = 0;
     formData.deductions.forEach((deduction) => {
       deductionsTotal += Number(deduction.amount) || 0;
     });
     setTotalDeductions(deductionsTotal);
-
-    // Calculate total salary
     const baseSalary = Number(formData.salaryAmount) || 0;
     const total = baseSalary + allowancesTotal - deductionsTotal;
     setTotalSalary(total);
@@ -167,10 +174,10 @@ const SalaryForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Construct the salary data object
+
     const salaryData = {
       employeeId: formData.employeeId,
+      status: "pending",
       date: formData.date,
       salaryType: formData.salaryType,
       salaryAmount: Number(formData.salaryAmount),
@@ -188,40 +195,52 @@ const SalaryForm = () => {
         })),
       totalSalary: totalSalary
     };
-    console.log(salaryData , "date");
+
     if (id) {
-      SalaryService.updateSalary(id, salaryData)
+      PayrollService.updatePayroll(id, salaryData)
         .then((response) => {
-          console.log('Salary updated successfully:', response);
-          toast.success('Salary updated successfully!');
-          navigate('/Salary');
+          console.log('Payroll updated successfully:', response);
+          toast.success('Payroll updated successfully!');
+          navigate('/payslip');
         })
         .catch((error) => {
-          console.error('Error updating employee:', error);
-          toast.error('Error updating employee. Please try again.');
+          console.error('Error updating payroll:', error);
+          toast.error('Error updating payroll. Please try again.');
         });
     } else {
-    SalaryService.createSalary(salaryData)
-      .then(response => {
-        console.log("Salary saved successfully:", response);
-        toast.success("Salary saved successfully!");
-        // Navigate to the salary list page or any other page as needed
-        navigate('/salary');
-      })
-      .catch(error => {
-        console.error("Error saving salary:", error);
-        toast.error("Error saving salary. Please try again.");
-      });
+      PayrollService.createPayroll(salaryData)
+        .then(response => {
+          console.log("Payroll saved successfully:", response);
+          toast.success("Payroll saved successfully!");
+          navigate('/payslip');
+        })
+        .catch(error => {
+          console.error("Error saving payroll:", error);
+          toast.error("Error saving payroll. Please try again.");
+        });
     }
+  };
+
+  // Get unique employees from salaries data
+  const getUniqueEmployees = () => {
+    const uniqueEmployees = [];
+    const employeeIds = new Set();
+    salaries.forEach(salary => {
+      if (salary.employeeId && !employeeIds.has(salary.employeeId._id)) {
+        employeeIds.add(salary.employeeId._id);
+        uniqueEmployees.push(salary);
+      }
+    });
+    return uniqueEmployees;
   };
 
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+        <h2 className="text-3xl font-bold text-gray-800">Payroll Form</h2>
         <div className="flex space-x-2">
           <button
-            onClick={() => navigate('/salary')}
+            onClick={() => navigate('/payslip')}
             title="List"
             className="p-2 bg-[#A294F9] rounded shadow"
           >
@@ -237,13 +256,14 @@ const SalaryForm = () => {
               <select
                 name="employeeId"
                 value={formData.employeeId}
-                onChange={handleChange}
+                onChange={handleEmployeeSelect}
                 className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                required
               >
                 <option value="">Select Employee</option>
-                {employees.map((emp) => (
-                  <option key={emp._id} value={emp._id}>
-                    {emp.firstName} {emp.lastName}
+                {getUniqueEmployees().map((salary) => (
+                  <option key={salary.employeeId._id} value={salary.employeeId._id}>
+                    {salary.employeeId.firstName} {salary.employeeId.lastName}
                   </option>
                 ))}
               </select>
@@ -256,38 +276,38 @@ const SalaryForm = () => {
                 value={formData.date}
                 onChange={handleChange}
                 className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                required
               />
             </div>
           </div>
-          <div className="flex gap-4 mb-4 w-full">
-            <div className="w-1/2">
-              <label className="block mb-1 font-semibold text-[#333]">Salary Type</label>
-              <select
-                name="salaryType"
-                value={formData.salaryType}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-              >
-                {salaryTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
+
+          {/* Employee Salary Information (read-only) */}
+          {selectedEmployee && (
+            <div className="flex gap-4 mb-4 w-full">
+              <div className="w-1/2">
+                <label className="block mb-1 font-semibold text-[#333]">Salary Type</label>
+                <input
+                  type="text"
+                  value={formData.salaryType === 'monthly' ? 'Monthly' : 'Hourly'}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+              </div>
+              <div className="w-1/2">
+                <label className="block mb-1 font-semibold text-[#333]">
+                  {formData.salaryType === "monthly" ? "Monthly Salary" : "Hourly Rate"}
+                </label>
+                <input
+                  type="text"
+                  value={formData.salaryAmount}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+              </div>
             </div>
-            <div className="w-1/2">
-              <label className="block mb-1 font-semibold text-[#333]">
-                {formData.salaryType === "monthly" ? "Monthly Salary" : "Hourly Rate"}
-              </label>
-              <input
-                type="number"
-                name="salaryAmount"
-                value={formData.salaryAmount}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-              />
-            </div>
-          </div>
+          )}
+
+          {/* Rest of the form remains the same */}
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold text-[#333]">Allowances</h3>
@@ -300,6 +320,7 @@ const SalaryForm = () => {
                 Add Allowance
               </button>
             </div>
+
             {formData.allowances.map((allowance, index) => (
               <div key={index} className="flex gap-2 mb-2 items-center">
                 <select
@@ -307,6 +328,7 @@ const SalaryForm = () => {
                   value={allowance.type}
                   onChange={(e) => handleAllowanceChange(index, e)}
                   className="w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  required
                 >
                   <option value="">Select Type</option>
                   {allowanceTypes.map((type) => (
@@ -315,25 +337,37 @@ const SalaryForm = () => {
                     </option>
                   ))}
                 </select>
-                <input
-                  type="number"
-                  name="amount"
-                  value={allowance.amount}
-                  placeholder="Amount"
-                  onChange={(e) => handleAllowanceChange(index, e)}
-                  className="w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                />
+
+                <div className="w-1/2">
+                  <input
+                    type="number"
+                    name="amount"
+                    value={allowance.amount}
+                    placeholder="Amount"
+                    onChange={(e) => handleAllowanceChange(index, e)}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                    required
+                  />
+                </div>
                 <button
+                  title="Delete"
+                  className="p-2 rounded shadow cursor-pointer"
+                  style={{ backgroundColor: '#F87171' }}
                   onClick={() => removeAllowance(index)}
-                  className="p-2 text-red-500 hover:text-red-700 transition"
                 >
-                  <FiTrash2 size={16} />
+                  <FaTrashAlt className="text-white" />
                 </button>
               </div>
             ))}
-            <div className="p-2 rounded mt-2">
-              <span className="font-semibold">Total Allowances: </span>{totalAllowances.toFixed(2)}
-            </div>
+
+            {/* Move the total display outside the map function */}
+            {formData.allowances.length > 0 && (
+              <div className="flex justify-center ml-8 mt-2">
+                <div className="text-sm text-gray-600">
+                  Total : {totalAllowances.toFixed(2)}
+                </div>
+              </div>
+            )}
           </div>
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
@@ -354,6 +388,7 @@ const SalaryForm = () => {
                   value={deduction.type}
                   onChange={(e) => handleDeductionChange(index, e)}
                   className="w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  required
                 >
                   <option value="">Select Type</option>
                   {deductionTypes.map((type) => (
@@ -362,28 +397,40 @@ const SalaryForm = () => {
                     </option>
                   ))}
                 </select>
-                <input
-                  type="number"
-                  name="amount"
-                  value={deduction.amount}
-                  placeholder="Amount"
-                  onChange={(e) => handleDeductionChange(index, e)}
-                  className="w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                />
+                <div className="w-1/2">
+                  <input
+                    type="number"
+                    name="amount"
+                    value={deduction.amount}
+                    placeholder="Amount"
+                    onChange={(e) => handleDeductionChange(index, e)}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                    required
+                  />
+                </div>
                 <button
+                  title="Delete"
+                  className="p-2 rounded shadow cursor-pointer"
+                  style={{ backgroundColor: '#F87171' }}
                   onClick={() => removeDeduction(index)}
-                  className="p-2 text-red-500 hover:text-red-700 transition"
                 >
-                  <FiTrash2 size={16} />
+                  <FaTrashAlt className="text-white" />
                 </button>
               </div>
             ))}
-            <div className="p-2 rounded mt-2">
-              <span className="font-semibold">Total Deductions: </span>{totalDeductions.toFixed(2)}
-            </div>
+
+            {/* Move the total display outside the map function */}
+            {formData.deductions.length > 0 && (
+              <div className="flex justify-center ml-8 mt-2">
+                <div className="text-sm text-gray-600">
+                  Total : {totalDeductions.toFixed(2)}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="p-4 rounded mb-4">
-            <span className="font-semibold">Total Salary: </span>{totalSalary.toFixed(2)}
+          <div className="p-4 rounded mt-10 mb-4 border border-gray-300">
+            <span className="font-semibold text-lg">Net Salary: </span>
+            <span className="font-bold text-xl">{totalSalary.toFixed(2)}</span>
           </div>
           <div className="flex justify-end">
             <button
@@ -391,7 +438,7 @@ const SalaryForm = () => {
               className="px-4 py-2 rounded shadow text-white"
               style={{ backgroundColor: '#A294F9' }}
             >
-              Save Salary
+              {id ? 'Update Payroll' : 'Create Payroll'}
             </button>
           </div>
         </div>
@@ -400,4 +447,4 @@ const SalaryForm = () => {
   );
 };
 
-export default SalaryForm;
+export default PayrollForm;
