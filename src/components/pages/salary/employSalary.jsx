@@ -46,13 +46,7 @@ const EmploySalaryForm = () => {
             totalSalary: salaryData.totalSalary || '',
             date: formatDateForInput(salaryData.date),
           });
-          
-          if (salaryData.employeeId?.profilePicture) {
-            setImageUrl(salaryData.employeeId.profilePicture);
-            setImageName(salaryData.employeeId.profilePicture.split('/').pop() || 'profile');
-            setUploadStatus('uploaded');
-          }
-          
+                    
         })
         .catch((error) => {
           console.error('Error fetching employee data:', error);
@@ -117,7 +111,7 @@ const EmploySalaryForm = () => {
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+        <h2 className="text-3xl font-bold text-gray-800">Employ Salary Form</h2>
         <div className="flex space-x-2">
           <button
             onClick={() => navigate('/salary')}
@@ -186,9 +180,6 @@ const EmploySalaryForm = () => {
                 className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
               />
             </div>
-          </div>
-          <div className="p-4 rounded mb-4">
-            <span className="font-semibold">Total Salary: </span>{totalSalary.toFixed(2)}
           </div>
           <div className="flex justify-end">
             <button

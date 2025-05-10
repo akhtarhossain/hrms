@@ -244,7 +244,7 @@ const EmploySalaryList = () => {
                         title="Edit"
                         className="p-2 rounded shadow cursor-pointer"
                         style={{ backgroundColor: '#A294F9' }}
-                        onClick={() => navigate(`/salary-form/${salary._id}`)}
+                        onClick={() => navigate(`/employSalaryform/${salary._id}`)}
                       >
                         <FaEdit className="text-white" />
                       </button>
@@ -255,14 +255,6 @@ const EmploySalaryList = () => {
                         onClick={() => handleDeleteClick(salary._id)}
                       >
                         <FaTrashAlt className="text-white" />
-                      </button>
-                      <button
-                        title="Preview"
-                        className="p-2 rounded shadow cursor-pointer"
-                        style={{ backgroundColor: '#34D399' }}
-                        onClick={() => navigate(`/employee-preview/${employee._id}`)}
-                      >
-                        <FaEye className="text-white" />
                       </button>
                     </div>
                   </td>

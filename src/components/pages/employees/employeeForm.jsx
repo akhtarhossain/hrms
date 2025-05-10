@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { FiDownload, FiUpload, FiPlus, FiList, FiFilter, FiDelete } from 'react-icons/fi';
 import { BsPerson, BsTelephone, BsBriefcase, BsBook, BsFileEarmarkText } from 'react-icons/bs';
@@ -10,59 +11,17 @@ import { FaEdit } from 'react-icons/fa';
 import countries from 'i18n-iso-countries';
 import enLocale from 'i18n-iso-countries/langs/en.json';
 
-interface Education {
-  institute: string;
-  yearOfPassing: string;
-  gradePercentage: string;
-  educationType: string;
-}
-type DocumentItem = {
-  type: string;
-  file: File;
-  fileUrl?: string;
-};
-
-interface FormData {
-  firstName: string;
-  lastName: string;
-  fatherOrHusbandName: string;
-  gender: string;
-  cnic: string;
-  maritalStatus: string;
-  nationality: string;
-  mobileNumber: string;
-  email: string;
-  country: string;
-  emergencyContactName: string;
-  emergencyContactRelation: string;
-  emergencyContactMobile: string;
-  permanentAddress: string;
-  city: string;
-  employeeId: string;
-  department: string;
-  designation: string;
-  dateOfJoining: string;
-  employmentType: string;
-  employeeStatus: string;
-  degreeTitle: string;
-  certificates: any[];
-  educations: any[];
-  dateOfBirth: string;
-  profilePicture: string;
-
-}
-
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
   const [uploadStatus, setUploadStatus] = useState('idle');
-  const [documentList, setDocumentList] = useState<DocumentItem[]>([]);
+  const [documentList, setDocumentList] = useState([]);
   const [selectedDocType, setSelectedDocType] = useState('');
   const [editIndex, setEditIndex] = useState(null);
   const [editIndexDoc, setEditIndexDoc] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingDoc, setIsEditingDoc] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
   const [imageName, setImageName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [DocuUrl, setDocuUrl] = useState('');
@@ -70,10 +29,10 @@ const EmployeeForm = () => {
   const [yearOfPassing, setYearOfPassing] = useState('');
   const [gradePercentage, setGradePercentage] = useState('');
   const [educationType, setEducationType] = useState('');
-  const [documentUploadStatus, setDocumentUploadStatus] = useState<'idle' | 'uploading' | 'uploaded'>('idle');
+  const [documentUploadStatus, setDocumentUploadStatus] = useState('idle');
   const [documentName, setDocumentName] = useState('');
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     fatherOrHusbandName: '',
@@ -101,7 +60,8 @@ const EmployeeForm = () => {
     dateOfBirth: '',
     profilePicture: '',
   });
-  const [educationList, setEducationList] = useState<Education[]>([]);
+
+  const [educationList, setEducationList] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
   countries.registerLocale(enLocale);
@@ -115,7 +75,6 @@ const EmployeeForm = () => {
         .then((response) => {
           const employeeData = response;
 
-          // Format dates from ISO string to input-friendly format (YYYY-MM-DD)
           const formatDateForInput = (dateString) => {
             if (!dateString) return '';
             const date = new Date(dateString);
@@ -150,14 +109,16 @@ const EmployeeForm = () => {
             dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
             profilePicture: employeeData.profilePicture || '',
           });
+
           if (employeeData.educations && employeeData.educations.length > 0) {
             setEducationList(employeeData.educations);
           }
+
           if (employeeData.certificates && employeeData.certificates.length > 0) {
             setDocumentList(employeeData.certificates.map(doc => ({
               type: doc.type,
               fileUrl: doc.fileUrl,
-              file: { name: doc.fileUrl?.split('/').pop() || 'document' } as File
+              file: { name: doc.fileUrl?.split('/').pop() || 'document' }
             })));
           }
 
@@ -226,10 +187,9 @@ const EmployeeForm = () => {
       ...formData,
       educations: educationList,
       certificates: documentList,
-      profilePicture: imageUrl, // Make sure to include the image URL
+      profilePicture: imageUrl,
     };
     if (id) {
-      // Update existing employee
       employeeService.updateEmployee(id, finalData)
         .then((response) => {
           console.log('Employee updated successfully:', response);
@@ -241,7 +201,6 @@ const EmployeeForm = () => {
           toast.error('Error updating employee. Please try again.');
         });
     } else {
-      // Create new employee
       employeeService.createEmployee(finalData)
         .then((response) => {
           console.log('Employee created successfully:', response);
@@ -377,6 +336,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
+
     if (name === 'employmentType') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -422,6 +382,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
+
     if (name === 'educationType') {
       return (
         <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -503,6 +464,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
+
     if (name === 'cnic') {
       return (
         <div className="w-full sm:w-1/2 px-2 mb-4">
@@ -518,6 +480,7 @@ const EmployeeForm = () => {
         </div>
       );
     }
+
     return (
       <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -553,7 +516,7 @@ const EmployeeForm = () => {
       return;
     }
     setImageName(file.name);
-    setUploadStatus('uploading'); // show loader while uploading
+    setUploadStatus('uploading');
     try {
       const projectData = {
         name: file.name,
@@ -562,7 +525,7 @@ const EmployeeForm = () => {
       const response = await employeeService.uploadImage(projectData);
       if (response?.message && Array.isArray(response.message)) {
         response.message.forEach((msg) => toast.error(msg));
-        setUploadStatus('idle'); // reset if failed
+        setUploadStatus('idle');
         return;
       }
       const uploadUrl = response.location;
@@ -579,20 +542,18 @@ const EmployeeForm = () => {
         },
         cancelToken: source.token,
         onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total ?? 1; // fallback to 1 to avoid division by zero
+          const total = progressEvent.total ?? 1;
           const percent = Math.round((progressEvent.loaded * 100) / total);
         }
       });
       const trimmedUrl = uploadUrl.split("?")[0];
-      console.log(trimmedUrl, "trim url");
       setImageUrl(trimmedUrl);
       setUploadStatus('uploaded');
       toast.success("File uploaded successfully!");
-      setFormData?.((prev) => ({
+      setFormData((prev) => ({
         ...prev,
         profilePicture: trimmedUrl,
       }));
-
     } catch (err) {
       if (axios.isCancel(err)) {
         console.log("Upload cancelled:", err.message);
@@ -600,7 +561,7 @@ const EmployeeForm = () => {
         console.error("Upload failed:", err);
         toast.error("Upload failed! Please try again.");
       }
-      setUploadStatus('idle'); // reset on error
+      setUploadStatus('idle');
     }
   };
 
@@ -610,7 +571,7 @@ const EmployeeForm = () => {
       return;
     }
 
-    const newEducation: Education = {
+    const newEducation = {
       institute,
       yearOfPassing,
       gradePercentage,
@@ -637,23 +598,20 @@ const EmployeeForm = () => {
     const newList = [...educationList];
     newList.splice(index, 1);
     setEducationList(newList);
-    toast.success("Education deleted successfully!")
+    toast.success("Education deleted successfully!");
   };
 
   const handleEditEducation = (index) => {
     const edu = educationList[index];
-    setFormData((prev) => ({
-      ...prev,
-      institute: edu.institute,
-      yearOfPassing: edu.yearOfPassing,
-      gradePercentage: edu.gradePercentage,
-      educationType: edu.educationType,
-    }));
+    setInstitute(edu.institute);
+    setYearOfPassing(edu.yearOfPassing);
+    setGradePercentage(edu.gradePercentage);
+    setEducationType(edu.educationType);
     setIsEditing(true);
     setEditIndex(index);
   };
 
-  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentUpload = async (e) => {
     const file = e.target?.files?.[0];
     if (!file) return;
     setDocumentName('');
@@ -677,7 +635,7 @@ const EmployeeForm = () => {
       const response = await employeeService.uploadDocument(projectData);
 
       if (response?.message && Array.isArray(response.message)) {
-        response.message.forEach((msg: string) => toast.error(msg));
+        response.message.forEach((msg) => toast.error(msg));
         setDocumentUploadStatus('idle');
         return;
       }
@@ -717,7 +675,7 @@ const EmployeeForm = () => {
       return;
     }
 
-    const newDocument: DocumentItem = {
+    const newDocument = {
       type: selectedDocType,
       file: uploadedFile,
       fileUrl: DocuUrl,
@@ -739,7 +697,7 @@ const EmployeeForm = () => {
     setDocuUrl('');
   };
 
-  const handleDeleteDocument = (index: number) => {
+  const handleDeleteDocument = (index) => {
     const updatedList = documentList.filter((_, i) => i !== index);
     setDocumentList(updatedList);
   };
@@ -752,7 +710,7 @@ const EmployeeForm = () => {
     setEditIndexDoc(index);
   };
 
-  const handleDownloadEducation = async (index: number) => {
+  const handleDownloadEducation = async (index) => {
     const edu = documentList[index];
     if (!edu || !edu.fileUrl || !edu.type) return;
     try {
@@ -767,15 +725,15 @@ const EmployeeForm = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl); // Clean up
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       toast.error('File download failed', error);
     }
   };
 
-  const handleCnicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove all non-digits
-    if (value.length > 13) value = value.slice(0, 13); // Max 13 digits
+  const handleCnicChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 13) value = value.slice(0, 13);
     let formatted = value;
     if (value.length > 5 && value.length <= 12) {
       formatted = `${value.slice(0, 5)}-${value.slice(5)}`;
@@ -784,7 +742,6 @@ const EmployeeForm = () => {
     }
     setFormData(prev => ({ ...prev, cnic: formatted }));
   };
-
 
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
@@ -799,55 +756,62 @@ const EmployeeForm = () => {
           </button>
         </div>
       </div>
-      <div className="relative flex flex-col items-center mb-8 px-4">
-        <div className="w-full max-w-6xl relative">
+     <div className="relative flex flex-col items-center mb-8 px-4">
+  <div className="w-full max-w-6xl relative">
+    {/* Background line (full width) */}
+    <div
+      className="absolute top-5 h-1 bg-gray-300 z-10 hidden sm:block"
+      style={{
+        left: '6vw',
+        right: '6vw',
+      }}
+    ></div>
+    
+    {/* Progress line (dynamic width) */}
+    <div
+      className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500 hidden sm:block"
+      style={{
+        left: '6vw',
+        width: step === steps.length 
+          ? 'calc(100% - 12vw)' // Full width when on last step
+          : `calc(${(step / steps.length) * 100}% - 14vw)`, // Proportional width for other steps
+        maxWidth: 'calc(100% - 12vw)',
+      }}
+    ></div>
+    
+    {/* Step indicators */}
+    <div className="flex flex-col sm:flex-row justify-between items-center relative z-20 space-y-4 sm:space-y-0 sm:space-x-4">
+      {steps.map((s, index) => (
+        <div
+          key={index}
+          className="flex flex-col items-center flex-1 sm:flex-auto"
+          style={{
+            minWidth: index === 0 || index === steps.length - 1 ? '10vw' : 'auto',
+          }}
+        >
           <div
-            className="absolute top-5 h-1 bg-gray-300 z-10 hidden sm:block"
-            style={{
-              left: '6vw',
-              right: '6vw',
-            }}
-          ></div>
-          <div
-            className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500 hidden sm:block"
-            style={{
-              left: '6vw',
-              width: step === steps.length
-                ? 'calc(100% - 13vw)'
-                : `calc(${(step - 1) / (steps.length - 1) * 100}% - 10vw)`,
-              maxWidth: 'calc(100% - 13vw)',
-            }}
-          ></div>
-          <div className="flex flex-col sm:flex-row justify-between items-center relative z-20 space-y-4 sm:space-y-0 sm:space-x-4">
-            {steps.map((s, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center flex-1 sm:flex-auto"
-                style={{
-                  minWidth: index === 0 || index === steps.length - 1 ? '10vw' : 'auto',
-                }}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${step === index + 1
-                    ? 'bg-[#A294F9] text-white border-2 border-[#A294F9]'
-                    : step > index + 1
-                      ? 'bg-[#A294F9] text-white'
-                      : 'bg-white border-2 border-gray-300 text-gray-600'
-                    }`}
-                >
-                  {s.icon}
-                </div>
-                <span
-                  className={`mt-2 text-xs sm:text-sm font-medium ${step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
-                    }`}
-                >
-                  {s.label}
-                </span>
-              </div>
-            ))}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+              step === index + 1
+                ? 'bg-[#A294F9] text-white border-2 border-[#A294F9]'
+                : step > index + 1
+                ? 'bg-[#A294F9] text-white'
+                : 'bg-white border-2 border-gray-300 text-gray-600'
+            }`}
+          >
+            {s.icon}
           </div>
+          <span
+            className={`mt-2 text-xs sm:text-sm font-medium ${
+              step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
+            }`}
+          >
+            {s.label}
+          </span>
         </div>
-      </div>
+      ))}
+    </div>
+  </div>
+</div>
       <div className="flex justify-center">
         <div className="p-8 w-full max-w-6xl">
           <h3 className="text-xl font-semibold mb-6 text-gray-800">
