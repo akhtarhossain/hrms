@@ -183,7 +183,7 @@ function Sidebar() {
           gridArea: "sidebar",
           backgroundColor: "#E5D9F2",
         }}
-      >       
+      >
         <div className="h-full px-3 pb-4 overflow-y-auto">
           <ul className="space-y-2 font-medium">
             {/* Dashboard */}
@@ -369,7 +369,6 @@ function Sidebar() {
                 <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
                 <span
                   className="flex-1 ms-3 text-left whitespace-nowrap"
-                  onClick={() => navigate("/employSalaryform")}
                 >
                   Salary
                 </span>
@@ -386,7 +385,7 @@ function Sidebar() {
                       href="#"
                       className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
                     >
-                      <span className="flex-1 whitespace-nowrap">Payroll</span>
+                      <span className="flex-1 whitespace-nowrap" onClick={() => navigate("/employSalaryform")}>Salary</span>
                     </a>
                   </li>
                   <li>
@@ -394,8 +393,10 @@ function Sidebar() {
                       href="#"
                       className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
                     >
-                      <span className="flex-1 whitespace-nowrap">
-                        Salary Slips
+                      <span className="flex-1 whitespace-nowrap"
+                        onClick={() => navigate("/payslip")}
+                      >
+                        Payslip
                       </span>
                     </a>
                   </li>
@@ -520,7 +521,7 @@ function Sidebar() {
             </li>
           </ul>
         </div>
-        
+
       </aside>
 
       <main
@@ -531,14 +532,14 @@ function Sidebar() {
         }}
       >
         <Outlet />
-        <footer 
-      style={{
-        gridArea: "footer",
-      }}
-      className="bg-[#E5D9F2] py-4 text-center text-sm">
-        &copy; {new Date().getFullYear()} Your Company. All rights reserved.
-      </footer>
-      </main> 
+        <footer
+          style={{
+            gridArea: "footer",
+          }}
+          className="bg-[#E5D9F2] py-4 text-center text-sm">
+          &copy; {new Date().getFullYear()} Your Company. All rights reserved.
+        </footer>
+      </main>
 
       {/* Overlay for mobile */}
       {isSidebarOpen && (
