@@ -2,54 +2,54 @@ import { toast } from 'react-toastify';
 import { HttpService } from "./HttpClient.service";
 import axios from 'axios';
 
-class SalaryService extends HttpService {
+class PayrollService extends HttpService {
   constructor() {
     super();
   }
 
-  getSalary(params = {}) {
+  getPayroll(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.get(`/salary${queryString ? `?${queryString}` : ''}`)
+    return this.get(`/payroll${queryString ? `?${queryString}` : ''}`)
       .then((response) => response.data)
       .catch((error) => {
-        console.error('Error fetching salary data:', error);
+        console.error('Error fetching payroll data:', error);
         toast.error(`${error}`);
         throw error;
       });
   }
   
 
-  getSalaryById(salaryId) {
-    return this.get(`/salary/${salaryId}`).then((response) => response.data)
+  getPayrollById(payrollId) {
+    return this.get(`/payroll/${payrollId}`).then((response) => response.data)
         .catch((error) => {
-          console.error('Error fetching salary data by ID:', error);
+          console.error('Error fetching payroll data by ID:', error);
           toast.error(`${error}`);
           throw error;
         });
   }
 
-  createSalary(SalaryData) {
-    return this.post('/salary', SalaryData).then((response) => response.data)
+  createPayroll(PayrollData) {
+    return this.post('/payroll', PayrollData).then((response) => response.data)
         .catch((error) => {
-          console.error('Error creating salary:', error);
+          console.error('Error creating payroll:', error);
           toast.error(`${error}`);
           throw error;
         });
   }
 
-  updateSalary(SalaryId, SalaryData) {
-    return this.patch(`/salary/${SalaryId}`, SalaryData).then((response) => response.data)
+  updatePayroll(PayrollId, PayrollData) {
+    return this.patch(`/payroll/${PayrollId}`, PayrollData).then((response) => response.data)
         .catch((error) => {
-          console.error('Error updating salary:', error);
+          console.error('Error updating payroll:', error);
           toast.error(`${error}`);
           throw error;
         });
   }
 
-  deleteSalary(SalaryId) {
-    return this.delete(`/salary/${SalaryId}`).then((response) => response.data)
+  deletePayroll(PayrollId) {
+    return this.delete(`/payroll/${PayrollId}`).then((response) => response.data)
         .catch((error) => {
-          console.error('Error deleting salary:', error);
+          console.error('Error deleting payroll:', error);
           toast.error(`${error}`);
           throw error;
         });
@@ -76,4 +76,4 @@ class SalaryService extends HttpService {
   }
 }
 
-export default new SalaryService();
+export default new PayrollService();
