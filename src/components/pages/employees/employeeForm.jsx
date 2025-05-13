@@ -539,13 +539,17 @@ useEffect(() => {
   };
 
   const steps = [
-    { label: 'Basic Info', icon: <BsPerson size={20} /> },
-    { label: 'Contact', icon: <BsTelephone size={20} /> },
-    { label: 'Employment', icon: <BsBriefcase size={20} /> },
-    { label: 'Education', icon: <BsBook size={20} /> },
-    { label: 'Salary', icon: <BsCurrencyDollar size={20} /> },
-    { label: 'Documents', icon: <BsFileEarmarkText size={20} /> },
+    { label: 'Basic Info', icon: <BsPerson size={20} onClick={() => handleStepClick(0)} /> },
+    { label: 'Contact', icon: <BsTelephone size={20} onClick={() => handleStepClick(1)} /> },
+    { label: 'Employment', icon: <BsBriefcase size={20} onClick={() => handleStepClick(2)} /> },
+    { label: 'Education', icon: <BsBook size={20} onClick={() => handleStepClick(3)} /> },
+    { label: 'Salary', icon: <BsCurrencyDollar size={20} onClick={() => handleStepClick(4)} /> },
+    { label: 'Documents', icon: <BsFileEarmarkText size={20} onClick={() => handleStepClick(5)} /> },
   ];
+
+  const handleStepClick = (index) => {
+    setStep(index + 1); 
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target?.files?.[0] || e;
@@ -795,28 +799,28 @@ useEffect(() => {
       deductions: [...formData.deductions, { type: "", amount: "" }],
     });
   };
-    const calculateTotals = () => {
-      let allowancesTotal = 0;
+  const calculateTotals = () => {
+    let allowancesTotal = 0;
 
-      (formData?.allowances || []).forEach((allowance) => {
-        allowancesTotal += Number(allowance?.amount) || 0;
-      });
+    (formData?.allowances || []).forEach((allowance) => {
+      allowancesTotal += Number(allowance?.amount) || 0;
+    });
 
-      setTotalAllowances(allowancesTotal);
+    setTotalAllowances(allowancesTotal);
 
-      let deductionsTotal = 0;
+    let deductionsTotal = 0;
 
-      (formData?.deductions || []).forEach((deduction) => {
-        deductionsTotal += Number(deduction?.amount) || 0;
-      });
+    (formData?.deductions || []).forEach((deduction) => {
+      deductionsTotal += Number(deduction?.amount) || 0;
+    });
 
-      setTotalDeductions(deductionsTotal);
+    setTotalDeductions(deductionsTotal);
 
-      const baseSalary = Number(formData?.salaryAmount) || 0;
-      const total = baseSalary + allowancesTotal - deductionsTotal;
+    const baseSalary = Number(formData?.salaryAmount) || 0;
+    const total = baseSalary + allowancesTotal - deductionsTotal;
 
-      setTotalSalary(total);
-    };
+    setTotalSalary(total);
+  };
 
     const handleAllowanceChange = (index, e) => {
     const { name, value } = e.target;
@@ -865,7 +869,6 @@ useEffect(() => {
       </div>
      <div className="relative flex flex-col items-center mb-8 px-4">
         <div className="w-full max-w-6xl relative">
-          {/* Background line (full width) */}
           <div
             className="absolute top-5 h-1 bg-gray-300 z-10 hidden sm:block"
             style={{
@@ -874,7 +877,6 @@ useEffect(() => {
             }}
           ></div>
           
-          {/* Progress line (dynamic width) */}
           <div
             className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500 hidden sm:block"
             style={{
@@ -886,7 +888,6 @@ useEffect(() => {
             }}
           ></div>
           
-          {/* Step indicators */}
           <div className="flex flex-col sm:flex-row justify-between items-center relative z-20 space-y-4 sm:space-y-0 sm:space-x-4">
             {steps.map((s, index) => (
               <div
