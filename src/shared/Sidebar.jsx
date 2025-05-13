@@ -405,8 +405,10 @@ function Sidebar() {
                       href="#"
                       className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
                     >
-                      <span className="flex-1 whitespace-nowrap">
-                        Deductions & Bonuses
+                      <span className="flex-1 whitespace-nowrap"
+                        onClick={() => navigate("/transaction")}
+                      >
+                        Transaction Type
                       </span>
                     </a>
                   </li>

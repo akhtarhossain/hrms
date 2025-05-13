@@ -17,6 +17,8 @@ import ResetPasswordPage from '../auth/ResetPasswordPage';
 import ChangePasswordPage from '../auth/ChangePasswordPage';
 import PayslipList from '../components/pages/salary/payslip';
 import PayrollForm from '../components/pages/salary/payrollForm';
+import TransactionTypeForm from '../components/Transaction/transactionForm';
+import TransactionList from '../components/Transaction/transactionList';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -51,6 +53,10 @@ const router = createBrowserRouter([
           { path: 'change-password', element: <ChangePasswordPage /> },
           { path: 'payslip', element: <PayslipList /> },
           { path: 'payroll-form', element: <PayrollForm /> },
+          { path: 'transaction-form', element: <TransactionTypeForm /> },
+          { path: 'transaction-form/:id', element: <TransactionTypeForm /> },
+          { path: 'transaction', element: <TransactionList /> },
+          { path: 'transaction', element: <TransactionList /> },
         ],
       },
     ],
