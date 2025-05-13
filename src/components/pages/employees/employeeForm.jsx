@@ -10,22 +10,7 @@ import { FaDownload, FaTrash } from 'react-icons/fa6';
 import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import countries from 'i18n-iso-countries';
 import enLocale from 'i18n-iso-countries/langs/en.json';
-const allowanceTypes = [
-  { value: "Housing", label: "Housing Allowance" },
-  { value: "Transport", label: "Transport Allowance" },
-  { value: "Medical", label: "Medical Allowance" },
-  { value: "Bonus", label: "Bonus" },
-  { value: "Other", label: "Other Allowance" },
-];
-
-const deductionTypes = [
-  { value: "Tax", label: "Income Tax" },
-  { value: "Insurance", label: "Health Insurance" },
-  { value: "Loan", label: "Loan Payment" },
-  { value: "ProvidentFund", label: "Provident Fund" },
-  { value: "Late", label: "Late Deduction" },
-  { value: "Other", label: "Other Deduction" },
-];
+import TransactionTypeService from '../../../services/TransactionTypeService';
 
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
@@ -50,6 +35,8 @@ const EmployeeForm = () => {
   const [totalAllowances, setTotalAllowances] = useState(0);
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [totalSalary, setTotalSalary] = useState(0);
+  const [allowanceTypes, setAllowanceTypes] = useState([]);
+  const [deductionTypes, setDeductionTypes] = useState([]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -89,6 +76,36 @@ const EmployeeForm = () => {
   const countryOptions = Object.entries(countries.getNames('en', { select: 'official' })).map(
     ([code, name]) => ({ value: code, label: name })
   );
+
+  const fetchTransactions = () => {
+    TransactionTypeService.getTransactionTypes()
+      .then((data) => {
+        const transactions = data || [];
+        const formattedAllowances = transactions
+          .filter((item) => item.transactionType === "allowance")
+          .map((item) => ({
+            value: item.name,
+            label: item.name,
+          }));
+        const formattedDeductions = transactions
+          .filter((item) => item.transactionType === "deduction")
+          .map((item) => ({
+            value: item.name,
+            label: item.name,
+          }));
+  
+        setAllowanceTypes(formattedAllowances);
+        setDeductionTypes(formattedDeductions);
+      })
+      .catch((error) => {
+        console.error("Error fetching transactions:", error);
+        toast.error("Failed to load transaction records");
+      });
+  };
+  
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
 
 useEffect(() => {
   if (id) {
@@ -795,28 +812,25 @@ useEffect(() => {
       deductions: [...formData.deductions, { type: "", amount: "" }],
     });
   };
-    const calculateTotals = () => {
-      let allowancesTotal = 0;
-
-      (formData?.allowances || []).forEach((allowance) => {
-        allowancesTotal += Number(allowance?.amount) || 0;
-      });
-
-      setTotalAllowances(allowancesTotal);
-
-      let deductionsTotal = 0;
-
-      (formData?.deductions || []).forEach((deduction) => {
-        deductionsTotal += Number(deduction?.amount) || 0;
-      });
-
-      setTotalDeductions(deductionsTotal);
-
-      const baseSalary = Number(formData?.salaryAmount) || 0;
-      const total = baseSalary + allowancesTotal - deductionsTotal;
-
-      setTotalSalary(total);
-    };
+  const calculateTotals = () => {
+    let allowancesTotal = 0;
+    let deductionsTotal = 0;
+    let baseSalary = Number(formData?.salaryAmount) || 0;
+    (formData?.allowances || []).forEach((allowance) => {
+      const amount = Number(allowance?.amount) || 0;
+      const newSalary = Number(allowance?.newSalary) || 0;
+      allowancesTotal += amount + newSalary;
+    });
+    (formData?.deductions || []).forEach((deduction) => {
+      const amount = Number(deduction?.amount) || 0;
+      const newSalary = Number(deduction?.newSalary) || 0;
+      deductionsTotal += amount + newSalary;
+    });
+    const total = baseSalary + allowancesTotal - deductionsTotal;
+    setTotalAllowances(allowancesTotal);
+    setTotalDeductions(deductionsTotal);
+    setTotalSalary(total);
+  };
 
     const handleAllowanceChange = (index, e) => {
     const { name, value } = e.target;
@@ -1097,7 +1111,7 @@ useEffect(() => {
                   </div>
 
                 {(formData?.allowances || []).map((allowance, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 rounded-lg">
                     <div className="md:col-span-1">
                       <label className="block text-sm text-gray-600 mb-1">Type</label>
                       <select
@@ -1187,9 +1201,9 @@ useEffect(() => {
 
               {(formData?.allowances?.length > 0) && (
               <div className="flex justify-end mt-2">
-                <div className="text-lg font-semibold text-gray-700">
-                  Total Allowances: {totalAllowances.toFixed(2)}
-                </div>
+              <div className="text-lg font-semibold text-gray-700">
+                Total Allowances: {totalAllowances?.toFixed(2) || "0.00"}
+              </div>
               </div>
             )}
 
@@ -1208,7 +1222,7 @@ useEffect(() => {
                   </div>
 
                 {formData?.deductions?.length > 0 && formData.deductions.map((deduction, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 rounded-lg">
                     <div className="md:col-span-1">
                       <label className="block text-sm text-gray-600 mb-1">Type</label>
                       <select
@@ -1220,10 +1234,10 @@ useEffect(() => {
                       >
                         <option value="">Select Type</option>
                         {deductionTypes.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
                       </select>
                     </div>
 
@@ -1297,14 +1311,14 @@ useEffect(() => {
 
                 {formData?.deductions?.length > 0 && (
                   <div className="flex justify-end mt-2">
-                    <div className="text-lg font-semibold text-gray-700">
-                      Total Deductions: {totalDeductions.toFixed(2)}
-                    </div>
+                  <div className="text-lg font-semibold text-gray-700">
+                    Total Deductions: {totalDeductions?.toFixed(2) || "0.00"}
+                  </div>
                   </div>
                 )}
                 </div>
 
-                <div className="p-4 rounded-lg mt-6 mb-4 border border-gray-300 bg-white shadow-sm">
+                <div className="p-4 rounded-lg mt-6 mb-4 border border-gray-300 shadow-sm">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-lg">Net Salary:</span>
                     <span className="font-bold text-xl text-[#A294F9]">
