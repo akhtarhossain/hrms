@@ -1,15 +1,31 @@
 
 import React, { useEffect, useState } from 'react';
 import { FiDownload, FiUpload, FiPlus, FiList, FiFilter, FiDelete } from 'react-icons/fi';
-import { BsPerson, BsTelephone, BsBriefcase, BsBook, BsFileEarmarkText } from 'react-icons/bs';
+import { BsPerson, BsTelephone, BsBriefcase, BsBook, BsFileEarmarkText, BsCurrencyDollar } from 'react-icons/bs';
 import { useNavigate, useParams } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { FaDownload, FaTrash } from 'react-icons/fa6';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import countries from 'i18n-iso-countries';
 import enLocale from 'i18n-iso-countries/langs/en.json';
+const allowanceTypes = [
+  { value: "Housing", label: "Housing Allowance" },
+  { value: "Transport", label: "Transport Allowance" },
+  { value: "Medical", label: "Medical Allowance" },
+  { value: "Bonus", label: "Bonus" },
+  { value: "Other", label: "Other Allowance" },
+];
+
+const deductionTypes = [
+  { value: "Tax", label: "Income Tax" },
+  { value: "Insurance", label: "Health Insurance" },
+  { value: "Loan", label: "Loan Payment" },
+  { value: "ProvidentFund", label: "Provident Fund" },
+  { value: "Late", label: "Late Deduction" },
+  { value: "Other", label: "Other Deduction" },
+];
 
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
@@ -31,6 +47,9 @@ const EmployeeForm = () => {
   const [educationType, setEducationType] = useState('');
   const [documentUploadStatus, setDocumentUploadStatus] = useState('idle');
   const [documentName, setDocumentName] = useState('');
+  const [totalAllowances, setTotalAllowances] = useState(0);
+  const [totalDeductions, setTotalDeductions] = useState(0);
+  const [totalSalary, setTotalSalary] = useState(0);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -59,6 +78,8 @@ const EmployeeForm = () => {
     educations: [],
     dateOfBirth: '',
     profilePicture: '',
+    allowances: [{ type: "", amount: "" }],
+    deductions: [{ type: "", amount: "" }],
   });
 
   const [educationList, setEducationList] = useState([]);
@@ -69,71 +90,89 @@ const EmployeeForm = () => {
     ([code, name]) => ({ value: code, label: name })
   );
 
-  useEffect(() => {
-    if (id) {
-      employeeService.getEmployeeById(id)
-        .then((response) => {
-          const employeeData = response;
+useEffect(() => {
+  if (id) {
+    employeeService.getEmployeeById(id)
+      .then((response) => {
+        const employeeData = response;
 
-          const formatDateForInput = (dateString) => {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toISOString().split('T')[0];
-          };
+        // Function to format date for input fields (YYYY-MM-DD)
+        const formatDateForInput = (dateString) => {
+          if (!dateString) return '';
+          const date = new Date(dateString);
+          return date.toISOString().split('T')[0];
+        };
 
-          setFormData({
-            firstName: employeeData.firstName || '',
-            lastName: employeeData.lastName || '',
-            fatherOrHusbandName: employeeData.fatherOrHusbandName || '',
-            gender: employeeData.gender || '',
-            cnic: employeeData.cnic || '',
-            maritalStatus: employeeData.maritalStatus || '',
-            nationality: employeeData.nationality || '',
-            mobileNumber: employeeData.mobileNumber || '',
-            email: employeeData.email || '',
-            country: employeeData.country || '',
-            emergencyContactName: employeeData.emergencyContactName || '',
-            emergencyContactRelation: employeeData.emergencyContactRelation || '',
-            emergencyContactMobile: employeeData.emergencyContactMobile || '',
-            permanentAddress: employeeData.permanentAddress || '',
-            city: employeeData.city || '',
-            employeeId: employeeData.employeeId || '',
-            department: employeeData.department || '',
-            designation: employeeData.designation || '',
-            dateOfJoining: formatDateForInput(employeeData.dateOfJoining),
-            employmentType: employeeData.employmentType || '',
-            employeeStatus: employeeData.employeeStatus || '',
-            degreeTitle: employeeData.degreeTitle || '',
-            certificates: employeeData.certificates || [],
-            educations: employeeData.educations || [],
-            dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
-            profilePicture: employeeData.profilePicture || '',
-          });
+        setFormData({
+          firstName: employeeData.firstName || '',
+          lastName: employeeData.lastName || '',
+          fatherOrHusbandName: employeeData.fatherOrHusbandName || '',
+          gender: employeeData.gender || '',
+          cnic: employeeData.cnic || '',
+          maritalStatus: employeeData.maritalStatus || '',
+          nationality: employeeData.nationality || '',
+          mobileNumber: employeeData.mobileNumber || '',
+          email: employeeData.email || '',
+          country: employeeData.country || '',
+          emergencyContactName: employeeData.emergencyContactName || '',
+          emergencyContactRelation: employeeData.emergencyContactRelation || '',
+          emergencyContactMobile: employeeData.emergencyContactMobile || '',
+          permanentAddress: employeeData.permanentAddress || '',
+          city: employeeData.city || '',
+          employeeId: employeeData.employeeId || '',
+          department: employeeData.department || '',
+          designation: employeeData.designation || '',
+          dateOfJoining: formatDateForInput(employeeData.dateOfJoining),
+          employmentType: employeeData.employmentType || '',
+          employeeStatus: employeeData.employeeStatus || '',
+          degreeTitle: employeeData.degreeTitle || '',
+          certificates: employeeData.certificates || [],
+          educations: employeeData.educations || [],
+          dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
+          profilePicture: employeeData.profilePicture || '',
+          
+          // Format date fields for allowances and deductions
+          allowances: employeeData.allowances?.map(allowance => ({
+            ...allowance,
+            startDate: formatDateForInput(allowance.startDate),
+            endDate: formatDateForInput(allowance.endDate)
+          })) || [],
 
-          if (employeeData.educations && employeeData.educations.length > 0) {
-            setEducationList(employeeData.educations);
-          }
-
-          if (employeeData.certificates && employeeData.certificates.length > 0) {
-            setDocumentList(employeeData.certificates.map(doc => ({
-              type: doc.type,
-              fileUrl: doc.fileUrl,
-              file: { name: doc.fileUrl?.split('/').pop() || 'document' }
-            })));
-          }
-
-          if (employeeData.profilePicture) {
-            setImageUrl(employeeData.profilePicture);
-            setImageName(employeeData.profilePicture.split('/').pop() || 'profile');
-            setUploadStatus('uploaded');
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching employee data:', error);
-          toast.error('Failed to load employee data');
+          deductions: employeeData.deductions?.map(deduction => ({
+            ...deduction,
+            startDate: formatDateForInput(deduction.startDate),
+            endDate: formatDateForInput(deduction.endDate)
+          })) || []
         });
-    }
-  }, [id]);
+
+        // Handle education list
+        if (employeeData.educations && employeeData.educations.length > 0) {
+          setEducationList(employeeData.educations);
+        }
+
+        // Handle document list
+        if (employeeData.certificates && employeeData.certificates.length > 0) {
+          setDocumentList(employeeData.certificates.map(doc => ({
+            type: doc.type,
+            fileUrl: doc.fileUrl,
+            file: { name: doc.fileUrl?.split('/').pop() || 'document' }
+          })));
+        }
+
+        // Handle profile picture
+        if (employeeData.profilePicture) {
+          setImageUrl(employeeData.profilePicture);
+          setImageName(employeeData.profilePicture.split('/').pop() || 'profile');
+          setUploadStatus('uploaded');
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching employee data:', error);
+        toast.error('Failed to load employee data');
+      });
+  }
+}, [id]);
+
 
   const requiredFields = {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
@@ -144,7 +183,7 @@ const EmployeeForm = () => {
 
   const handleNext = () => {
     if (!isStepValid()) return;
-    if (step < 5) setStep(step + 1);
+    if (step < 6) setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -504,6 +543,7 @@ const EmployeeForm = () => {
     { label: 'Contact', icon: <BsTelephone size={20} /> },
     { label: 'Employment', icon: <BsBriefcase size={20} /> },
     { label: 'Education', icon: <BsBook size={20} /> },
+    { label: 'Salary', icon: <BsCurrencyDollar size={20} /> },
     { label: 'Documents', icon: <BsFileEarmarkText size={20} /> },
   ];
 
@@ -742,7 +782,74 @@ const EmployeeForm = () => {
     }
     setFormData(prev => ({ ...prev, cnic: formatted }));
   };
+  const addAllowance = () => {
+    setFormData({
+      ...formData,
+      allowances: [...formData.allowances, { type: "", amount: "" }],
+    });
+  };
 
+  const addDeduction = () => {
+    setFormData({
+      ...formData,
+      deductions: [...formData.deductions, { type: "", amount: "" }],
+    });
+  };
+    const calculateTotals = () => {
+      let allowancesTotal = 0;
+
+      (formData?.allowances || []).forEach((allowance) => {
+        allowancesTotal += Number(allowance?.amount) || 0;
+      });
+
+      setTotalAllowances(allowancesTotal);
+
+      let deductionsTotal = 0;
+
+      (formData?.deductions || []).forEach((deduction) => {
+        deductionsTotal += Number(deduction?.amount) || 0;
+      });
+
+      setTotalDeductions(deductionsTotal);
+
+      const baseSalary = Number(formData?.salaryAmount) || 0;
+      const total = baseSalary + allowancesTotal - deductionsTotal;
+
+      setTotalSalary(total);
+    };
+
+    const handleAllowanceChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedAllowances = [...formData.allowances];
+    updatedAllowances[index][name] = value;
+    setFormData({ ...formData, allowances: updatedAllowances });
+  };
+
+  const handleDeductionChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedDeductions = [...formData.deductions];
+    updatedDeductions[index][name] = value;
+    setFormData({ ...formData, deductions: updatedDeductions });
+  };
+
+useEffect(() => {
+  if (formData) {
+    if (formData.allowances?.length || formData.deductions?.length) {
+      calculateTotals(formData);
+    }
+  }
+}, [formData]);
+
+
+  const removeAllowance = (index) => {
+    const updatedAllowances = formData.allowances.filter((_, i) => i !== index);
+    setFormData({ ...formData, allowances: updatedAllowances });
+  };
+
+  const removeDeduction = (index) => {
+    const updatedDeductions = formData.deductions.filter((_, i) => i !== index);
+    setFormData({ ...formData, deductions: updatedDeductions });
+  };
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
@@ -757,61 +864,61 @@ const EmployeeForm = () => {
         </div>
       </div>
      <div className="relative flex flex-col items-center mb-8 px-4">
-  <div className="w-full max-w-6xl relative">
-    {/* Background line (full width) */}
-    <div
-      className="absolute top-5 h-1 bg-gray-300 z-10 hidden sm:block"
-      style={{
-        left: '6vw',
-        right: '6vw',
-      }}
-    ></div>
-    
-    {/* Progress line (dynamic width) */}
-    <div
-      className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500 hidden sm:block"
-      style={{
-        left: '6vw',
-        width: step === steps.length 
-          ? 'calc(100% - 12vw)' // Full width when on last step
-          : `calc(${(step / steps.length) * 100}% - 14vw)`, // Proportional width for other steps
-        maxWidth: 'calc(100% - 12vw)',
-      }}
-    ></div>
-    
-    {/* Step indicators */}
-    <div className="flex flex-col sm:flex-row justify-between items-center relative z-20 space-y-4 sm:space-y-0 sm:space-x-4">
-      {steps.map((s, index) => (
-        <div
-          key={index}
-          className="flex flex-col items-center flex-1 sm:flex-auto"
-          style={{
-            minWidth: index === 0 || index === steps.length - 1 ? '10vw' : 'auto',
-          }}
-        >
+        <div className="w-full max-w-6xl relative">
+          {/* Background line (full width) */}
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
-              step === index + 1
-                ? 'bg-[#A294F9] text-white border-2 border-[#A294F9]'
-                : step > index + 1
-                ? 'bg-[#A294F9] text-white'
-                : 'bg-white border-2 border-gray-300 text-gray-600'
-            }`}
-          >
-            {s.icon}
+            className="absolute top-5 h-1 bg-gray-300 z-10 hidden sm:block"
+            style={{
+              left: '6vw',
+              right: '6vw',
+            }}
+          ></div>
+          
+          {/* Progress line (dynamic width) */}
+          <div
+            className="absolute top-5 h-1 bg-[#A294F9] z-10 transition-all duration-500 hidden sm:block"
+            style={{
+              left: '6vw',
+              width: step === steps.length 
+                ? 'calc(100% - 12vw)' // Full width when on last step
+                : `calc(${(step / steps.length) * 100}% - 12vw)`, // Proportional width for other steps
+              maxWidth: 'calc(100% - 12vw)',
+            }}
+          ></div>
+          
+          {/* Step indicators */}
+          <div className="flex flex-col sm:flex-row justify-between items-center relative z-20 space-y-4 sm:space-y-0 sm:space-x-4">
+            {steps.map((s, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center flex-1 sm:flex-auto"
+                style={{
+                  minWidth: index === 0 || index === steps.length - 1 ? '10vw' : 'auto',
+                }}
+              >
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                    step === index + 1
+                      ? 'bg-[#A294F9] text-white border-2 border-[#A294F9]'
+                      : step > index + 1
+                      ? 'bg-[#A294F9] text-white'
+                      : 'bg-white border-2 border-gray-300 text-gray-600'
+                  }`}
+                >
+                  {s.icon}
+                </div>
+                <span
+                  className={`mt-2 text-xs sm:text-sm font-medium ${
+                    step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
+                  }`}
+                >
+                  {s.label}
+                </span>
+              </div>
+            ))}
           </div>
-          <span
-            className={`mt-2 text-xs sm:text-sm font-medium ${
-              step >= index + 1 ? 'text-gray-800' : 'text-gray-500'
-            }`}
-          >
-            {s.label}
-          </span>
         </div>
-      ))}
-    </div>
-  </div>
-</div>
+      </div>
       <div className="flex justify-center">
         <div className="p-8 w-full max-w-6xl">
           <h3 className="text-xl font-semibold mb-6 text-gray-800">
@@ -819,7 +926,8 @@ const EmployeeForm = () => {
             {step === 2 && 'Personal Information'}
             {step === 3 && 'Employment Information'}
             {step === 4 && 'Educational Background'}
-            {step === 5 && 'Documents'}
+            {step === 5 && 'Salary'}
+            {step === 6 && 'Documents'}
           </h3>
           <form onSubmit={handleSubmit}>
             {step === 1 && (
@@ -976,6 +1084,238 @@ const EmployeeForm = () => {
             )}
             {step === 5 && (
               <>
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-lg text-[#333]">Allowances</h3>
+                    <button
+                      onClick={addAllowance}
+                      className="px-3 py-2 rounded-md shadow text-white flex items-center gap-1 bg-[#A294F9] hover:bg-[#8a7ce0] transition"
+                    >
+                      <FiPlus size={16} />
+                      Add Allowance
+                    </button>
+                  </div>
+
+                {(formData?.allowances || []).map((allowance, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 bg-gray-50 rounded-lg">
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">Type</label>
+                      <select
+                        name="type"
+                        value={allowance.type}
+                        onChange={(e) => handleAllowanceChange(index, e)}
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                        required
+                      >
+                        <option value="">Select Type</option>
+                        {allowanceTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">Current Salary</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <BsCurrencyDollar className="text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="currentSalary"
+                          value={allowance.currentSalary || ''}
+                          placeholder="Current"
+                          onChange={(e) => handleAllowanceChange(index, e)}
+                          className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">New Salary</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <BsCurrencyDollar className="text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="newSalary"
+                          value={allowance.newSalary || ''}
+                          placeholder="New Salary"
+                          onChange={(e) => handleAllowanceChange(index, e)}
+                          className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={allowance.startDate || ''}
+                        onChange={(e) => handleAllowanceChange(index, e)}
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={allowance.endDate || ''}
+                        onChange={(e) => handleAllowanceChange(index, e)}
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-5 flex justify-end">
+                      <button
+                        title="Delete"
+                        className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                        onClick={() => removeAllowance(index)}
+                      >
+                        <FaTrash className="text-white" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+
+              {(formData?.allowances?.length > 0) && (
+              <div className="flex justify-end mt-2">
+                <div className="text-lg font-semibold text-gray-700">
+                  Total Allowances: {totalAllowances.toFixed(2)}
+                </div>
+              </div>
+            )}
+
+                </div>
+
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-lg text-[#333]">Deductions</h3>
+                    <button
+                      onClick={addDeduction}
+                      className="px-3 py-2 rounded-md shadow text-white flex items-center gap-1 bg-[#A294F9] hover:bg-[#8a7ce0] transition"
+                    >
+                      <FiPlus size={16} />
+                      Add Deduction
+                    </button>
+                  </div>
+
+                {formData?.deductions?.length > 0 && formData.deductions.map((deduction, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 bg-gray-50 rounded-lg">
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">Type</label>
+                      <select
+                        name="type"
+                        value={deduction.type}
+                        onChange={(e) => handleDeductionChange(index, e)}
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                        required
+                      >
+                        <option value="">Select Type</option>
+                        {deductionTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">Current Salary</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <BsCurrencyDollar className="text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="currentSalary"
+                          value={deduction.currentSalary || ''}
+                          placeholder="Current"
+                          onChange={(e) => handleDeductionChange(index, e)}
+                          className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">New Salary</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <BsCurrencyDollar className="text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="newSalary"
+                          value={deduction.newSalary || ''}
+                          placeholder="New Salary"
+                          onChange={(e) => handleDeductionChange(index, e)}
+                          className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={deduction.startDate || ''}
+                        onChange={(e) => handleDeductionChange(index, e)}
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-1">
+                      <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={deduction.endDate || ''}
+                        onChange={(e) => handleDeductionChange(index, e)}
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="md:col-span-5 flex justify-end">
+                      <button
+                        title="Delete"
+                        className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                        onClick={() => removeDeduction(index)}
+                      >
+                        <FaTrash className="text-white" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {formData?.deductions?.length > 0 && (
+                  <div className="flex justify-end mt-2">
+                    <div className="text-lg font-semibold text-gray-700">
+                      Total Deductions: {totalDeductions.toFixed(2)}
+                    </div>
+                  </div>
+                )}
+                </div>
+
+                <div className="p-4 rounded-lg mt-6 mb-4 border border-gray-300 bg-white shadow-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-lg">Net Salary:</span>
+                    <span className="font-bold text-xl text-[#A294F9]">
+                      {totalSalary.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+            {step === 6 && (
+              <>
                 <div className="flex flex-wrap -mx-2 w-full">
                   <div className="w-full sm:w-1/2 px-2 mb-4">
                     <label className="block text-sm font-medium mb-1 text-gray-700">Document Type</label>
@@ -1106,7 +1446,7 @@ const EmployeeForm = () => {
                 Previous
               </button>
             )}
-            {step < 5 && (
+            {step < 6 && (
               <button
                 type="button"
                 onClick={handleNext}
@@ -1116,7 +1456,7 @@ const EmployeeForm = () => {
               </button>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <button
                 type="submit"
                 onClick={handleSubmit}
