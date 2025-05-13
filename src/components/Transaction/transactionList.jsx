@@ -28,10 +28,8 @@ const TransactionList = () => {
     setLoading(true);
     TransactionTypeService.getTransactionTypes()
     .then((data) => {
-      console.log("Data fetched:", data); // Add this line
       setTransactions(data || []);
     })
-  
       .catch((error) => {
         console.error('Error fetching transactions:', error);
         toast.error('Failed to load transaction records');
@@ -40,7 +38,6 @@ const TransactionList = () => {
         setLoading(false);
       });
       console.log(transactions);
-      
   };
 
   const handleFilterChange = (e) => {
