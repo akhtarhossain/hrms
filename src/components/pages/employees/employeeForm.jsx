@@ -65,8 +65,8 @@ const EmployeeForm = () => {
     educations: [],
     dateOfBirth: '',
     profilePicture: '',
-    allowances: [{ type: "", amount: "" }],
-    deductions: [{ type: "", amount: "" }],
+    allowances: [{ type: "", amount: "" , currentSalary: "0" }],
+    deductions: [{ type: "", amount: "" , currentSalary: "0" }],
   });
 
   const [educationList, setEducationList] = useState([]);
@@ -148,7 +148,6 @@ useEffect(() => {
           dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
           profilePicture: employeeData.profilePicture || '',
           
-          // Format date fields for allowances and deductions
           allowances: employeeData.allowances?.map(allowance => ({
             ...allowance,
             startDate: formatDateForInput(allowance.startDate),
@@ -244,7 +243,10 @@ useEffect(() => {
       educations: educationList,
       certificates: documentList,
       profilePicture: imageUrl,
+      totalValue : String(totalSalary)
     };
+    console.log(finalData , "final daat");
+    
     if (id) {
       employeeService.updateEmployee(id, finalData)
         .then((response) => {
@@ -806,20 +808,20 @@ useEffect(() => {
   const addAllowance = () => {
     setFormData({
       ...formData,
-      allowances: [...formData.allowances, { type: "", amount: "" }],
+      allowances: [...formData.allowances, { type: "", amount: "" , currentSalary: "0" }],
     });
   };
 
   const addDeduction = () => {
     setFormData({
       ...formData,
-      deductions: [...formData.deductions, { type: "", amount: "" }],
+      deductions: [...formData.deductions, { type: "", amount: "" , currentSalary: "0"}],
     });
   };
   const calculateTotals = () => {
     let allowancesTotal = 0;
     let deductionsTotal = 0;
-    let baseSalary = Number(formData?.salaryAmount) || 0;
+  
     (formData?.allowances || []).forEach((allowance) => {
       const amount = Number(allowance?.amount) || 0;
       const newSalary = Number(allowance?.newSalary) || 0;
@@ -830,7 +832,9 @@ useEffect(() => {
       const newSalary = Number(deduction?.newSalary) || 0;
       deductionsTotal += amount + newSalary;
     });
-    const total = baseSalary + allowancesTotal - deductionsTotal;
+    const total = allowancesTotal - deductionsTotal;
+    console.log(total , "totototlllll");
+    
     setTotalAllowances(allowancesTotal);
     setTotalDeductions(deductionsTotal);
     setTotalSalary(total);
@@ -1110,8 +1114,7 @@ useEffect(() => {
                       Add Allowance
                     </button>
                   </div>
-
-                {(formData?.allowances || []).map((allowance, index) => (
+                {formData?.allowances?.length > 0 && formData.allowances.map((allowance, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3 rounded-lg">
                     <div className="md:col-span-1">
                       <label className="block text-sm text-gray-600 mb-1">Type</label>
@@ -1132,7 +1135,7 @@ useEffect(() => {
                     </div>
 
                     <div className="md:col-span-1">
-                      <label className="block text-sm text-gray-600 mb-1">Current Salary</label>
+                      <label className="block text-sm text-gray-600 mb-1">Current Value</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <BsCurrencyDollar className="text-gray-400" />
@@ -1149,7 +1152,7 @@ useEffect(() => {
                     </div>
 
                     <div className="md:col-span-1">
-                      <label className="block text-sm text-gray-600 mb-1">New Salary</label>
+                      <label className="block text-sm text-gray-600 mb-1">New Value</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <BsCurrencyDollar className="text-gray-400" />
@@ -1158,7 +1161,7 @@ useEffect(() => {
                           type="number"
                           name="newSalary"
                           value={allowance.newSalary || ''}
-                          placeholder="New Salary"
+                          placeholder="New Value"
                           onChange={(e) => handleAllowanceChange(index, e)}
                           className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                         />
@@ -1199,7 +1202,6 @@ useEffect(() => {
                   </div>
                 ))}
 
-
               {(formData?.allowances?.length > 0) && (
               <div className="flex justify-end mt-2">
               <div className="text-lg font-semibold text-gray-700">
@@ -1207,8 +1209,7 @@ useEffect(() => {
               </div>
               </div>
             )}
-
-                </div>
+            </div>
 
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-4">
@@ -1243,7 +1244,7 @@ useEffect(() => {
                     </div>
 
                     <div className="md:col-span-1">
-                      <label className="block text-sm text-gray-600 mb-1">Current Salary</label>
+                      <label className="block text-sm text-gray-600 mb-1">Current Value</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <BsCurrencyDollar className="text-gray-400" />
@@ -1260,7 +1261,7 @@ useEffect(() => {
                     </div>
 
                     <div className="md:col-span-1">
-                      <label className="block text-sm text-gray-600 mb-1">New Salary</label>
+                      <label className="block text-sm text-gray-600 mb-1">New Value</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <BsCurrencyDollar className="text-gray-400" />
@@ -1269,7 +1270,7 @@ useEffect(() => {
                           type="number"
                           name="newSalary"
                           value={deduction.newSalary || ''}
-                          placeholder="New Salary"
+                          placeholder="New Value"
                           onChange={(e) => handleDeductionChange(index, e)}
                           className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                         />
