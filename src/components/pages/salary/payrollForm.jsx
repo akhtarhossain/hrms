@@ -1,449 +1,416 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { FiList, FiPlus, FiTrash2 } from "react-icons/fi";
-import PayrollService from "../../../services/PayrollService";
+import React, { useState, useEffect } from 'react';
+import { FiFilter, FiPlus, FiDollarSign } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FaEdit, FaTrashAlt, FaEye, FaSearch, FaFileDownload } from 'react-icons/fa';
+import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
-import EmploySalaryService from "../../../services/EmploySalaryService";
-import { FaTrashAlt } from "react-icons/fa";
-
-const allowanceTypes = [
-  { value: "Housing", label: "Housing Allowance" },
-  { value: "Transport", label: "Transport Allowance" },
-  { value: "Medical", label: "Medical Allowance" },
-  { value: "Bonus", label: "Bonus" },
-  { value: "Other", label: "Other Allowance" },
-];
-
-const deductionTypes = [
-  { value: "Tax", label: "Income Tax" },
-  { value: "Insurance", label: "Health Insurance" },
-  { value: "Loan", label: "Loan Payment" },
-  { value: "ProvidentFund", label: "Provident Fund" },
-  { value: "Late", label: "Late Deduction" },
-  { value: "Other", label: "Other Deduction" },
-];
-
-const salaryTypes = [
-  { value: "monthly", label: "Monthly" },
-  { value: "hourly", label: "Hourly" },
-];
+import DeleteModal from '../../../shared/common/DeleteConfirmation';
+import EmploySalaryService from '../../../services/EmploySalaryService';
+import employeeService from '../../../services/employeeService';
+import EmployeeSalaryForm from '../salary/employSalary';
 
 const PayrollForm = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
   const [salaries, setSalaries] = useState([]);
-  const [totalSalary, setTotalSalary] = useState(0);
-  const [totalAllowances, setTotalAllowances] = useState(0);
-  const [totalDeductions, setTotalDeductions] = useState(0);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedSalaryId, setSelectedSalaryId] = useState(null);
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [currentEmployee, setCurrentEmployee] = useState(null);
 
-  const [formData, setFormData] = useState({
-    employeeId: "",
-    date: new Date().toISOString().split("T")[0],
-    salaryType: "monthly",
-    salaryAmount: "",
-    allowances: [{ type: "", amount: "" }],
-    deductions: [{ type: "", amount: "" }],
+  const [filters, setFilters] = useState({
+    employeeName: '',
+    month: '',
+    year: ''
   });
 
   useEffect(() => {
     fetchSalaries();
   }, []);
 
-  useEffect(() => {
-    if (id) {
-      PayrollService.getPayrollById(id)
-        .then((response) => {
-          const salaryData = response;
-          const formatDateForInput = (dateString) => {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toISOString().split('T')[0];
-          };
-          setFormData({
-            employeeId: salaryData.employeeId?._id || '',
-            firstName: salaryData.employeeId?.firstName || '',
-            lastName: salaryData.employeeId?.lastName || '',
-            profilePicture: salaryData.employeeId?.profilePicture || '',
-            salaryAmount: salaryData.salaryAmount || '',
-            salaryType: salaryData.salaryType || '',
-            totalSalary: salaryData.totalSalary || '',
-            date: formatDateForInput(salaryData.date),
-            allowances: salaryData.allowances || [],
-            deductions: salaryData.deductions || [],
-          });
-          // Set the selected employee for display
-          if (salaryData.employeeId) {
-            setSelectedEmployee(salaryData.employeeId);
-          }
-        })
-        .catch((error) => {
-          console.error('Error fetching salary data:', error);
-          toast.error('Failed to load salary data');
-        });
-    }
-  }, [id]);
-
-  useEffect(() => {
-    calculateTotals();
-  }, [formData]);
-
   const fetchSalaries = () => {
-    EmploySalaryService.getSalary()
-      .then((response) => {
-        setSalaries(response);
+    setLoading(true);
+    employeeService.getEmployee()
+      .then((data) => {
+        setSalaries(data || []);
+        setSelectedEmployees([]);
+        setSelectAll(false);
       })
       .catch((error) => {
-        console.error("Error fetching salaries:", error);
-        toast.error("Failed to load salary data");
+        console.error('Error fetching salaries:', error);
+        toast.error('Failed to load salary records');
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
-  const handleEmployeeSelect = (e) => {
-    const employeeId = e.target.value;
-    const selectedSalary = salaries.find(s => s.employeeId._id === employeeId);
-    if (selectedSalary) {
-      setSelectedEmployee(selectedSalary.employeeId);
-      setFormData({
-        ...formData,
-        employeeId: employeeId,
-        salaryAmount: selectedSalary.salaryAmount || '',
-        salaryType: selectedSalary.salaryType || 'monthly'
+  const calculateTotalAllowances = (employee) => {
+    if (!employee.allowances || employee.allowances.length === 0) return 0;
+    return employee.allowances.reduce((total, allowance) => {
+      return total + (allowance.newSalary || 0);
+    }, 0);
+  };
+
+  const calculateTotalDeductions = (employee) => {
+    if (!employee.deductions || employee.deductions.length === 0) return 0;
+    return employee.deductions.reduce((total, deduction) => {
+      return total + (deduction.newSalary || 0);
+    }, 0);
+  };
+
+  const calculateTotalSalary = (employee) => {
+    const totalAllowances = calculateTotalAllowances(employee);
+    const totalDeductions = calculateTotalDeductions(employee);
+    return totalAllowances - totalDeductions;
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const applyFilters = () => {
+    setLoading(true);
+    EmploySalaryService.getSalary(filters)
+      .then((response) => {
+        setSalaries(response.data || []);
+        setSelectedEmployees([]);
+        setSelectAll(false);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error filtering salaries:', error);
+        toast.error('Failed to filter salary records');
+        setLoading(false);
       });
-    }
+    setShowFilter(false);
   };
 
-  const calculateTotals = () => {
-    let allowancesTotal = 0;
-    formData.allowances.forEach((allowance) => {
-      allowancesTotal += Number(allowance.amount) || 0;
+  const closeFilter = () => {
+    setShowFilter(false);
+    setFilters({
+      employeeName: '',
+      month: '',
+      year: ''
     });
-    setTotalAllowances(allowancesTotal);
-    let deductionsTotal = 0;
-    formData.deductions.forEach((deduction) => {
-      deductionsTotal += Number(deduction.amount) || 0;
-    });
-    setTotalDeductions(deductionsTotal);
-    const baseSalary = Number(formData.salaryAmount) || 0;
-    const total = baseSalary + allowancesTotal - deductionsTotal;
-    setTotalSalary(total);
+    fetchSalaries();
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const handleDeleteClick = (salaryId) => {
+    setSelectedSalaryId(salaryId);
+    setShowDeleteModal(true);
+  };
+  
+  const confirmDelete = () => {
+    EmploySalaryService.deleteSalary(selectedSalaryId)
+      .then(() => {
+        toast.success("Salary record deleted successfully");
+        setSalaries(prev => prev.filter(s => s._id !== selectedSalaryId));
+      })
+      .catch((error) => {
+        console.error('Error deleting salary:', error);
+        toast.error('Failed to delete salary record');
+      })
+      .finally(() => {
+        setShowDeleteModal(false);
+        setSelectedSalaryId(null);
+      });
   };
 
-  const handleAllowanceChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedAllowances = [...formData.allowances];
-    updatedAllowances[index][name] = value;
-    setFormData({ ...formData, allowances: updatedAllowances });
-  };
-
-  const handleDeductionChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedDeductions = [...formData.deductions];
-    updatedDeductions[index][name] = value;
-    setFormData({ ...formData, deductions: updatedDeductions });
-  };
-
-  const addAllowance = () => {
-    setFormData({
-      ...formData,
-      allowances: [...formData.allowances, { type: "", amount: "" }],
-    });
-  };
-
-  const addDeduction = () => {
-    setFormData({
-      ...formData,
-      deductions: [...formData.deductions, { type: "", amount: "" }],
-    });
-  };
-
-  const removeAllowance = (index) => {
-    const updatedAllowances = formData.allowances.filter((_, i) => i !== index);
-    setFormData({ ...formData, allowances: updatedAllowances });
-  };
-
-  const removeDeduction = (index) => {
-    const updatedDeductions = formData.deductions.filter((_, i) => i !== index);
-    setFormData({ ...formData, deductions: updatedDeductions });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const salaryData = {
-      employeeId: formData.employeeId,
-      status: "pending",
-      date: formData.date,
-      salaryType: formData.salaryType,
-      salaryAmount: Number(formData.salaryAmount),
-      allowances: formData.allowances
-        .filter(allowance => allowance.type && allowance.amount)
-        .map(allowance => ({
-          type: allowance.type,
-          amount: Number(allowance.amount)
-        })),
-      deductions: formData.deductions
-        .filter(deduction => deduction.type && deduction.amount)
-        .map(deduction => ({
-          type: deduction.type,
-          amount: Number(deduction.amount)
-        })),
-      totalSalary: totalSalary
-    };
-
-    if (id) {
-      PayrollService.updatePayroll(id, salaryData)
-        .then((response) => {
-          console.log('Payroll updated successfully:', response);
-          toast.success('Payroll updated successfully!');
-          navigate('/payslip');
-        })
-        .catch((error) => {
-          console.error('Error updating payroll:', error);
-          toast.error('Error updating payroll. Please try again.');
-        });
-    } else {
-      PayrollService.createPayroll(salaryData)
-        .then(response => {
-          console.log("Payroll saved successfully:", response);
-          toast.success("Payroll saved successfully!");
-          navigate('/payslip');
-        })
-        .catch(error => {
-          console.error("Error saving payroll:", error);
-          toast.error("Error saving payroll. Please try again.");
-        });
-    }
-  };
-
-  // Get unique employees from salaries data
-  const getUniqueEmployees = () => {
-    const uniqueEmployees = [];
-    const employeeIds = new Set();
-    salaries.forEach(salary => {
-      if (salary.employeeId && !employeeIds.has(salary.employeeId._id)) {
-        employeeIds.add(salary.employeeId._id);
-        uniqueEmployees.push(salary);
+  const toggleEmployeeSelection = (employeeId) => {
+    setSelectedEmployees(prev => {
+      if (prev.includes(employeeId)) {
+        return prev.filter(id => id !== employeeId);
+      } else {
+        return [...prev, employeeId];
       }
     });
-    return uniqueEmployees;
   };
 
-  return (
-    <div className="p-6 bg-[#F5EFFF] min-h-screen">
-      <div className="py-4 px-2 flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Payroll Form</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => navigate('/payslip')}
-            title="List"
-            className="p-2 bg-[#A294F9] rounded shadow"
-          >
-            <FiList className="text-white" />
-          </button>
-        </div>
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedEmployees([]);
+    } else {
+      setSelectedEmployees(salaries.map(employee => employee._id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const calculateSelectedTotals = () => {
+    const selected = salaries.filter(employee => selectedEmployees.includes(employee._id));
+    
+    const totalAllowance = selected.reduce((sum, employee) => {
+      return sum + calculateTotalAllowances(employee);
+    }, 0);
+
+    const totalDeduction = selected.reduce((sum, employee) => {
+      return sum + calculateTotalDeductions(employee);
+    }, 0);
+
+    const totalSalary = selected.reduce((sum, employee) => {
+      return sum + calculateTotalSalary(employee);
+    }, 0);
+
+    return {
+      totalAllowance,
+      totalDeduction,
+      totalSalary,
+      selectedEmployees: selected
+    };
+  };
+
+  const openEditModal = (employee) => {
+    setCurrentEmployee(employee);
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setCurrentEmployee(null);
+  };
+
+  const handleCreatePayroll = () => {
+    if (selectedEmployees.length === 0) {
+      toast.warning("Please select at least one employee to create payroll");
+      return;
+    }
+
+    const payrollData = {
+      employees: selectedEmployees.map(empId => {
+        const employee = salaries.find(e => e._id === empId);
+        return {
+          employeeId: empId,
+          name: `${employee.firstName} ${employee.lastName}`,
+          totalAllowance: calculateTotalAllowances(employee),
+          totalDeduction: calculateTotalDeductions(employee),
+          totalSalary: calculateTotalSalary(employee)
+        };
+      }),
+      summary: calculateSelectedTotals()
+    };
+
+    console.log("Payroll data to be sent:", payrollData);
+    toast.success(`Payroll created for ${selectedEmployees.length} employees`);
+    setSelectedEmployees([]);
+    setSelectAll(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
+        <div className="text-lg text-gray-600">Loading salary records...</div>
       </div>
-      <div className="flex justify-center">
-        <div className="w-full max-w-5xl">
-          <div className="flex gap-4 mb-4 w-full">
-            <div className="w-1/2">
-              <label className="block mb-1 font-semibold text-[#333]">Employee</label>
-              <select
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleEmployeeSelect}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                required
-              >
-                <option value="">Select Employee</option>
-                {getUniqueEmployees().map((salary) => (
-                  <option key={salary.employeeId._id} value={salary.employeeId._id}>
-                    {salary.employeeId.firstName} {salary.employeeId.lastName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="w-1/2">
-              <label className="block mb-1 font-semibold text-[#333]">Date</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                required
-              />
-            </div>
-          </div>
+    );
+  }
 
-          {/* Employee Salary Information (read-only) */}
-          {selectedEmployee && (
-            <div className="flex gap-4 mb-4 w-full">
-              <div className="w-1/2">
-                <label className="block mb-1 font-semibold text-[#333]">Salary Type</label>
-                <input
-                  type="text"
-                  value={formData.salaryType === 'monthly' ? 'Monthly' : 'Hourly'}
-                  readOnly
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-              <div className="w-1/2">
-                <label className="block mb-1 font-semibold text-[#333]">
-                  {formData.salaryType === "monthly" ? "Monthly Salary" : "Hourly Rate"}
-                </label>
-                <input
-                  type="text"
-                  value={formData.salaryAmount}
-                  readOnly
-                  className="w-full p-2 border border-gray-300 rounded"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Rest of the form remains the same */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-[#333]">Allowances</h3>
-              <button
-                onClick={addAllowance}
-                className="px-3 py-1 rounded shadow text-white flex items-center gap-1"
-                style={{ backgroundColor: '#A294F9' }}
-              >
-                <FiPlus size={16} />
-                Add Allowance
-              </button>
-            </div>
-
-            {formData.allowances.map((allowance, index) => (
-              <div key={index} className="flex gap-2 mb-2 items-center">
-                <select
-                  name="type"
-                  value={allowance.type}
-                  onChange={(e) => handleAllowanceChange(index, e)}
-                  className="w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  required
-                >
-                  <option value="">Select Type</option>
-                  {allowanceTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-
-                <div className="w-1/2">
-                  <input
-                    type="number"
-                    name="amount"
-                    value={allowance.amount}
-                    placeholder="Amount"
-                    onChange={(e) => handleAllowanceChange(index, e)}
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                    required
-                  />
-                </div>
-                <button
-                  title="Delete"
-                  className="p-2 rounded shadow cursor-pointer"
-                  style={{ backgroundColor: '#F87171' }}
-                  onClick={() => removeAllowance(index)}
-                >
-                  <FaTrashAlt className="text-white" />
-                </button>
-              </div>
-            ))}
-
-            {/* Move the total display outside the map function */}
-            {formData.allowances.length > 0 && (
-              <div className="flex justify-center ml-8 mt-2">
-                <div className="text-sm text-gray-600">
-                  Total : {totalAllowances.toFixed(2)}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-[#333]">Deductions</h3>
-              <button
-                onClick={addDeduction}
-                className="px-3 py-1 rounded shadow text-white flex items-center gap-1"
-                style={{ backgroundColor: '#A294F9' }}
-              >
-                <FiPlus size={16} />
-                Add Deduction
-              </button>
-            </div>
-            {formData.deductions.map((deduction, index) => (
-              <div key={index} className="flex gap-2 mb-2 items-center">
-                <select
-                  name="type"
-                  value={deduction.type}
-                  onChange={(e) => handleDeductionChange(index, e)}
-                  className="w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  required
-                >
-                  <option value="">Select Type</option>
-                  {deductionTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="w-1/2">
-                  <input
-                    type="number"
-                    name="amount"
-                    value={deduction.amount}
-                    placeholder="Amount"
-                    onChange={(e) => handleDeductionChange(index, e)}
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                    required
-                  />
-                </div>
-                <button
-                  title="Delete"
-                  className="p-2 rounded shadow cursor-pointer"
-                  style={{ backgroundColor: '#F87171' }}
-                  onClick={() => removeDeduction(index)}
-                >
-                  <FaTrashAlt className="text-white" />
-                </button>
-              </div>
-            ))}
-
-            {/* Move the total display outside the map function */}
-            {formData.deductions.length > 0 && (
-              <div className="flex justify-center ml-8 mt-2">
-                <div className="text-sm text-gray-600">
-                  Total : {totalDeductions.toFixed(2)}
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="p-4 rounded mt-10 mb-4 border border-gray-300">
-            <span className="font-semibold text-lg">Net Salary: </span>
-            <span className="font-bold text-xl">{totalSalary.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-end">
+  return (
+    <>
+      <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
+        <div className="py-4 px-2 flex justify-between items-center mb-3">
+          <h2 className="text-3xl font-bold text-gray-800">Salary Records</h2>
+          <div className="flex space-x-2">
             <button
-              onClick={handleSubmit}
-              className="px-4 py-2 rounded shadow text-white"
+              title="filter"
+              className="p-2 bg-[#A294F9] rounded shadow cursor-pointer"
+              onClick={() => setShowFilter(!showFilter)}
+            >
+              <FiFilter className="text-white" />
+            </button>
+            <button
+              title="Create Salary"
+              onClick={() => navigate('/employSalaryform')}
+              className="p-2 rounded shadow cursor-pointer"
               style={{ backgroundColor: '#A294F9' }}
             >
-              {id ? 'Update Payroll' : 'Create Payroll'}
+              <FiPlus className="text-white" />
             </button>
           </div>
         </div>
+
+        {/* Filter Dropdown */}
+        <div className={`overflow-hidden transition-all duration-400 ease-in-out ${showFilter ? 'max-h-96' : 'max-h-0'}`}>
+          <div className="p-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+                <input
+                  type="text"
+                  name="employeeName"
+                  value={filters.employeeName}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  placeholder="Search by name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                <select
+                  name="month"
+                  value={filters.month}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                >
+                  <option value="">All Months</option>
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <select
+                  name="year"
+                  value={filters.year}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                >
+                  <option value="">All Years</option>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={closeFilter}
+                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                onClick={applyFilters}
+                className="px-4 py-2 rounded shadow text-white cursor-pointer flex items-center"
+                style={{ backgroundColor: '#A294F9' }}
+              >
+                <FaSearch className="mr-2" />
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Salary List Table */}
+        <div className="overflow-x-auto p-3">
+          <div className="flex justify-between items-center mb-3">
+            <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
+              Showing <span className="font-semibold text-gray-800">{salaries.length}</span> salary records
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Pagination />
+            </div>
+          </div>
+          <table className="min-w-full table-auto text-sm">
+            <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
+              <tr>
+                <th className="px-4 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={toggleSelectAll}
+                    className="form-checkbox h-4 w-4 text-[#A294F9] rounded focus:ring-[#A294F9]"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">Profile</th>
+                <th className="px-4 py-3 text-left">Employee</th>
+                <th className="px-4 py-3 text-left">Total Allowance</th>
+                <th className="px-4 py-3 text-left">Total Deduction</th>
+                <th className="px-4 py-3 text-left">Total Salary</th>
+                <th className="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {salaries.length > 0 ? (
+                salaries.map((employee) => (
+                  <tr key={employee._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedEmployees.includes(employee._id)}
+                        onChange={() => toggleEmployeeSelection(employee._id)}
+                        className="form-checkbox h-4 w-4 text-[#A294F9] rounded focus:ring-[#A294F9]"
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      {employee?.profilePicture ? (
+                        <img
+                          src={employee.profilePicture}
+                          alt="Profile"
+                          className="w-10 h-10 rounded-full object-cover border"
+                        />
+                      ) : (
+                        <span className="text-gray-400 italic">No image</span>
+                      )}
+                    </td>           
+                    <td className="px-4 py-3">{employee.firstName} {employee.lastName}</td>
+                    <td className="px-4 py-3">{calculateTotalAllowances(employee).toFixed(2)}</td>
+                    <td className="px-4 py-3">{calculateTotalDeductions(employee).toFixed(2)}</td>
+                    <td className="px-4 py-3 font-semibold">
+                      {calculateTotalSalary(employee).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex space-x-2">
+                        <button
+                          title="Edit"
+                          className="p-2 rounded shadow cursor-pointer"
+                          style={{ backgroundColor: '#A294F9' }}
+                          onClick={() => openEditModal(employee)}
+                        >
+                          <FaEdit className="text-white" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="px-4 py-6 text-center text-gray-500">No salary records found</td>
+                </tr>
+              )}
+              
+              {/* Summary row for selected employees */}
+              {selectedEmployees.length > 0 && (
+                <tr className="border-t-2 border-gray-400 font-semibold" style={{ backgroundColor: '#E5D9F2' }}>
+                  <td className="px-4 py-3" colSpan="3">Total for {selectedEmployees.length} selected employees</td>
+                  <td className="px-4 py-3">{calculateSelectedTotals().totalAllowance.toFixed(2)}</td>
+                  <td className="px-4 py-3">{calculateSelectedTotals().totalDeduction.toFixed(2)}</td>
+                  <td className="px-4 py-3">{calculateSelectedTotals().totalSalary.toFixed(2)}</td>
+                  <td className="px-4 py-3"></td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Create Payroll Button - Added at the bottom of the table */}
+          {selectedEmployees.length > 0 && (
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={handleCreatePayroll}
+                className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
+                style={{ backgroundColor: '#A294F9' }}
+              >
+                <FiDollarSign className="mr-2" />
+                Create Payroll for {selectedEmployees.length} Employee(s)
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+      />
+    </>
   );
 };
 
