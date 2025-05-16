@@ -381,6 +381,7 @@ const handleEditClick = (employee, index) => {
       ...prev,
       allowances: updatedAllowances
     }));
+    toast.success('Allowance field removed')
   };
 
   const removeDeduction = (index) => {
@@ -389,6 +390,7 @@ const handleEditClick = (employee, index) => {
       ...prev,
       deductions: updatedDeductions
     }));
+    toast.success('Deducation field removed')
   };
 const handleSubmit = () => {
   const updatedSalaries = [...salaries];
@@ -405,11 +407,8 @@ const handleSubmit = () => {
 
   updatedSalaries[editIndex] = updatedEmployee;
   setSalaries(updatedSalaries);
-
-  // Save to localStorage
   localStorage.setItem("salaries", JSON.stringify(updatedSalaries));
-
-  // Reset form
+  toast.success('Salary detail updated successfully!')
   setShowEditForm(false);
   setFormData({
     type: '',
