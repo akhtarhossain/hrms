@@ -833,8 +833,6 @@ useEffect(() => {
       deductionsTotal += amount + newSalary;
     });
     const total = allowancesTotal - deductionsTotal;
-    console.log(total , "totototlllll");
-    
     setTotalAllowances(allowancesTotal);
     setTotalDeductions(deductionsTotal);
     setTotalSalary(total);
