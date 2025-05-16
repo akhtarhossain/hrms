@@ -8,6 +8,7 @@ import DeleteModal from '../../../shared/common/DeleteConfirmation';
 import EmploySalaryService from '../../../services/EmploySalaryService';
 import employeeService from '../../../services/employeeService';
 import EmployeeSalaryForm from '../salary/employSalary';
+import PayrollService from '../../../services/PayrollService'; // Import the PayrollService
 
 const PayrollForm = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const PayrollForm = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [payrollDate, setPayrollDate] = useState(''); // Replace month and year states
 
   const [filters, setFilters] = useState({
     employeeName: '',
@@ -181,25 +183,62 @@ const PayrollForm = () => {
       toast.warning("Please select at least one employee to create payroll");
       return;
     }
+    if (!payrollDate) {
+      toast.warning("Please select a date for payroll");
+      return;
+    }
+
+    // Get the selected employee objects with all required fields
+    const selectedEmployeeObjects = salaries.filter(employee =>
+      selectedEmployees.includes(employee._id)
+    ).map(employee => ({
+      employeeId: employee._id,
+      name: `${employee.firstName} ${employee.lastName}`,
+      totalAllowance: calculateTotalAllowances(employee),
+      totalDeduction: calculateTotalDeductions(employee),
+      totalSalary: calculateTotalSalary(employee)
+    }));
+
+    // Calculate totals for the summary
+    const totals = selectedEmployeeObjects.reduce((acc, employee) => ({
+      totalAllowance: acc.totalAllowance + employee.totalAllowance,
+      totalDeduction: acc.totalDeduction + employee.totalDeduction,
+      totalSalary: acc.totalSalary + employee.totalSalary
+    }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
+
+    // Extract month and year from the payrollDate
+    const dateObj = new Date(payrollDate);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const year = String(dateObj.getFullYear());
 
     const payrollData = {
-      employees: selectedEmployees.map(empId => {
-        const employee = salaries.find(e => e._id === empId);
-        return {
-          employeeId: empId,
-          name: `${employee.firstName} ${employee.lastName}`,
-          totalAllowance: calculateTotalAllowances(employee),
-          totalDeduction: calculateTotalDeductions(employee),
-          totalSalary: calculateTotalSalary(employee)
-        };
-      }),
-      summary: calculateSelectedTotals()
+      employees: selectedEmployeeObjects,
+      payrollDate, // Send the full date string
+      month,       // Include month separately if backend needs it
+      year,        // Include year separately if backend needs it
+      status: "draft",
+      summary: {
+        totalAllowance: totals.totalAllowance,
+        totalDeduction: totals.totalDeduction,
+        totalSalary: totals.totalSalary,
+        selectedEmployees: selectedEmployees // Array of MongoDB IDs
+      }
     };
 
-    console.log("Payroll data to be sent:", payrollData);
-    toast.success(`Payroll created for ${selectedEmployees.length} employees`);
-    setSelectedEmployees([]);
-    setSelectAll(false);
+    // Call the PayrollService to create the payroll
+    PayrollService.createPayroll(payrollData)
+      .then((response) => {
+        console.log("Payroll created successfully:", response);
+        toast.success(`Payroll created for ${selectedEmployees.length} employees`);
+        setSelectedEmployees([]);
+        setSelectAll(false);
+        setPayrollDate(''); // Clear the date field instead of month/year
+      })
+      .catch((error) => {
+        console.error("Error creating payroll:", error);
+        const errorMessage = error.response?.data?.message || "Failed to create payroll";
+        toast.error(`Error: ${errorMessage}`);
+      });
   };
 
   if (loading) {
@@ -388,6 +427,20 @@ const PayrollForm = () => {
             </tbody>
           </table>
 
+          {/* Month, Year and Status Selectors */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Replace the month and year selectors with this */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payroll Date</label>
+              <input
+                type="date"
+                value={payrollDate}
+                onChange={(e) => setPayrollDate(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                required
+              />
+            </div>
+          </div>
           {/* Create Payroll Button - Added at the bottom of the table */}
           {selectedEmployees.length > 0 && (
             <div className="flex justify-end mt-4">
