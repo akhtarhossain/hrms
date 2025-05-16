@@ -12,6 +12,7 @@ import PayrollService from '../../../services/PayrollService'; // Import the Pay
 import { BsCurrencyDollar } from 'react-icons/bs';
 import { FaTrash } from 'react-icons/fa6';
 import TransactionTypeService from '../../../services/TransactionTypeService';
+import { BiX } from 'react-icons/bi';
 
 const PayrollForm = () => {
   const navigate = useNavigate();
@@ -711,9 +712,21 @@ const PayrollForm = () => {
             }}
           >
             <div className="p-2 bg-[#F5EFFF] min-h-screen">
-              <div className="px-2 flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
-              </div>
+               <div className="px-2 flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+            
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                title="Close"
+                onClick={() => setShowEditForm(false)} 
+                className="p-1 rounded shadow cursor-pointer"
+                style={{ backgroundColor: '#A294F9' , color:'white'}}
+              >
+                <BiX size={20} />
+              </button>
+            </div>
+          </div>
 
               <div className="flex justify-center">
                 <div className="p-8 w-full max-w-6xl">
