@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiFilter, FiPlus, FiDollarSign, FiList, FiCrosshair } from 'react-icons/fi';
+import { FiFilter, FiPlus, FiDollarSign, FiList } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaEdit, FaTrashAlt, FaEye, FaSearch, FaFileDownload } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
@@ -7,10 +7,11 @@ import { toast } from 'react-toastify';
 import DeleteModal from '../../../shared/common/DeleteConfirmation';
 import EmploySalaryService from '../../../services/EmploySalaryService';
 import employeeService from '../../../services/employeeService';
+import EmployeeSalaryForm from '../salary/employSalary';
+import PayrollService from '../../../services/PayrollService'; // Import the PayrollService
 import { BsCurrencyDollar } from 'react-icons/bs';
 import { FaTrash } from 'react-icons/fa6';
 import TransactionTypeService from '../../../services/TransactionTypeService';
-import { BiCross, BiX } from 'react-icons/bi';
 
 const PayrollForm = () => {
   const navigate = useNavigate();
@@ -29,17 +30,18 @@ const PayrollForm = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
+  const [payrollDate, setPayrollDate] = useState(''); // Replace month and year states
   const [editIndex, setEditIndex] = useState(null);
 
-const [formData, setFormData] = useState({
-  type: '',
-  currentSalary: '',
-  newSalary: '',
-  startDate: '',
-  endDate: '',
-  allowances: [],
-  deductions: [] 
-});
+  const [formData, setFormData] = useState({
+    type: '',
+    currentSalary: '',
+    newSalary: '',
+    startDate: '',
+    endDate: '',
+    allowances: [],
+    deductions: []
+  });
 
 
   const [filters, setFilters] = useState({
@@ -47,30 +49,30 @@ const [formData, setFormData] = useState({
     month: '',
     year: ''
   });
- const fetchTransactions = () => {
-  TransactionTypeService.getTransactionTypes()
-    .then((data) => {
-      const transactions = data || [];
-      const formattedAllowances = transactions
-        .filter((item) => item.transactionType === "allowance")
-        .map((item) => ({
-          value: item.name,
-          label: item.name,
-        }));
-      const formattedDeductions = transactions
-        .filter((item) => item.transactionType === "deduction")
-        .map((item) => ({
-          value: item.name,
-          label: item.name,
-        }));
+  const fetchTransactions = () => {
+    TransactionTypeService.getTransactionTypes()
+      .then((data) => {
+        const transactions = data || [];
+        const formattedAllowances = transactions
+          .filter((item) => item.transactionType === "allowance")
+          .map((item) => ({
+            value: item.name,
+            label: item.name,
+          }));
+        const formattedDeductions = transactions
+          .filter((item) => item.transactionType === "deduction")
+          .map((item) => ({
+            value: item.name,
+            label: item.name,
+          }));
 
-      setAllowanceTypes(formattedAllowances);
-      setDeductionTypes(formattedDeductions);
-    })
-    .catch((error) => {
-      console.error("Error fetching transactions:", error);
-      toast.error("Failed to load transaction records");
-    });
+        setAllowanceTypes(formattedAllowances);
+        setDeductionTypes(formattedDeductions);
+      })
+      .catch((error) => {
+        console.error("Error fetching transactions:", error);
+        toast.error("Failed to load transaction records");
+      });
   };
 
   useEffect(() => {
@@ -79,58 +81,58 @@ const [formData, setFormData] = useState({
   }, []);
 
   useEffect(() => {
-  const storedSalaries = localStorage.getItem("salaries");
-  if (storedSalaries) {
-    setSalaries(JSON.parse(storedSalaries));
-  }
-}, []);
+    const storedSalaries = localStorage.getItem("salaries");
+    if (storedSalaries) {
+      setSalaries(JSON.parse(storedSalaries));
+    }
+  }, []);
 
-useEffect(() => {
-  localStorage.setItem("salaries", JSON.stringify(salaries));
-}, [salaries]);
-  
-const fetchSalaries = () => {
-  setLoading(true);
-  employeeService.getEmployee()
-    .then((data) => {
-      setSalaries(data || []);
-      setSelectedEmployees([]);
-      setSelectAll(false);
-    })
-    .catch((error) => {
-      console.error('Error fetching salaries:', error);
-      toast.error('Failed to load salary records');
-    })
-    .finally(() => {
-      setLoading(false);
-    });
-};
+  useEffect(() => {
+    localStorage.setItem("salaries", JSON.stringify(salaries));
+  }, [salaries]);
 
-const calculateTotalAllowances = (employee) => {
-  if (!employee) return 0;
-  if (!Array.isArray(employee.allowances)) return 0;
-  
-  return employee.allowances.reduce((total, allowance) => {
-    const amount = Number(allowance?.newSalary) || 0;
-    return total + amount;
-  }, 0);
-};
+  const fetchSalaries = () => {
+    setLoading(true);
+    employeeService.getEmployee()
+      .then((data) => {
+        setSalaries(data || []);
+        setSelectedEmployees([]);
+        setSelectAll(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching salaries:', error);
+        toast.error('Failed to load salary records');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
-const calculateTotalDeductions = (employee) => {
-  if (!employee) return 0;
-  if (!Array.isArray(employee.deductions)) return 0;
-  
-  return employee.deductions.reduce((total, deduction) => {
-    const amount = Number(deduction?.newSalary) || 0;
-    return total + amount;
-  }, 0);
-};
+  const calculateTotalAllowances = (employee) => {
+    if (!employee) return 0;
+    if (!Array.isArray(employee.allowances)) return 0;
 
-const calculateTotalSalary = (employee) => {
-  const allowances = calculateTotalAllowances(employee);
-  const deductions = calculateTotalDeductions(employee);
-  return allowances - deductions;
-};
+    return employee.allowances.reduce((total, allowance) => {
+      const amount = Number(allowance?.newSalary) || 0;
+      return total + amount;
+    }, 0);
+  };
+
+  const calculateTotalDeductions = (employee) => {
+    if (!employee) return 0;
+    if (!Array.isArray(employee.deductions)) return 0;
+
+    return employee.deductions.reduce((total, deduction) => {
+      const amount = Number(deduction?.newSalary) || 0;
+      return total + amount;
+    }, 0);
+  };
+
+  const calculateTotalSalary = (employee) => {
+    const allowances = calculateTotalAllowances(employee);
+    const deductions = calculateTotalDeductions(employee);
+    return allowances - deductions;
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -171,7 +173,7 @@ const calculateTotalSalary = (employee) => {
     setSelectedSalaryId(salaryId);
     setShowDeleteModal(true);
   };
-  
+
   const confirmDelete = () => {
     EmploySalaryService.deleteSalary(selectedSalaryId)
       .then(() => {
@@ -209,7 +211,7 @@ const calculateTotalSalary = (employee) => {
 
   const calculateSelectedTotals = () => {
     const selected = salaries.filter(employee => selectedEmployees.includes(employee._id));
-    
+
     const totalAllowance = selected.reduce((sum, employee) => {
       return sum + calculateTotalAllowances(employee);
     }, 0);
@@ -231,30 +233,30 @@ const calculateTotalSalary = (employee) => {
   };
 
   useEffect(() => {
-  if (showEditForm) {
-    calculateTotals(formData);
-  }
+    if (showEditForm) {
+      calculateTotals(formData);
+    }
 
-}, [formData, showEditForm]);
+  }, [formData, showEditForm]);
 
-const handleEditClick = (employee, index) => {
-     const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
-  };
-  console.log(employee, index, "in ty");
+  const handleEditClick = (employee, index) => {
+    const formatDateForInput = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    };
+    console.log(employee, index, "in ty");
 
-  setCurrentEmployee(employee);
-  setEditIndex(index);
+    setCurrentEmployee(employee);
+    setEditIndex(index);
 
-  setFormData({
-    type: '', 
-    currentSalary: employee?.currentSalary?.toString() || '',
-    newSalary: employee?.newSalary?.toString() || '',
-    startDate: employee?.startDate || '',
-    endDate: employee?.endDate || '',
-    allowances: employee.allowances?.map(allowance => ({
+    setFormData({
+      type: '',
+      currentSalary: employee?.currentSalary?.toString() || '',
+      newSalary: employee?.newSalary?.toString() || '',
+      startDate: employee?.startDate || '',
+      endDate: employee?.endDate || '',
+      allowances: employee.allowances?.map(allowance => ({
         ...allowance,
         startDate: formatDateForInput(allowance.startDate),
         endDate: formatDateForInput(allowance.endDate)
@@ -265,12 +267,12 @@ const handleEditClick = (employee, index) => {
         startDate: formatDateForInput(deduction.startDate),
         endDate: formatDateForInput(deduction.endDate)
       })) || []
-  });
+    });
 
-  setShowEditForm(true);
-};
+    setShowEditForm(true);
+  };
 
-    const closeEditModal = () => {
+  const closeEditModal = () => {
     setShowEditForm(false);
     setCurrentEmployee(null);
   };
@@ -280,23 +282,62 @@ const handleEditClick = (employee, index) => {
       toast.warning("Please select at least one employee to create payroll");
       return;
     }
+    if (!payrollDate) {
+      toast.warning("Please select a date for payroll");
+      return;
+    }
+
+    // Get the selected employee objects with all required fields
+    const selectedEmployeeObjects = salaries.filter(employee =>
+      selectedEmployees.includes(employee._id)
+    ).map(employee => ({
+      employeeId: employee._id,
+      name: `${employee.firstName} ${employee.lastName}`,
+      totalAllowance: calculateTotalAllowances(employee),
+      totalDeduction: calculateTotalDeductions(employee),
+      totalSalary: calculateTotalSalary(employee)
+    }));
+
+    // Calculate totals for the summary
+    const totals = selectedEmployeeObjects.reduce((acc, employee) => ({
+      totalAllowance: acc.totalAllowance + employee.totalAllowance,
+      totalDeduction: acc.totalDeduction + employee.totalDeduction,
+      totalSalary: acc.totalSalary + employee.totalSalary
+    }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
+
+    // Extract month and year from the payrollDate
+    const dateObj = new Date(payrollDate);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const year = String(dateObj.getFullYear());
+
     const payrollData = {
-      employees: selectedEmployees.map(empId => {
-        const employee = salaries.find(e => e._id === empId);
-        return {
-          employeeId: empId,
-          name: `${employee.firstName} ${employee.lastName}`,
-          totalAllowance: calculateTotalAllowances(employee),
-          totalDeduction: calculateTotalDeductions(employee),
-          totalSalary: calculateTotalSalary(employee)
-        };
-      }),
-      summary: calculateSelectedTotals()
+      employees: selectedEmployeeObjects,
+      payrollDate, // Send the full date string
+      month,       // Include month separately if backend needs it
+      year,        // Include year separately if backend needs it
+      status: "draft",
+      summary: {
+        totalAllowance: totals.totalAllowance,
+        totalDeduction: totals.totalDeduction,
+        totalSalary: totals.totalSalary,
+        selectedEmployees: selectedEmployees // Array of MongoDB IDs
+      }
     };
-    console.log("Payroll data to be sent:", payrollData);
-    toast.success(`Payroll created for ${selectedEmployees.length} employees`);
-    setSelectedEmployees([]);
-    setSelectAll(false);
+
+    // Call the PayrollService to create the payroll
+    PayrollService.createPayroll(payrollData)
+      .then((response) => {
+        console.log("Payroll created successfully:", response);
+        toast.success(`Payroll created for ${selectedEmployees.length} employees`);
+        setSelectedEmployees([]);
+        setSelectAll(false);
+        setPayrollDate(''); // Clear the date field instead of month/year
+      })
+      .catch((error) => {
+        console.error("Error creating payroll:", error);
+        const errorMessage = error.response?.data?.message || "Failed to create payroll";
+        toast.error(`Error: ${errorMessage}`);
+      });
   };
 
   if (loading) {
@@ -310,19 +351,19 @@ const handleEditClick = (employee, index) => {
   const calculateTotals = (data) => {
     let allowancesTotal = 0;
     let deductionsTotal = 0;
-    
+
     (data?.allowances || []).forEach((allowance) => {
       const amount = Number(allowance?.amount) || 0;
       const newSalary = Number(allowance?.newSalary) || 0;
       allowancesTotal += amount + newSalary;
     });
-    
+
     (data?.deductions || []).forEach((deduction) => {
       const amount = Number(deduction?.amount) || 0;
       const newSalary = Number(deduction?.newSalary) || 0;
       deductionsTotal += amount + newSalary;
     });
-    
+
     const total = allowancesTotal - deductionsTotal;
     setTotalAllowances(allowancesTotal);
     setTotalDeductions(deductionsTotal);
@@ -332,12 +373,12 @@ const handleEditClick = (employee, index) => {
   const addAllowance = () => {
     setFormData(prev => ({
       ...prev,
-      allowances: [...prev.allowances, { 
-        type: "", 
-        currentSalary: "", 
+      allowances: [...prev.allowances, {
+        type: "",
+        currentSalary: "",
         newSalary: "",
         startDate: "",
-        endDate: "" 
+        endDate: ""
       }]
     }));
   };
@@ -345,16 +386,16 @@ const handleEditClick = (employee, index) => {
   const addDeduction = () => {
     setFormData(prev => ({
       ...prev,
-      deductions: [...prev.deductions, { 
-        type: "", 
-        currentSalary: "", 
+      deductions: [...prev.deductions, {
+        type: "",
+        currentSalary: "",
         newSalary: "",
         startDate: "",
-        endDate: "" 
+        endDate: ""
       }]
     }));
   };
-  
+
   const handleAllowanceChange = (index, e) => {
     const { name, value } = e.target;
     const updatedAllowances = [...formData.allowances];
@@ -390,40 +431,40 @@ const handleEditClick = (employee, index) => {
       deductions: updatedDeductions
     }));
   };
-const handleSubmit = () => {
-  const updatedSalaries = [...salaries];
+  const handleSubmit = () => {
+    const updatedSalaries = [...salaries];
 
-  const updatedEmployee = {
-    ...updatedSalaries[editIndex],
-    allowances: formData.allowances,
-    deductions: formData.deductions,
-    currentSalary: formData.currentSalary,
-    newSalary: formData.newSalary,
-    startDate: formData.startDate,
-    endDate: formData.endDate,
+    const updatedEmployee = {
+      ...updatedSalaries[editIndex],
+      allowances: formData.allowances,
+      deductions: formData.deductions,
+      currentSalary: formData.currentSalary,
+      newSalary: formData.newSalary,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+    };
+
+    updatedSalaries[editIndex] = updatedEmployee;
+    setSalaries(updatedSalaries);
+
+    // Save to localStorage
+    localStorage.setItem("salaries", JSON.stringify(updatedSalaries));
+
+    // Reset form
+    setShowEditForm(false);
+    setFormData({
+      type: '',
+      currentSalary: '',
+      newSalary: '',
+      startDate: '',
+      endDate: '',
+      allowances: [],
+      deductions: [],
+    });
+
+    setCurrentEmployee(null);
+    setEditIndex(null);
   };
-
-  updatedSalaries[editIndex] = updatedEmployee;
-  setSalaries(updatedSalaries);
-
-  // Save to localStorage
-  localStorage.setItem("salaries", JSON.stringify(updatedSalaries));
-
-  // Reset form
-  setShowEditForm(false);
-  setFormData({
-    type: '',
-    currentSalary: '',
-    newSalary: '',
-    startDate: '',
-    endDate: '',
-    allowances: [],
-    deductions: [],
-  });
-
-  setCurrentEmployee(null);
-  setEditIndex(null);
-};
 
   return (
     <>
@@ -522,6 +563,7 @@ const handleSubmit = () => {
               <Pagination />
             </div>
           </div>
+
           <table className="min-w-full table-auto text-sm">
             <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
               <tr>
@@ -543,7 +585,7 @@ const handleSubmit = () => {
             </thead>
             <tbody>
               {salaries.length > 0 ? (
-                salaries.map((employee , index) => (
+                salaries.map((employee, index) => (
                   <tr key={employee._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
                     <td className="px-4 py-3">
                       <input
@@ -563,7 +605,7 @@ const handleSubmit = () => {
                       ) : (
                         <span className="text-gray-400 italic">No image</span>
                       )}
-                    </td>           
+                    </td>
                     <td className="px-4 py-3">{employee.firstName} {employee.lastName}</td>
                     <td className="px-4 py-3">{calculateTotalAllowances(employee).toFixed(2)}</td>
                     <td className="px-4 py-3">{calculateTotalDeductions(employee).toFixed(2)}</td>
@@ -589,7 +631,7 @@ const handleSubmit = () => {
                   <td colSpan="7" className="px-4 py-6 text-center text-gray-500">No salary records found</td>
                 </tr>
               )}
-              
+
               {/* Summary row for selected employees */}
               {selectedEmployees.length > 0 && (
                 <tr className="border-t-2 border-gray-400 font-semibold" style={{ backgroundColor: '#E5D9F2' }}>
@@ -603,22 +645,37 @@ const handleSubmit = () => {
             </tbody>
           </table>
 
-          {/* Create Payroll Button - Added at the bottom of the table */}
+          {/* Payroll Date and Create Button Row */}
           {selectedEmployees.length > 0 && (
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleCreatePayroll}
-                className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
-                style={{ backgroundColor: '#A294F9' }}
-              >
-                <FiDollarSign className="mr-2" />
-                Create Payroll for {selectedEmployees.length} Employee(s)
-              </button>
+            <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              {/* Payroll Date Input - Left Side (now with moderate width) */}
+              <div className="w-full md:w-70">  {/* Fixed moderate width on desktop, full width on mobile */}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payroll Date</label>
+                <input
+                  type="date"
+                  value={payrollDate}
+                  onChange={(e) => setPayrollDate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  required
+                />
+              </div>
+
+              {/* Create Payroll Button - Right Side */}
+              <div className="w-full md:w-auto">  {/* Auto width on desktop, full width on mobile */}
+                <button
+                  onClick={handleCreatePayroll}
+                  className="w-full md:w-auto mt-4 px-6 py-3 rounded-md shadow text-white font-medium flex items-center justify-center"
+                  style={{ backgroundColor: '#A294F9' }}
+                >
+                  <FiDollarSign className="mr-2" />
+                  Create Payroll for {selectedEmployees.length} Employee(s)
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Delete Confirmation Modal */}
       <DeleteModal
         isOpen={showDeleteModal}
@@ -642,294 +699,280 @@ const handleSubmit = () => {
           }}
         >
           <div
-         style={{
-            background: '#F5EFFF',
-            padding: "20px 30px",
-            borderRadius: "8px",
-            width: "100%",
-            maxWidth: "1000px", // Optional: limit max width for better UX
-            maxHeight: "90vh", // Limit height to 80% of the viewport height
-            overflowY: "auto", // Enable vertical scroll
-            boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
-          }}
+            style={{
+              background: '#F5EFFF',
+              padding: "20px 30px",
+              borderRadius: "8px",
+              width: "100%",
+              maxWidth: "1000px", // Optional: limit max width for better UX
+              maxHeight: "90vh", // Limit height to 80% of the viewport height
+              overflowY: "auto", // Enable vertical scroll
+              boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
+            }}
           >
-          <div className="p-2 bg-[#F5EFFF] min-h-screen">
-          <div className="px-2 flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
-            
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                title="Close"
-                onClick={() => setShowEditForm(false)} 
-                className="p-1 rounded shadow cursor-pointer"
-                style={{ backgroundColor: '#A294F9' , color:'white'}}
-              >
-                <BiX size={20} />
-              </button>
-            </div>
-          </div>
-      
-            <div className="flex justify-center">
-              <div className="p-8 w-full max-w-6xl">
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-8">
-                    <div className="mb-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-lg text-[#333]">Allowances</h3>
-                        <button
-                          type="button"
-                          onClick={addAllowance}
-                          className="px-3 py-2 rounded-md shadow text-white flex items-center gap-1 bg-[#A294F9] hover:bg-[#8a7ce0] transition"
-                        >
-                          <FiPlus size={16} />
-                          Add Allowance
-                        </button>
-                      </div>
-      
-                      {formData.allowances.map((allowance, index) => (
-                        <div key={`allowance-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">Type</label>
-                            <select
-                              name="type"
-                              value={allowance.type}
-                              onChange={(e) => handleAllowanceChange(index, e)}
-                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                              required
-                            >
-                              <option value="">Select Type</option>
-                              {allowanceTypes.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                  {type.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">Current Value</label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <BsCurrencyDollar className="text-gray-400" />
-                              </div>
-                              <input
-                                type="number"
-                                name="currentSalary"
-                                value={allowance.currentSalary}
-                                placeholder="currentSalary"
+            <div className="p-2 bg-[#F5EFFF] min-h-screen">
+              <div className="px-2 flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="p-8 w-full max-w-6xl">
+                  <form onSubmit={handleSubmit}>
+                    <div className="mb-8">
+                      <div className="mb-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-semibold text-lg text-[#333]">Allowances</h3>
+                          <button
+                            type="button"
+                            onClick={addAllowance}
+                            className="px-3 py-2 rounded-md shadow text-white flex items-center gap-1 bg-[#A294F9] hover:bg-[#8a7ce0] transition"
+                          >
+                            <FiPlus size={16} />
+                            Add Allowance
+                          </button>
+                        </div>
+
+                        {formData.allowances.map((allowance, index) => (
+                          <div key={`allowance-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">Type</label>
+                              <select
+                                name="type"
+                                value={allowance.type}
                                 onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                 required
-                              />
+                              >
+                                <option value="">Select Type</option>
+                                {allowanceTypes.map((type) => (
+                                  <option key={type.value} value={type.value}>
+                                    {type.label}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
-                          </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">New Value</label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <BsCurrencyDollar className="text-gray-400" />
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">Current Value</label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                  <BsCurrencyDollar className="text-gray-400" />
+                                </div>
+                                <input
+                                  type="number"
+                                  name="currentSalary"
+                                  value={allowance.currentSalary}
+                                  placeholder="currentSalary"
+                                  onChange={(e) => handleAllowanceChange(index, e)}
+                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                  required
+                                />
                               </div>
+                            </div>
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">New Value</label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                  <BsCurrencyDollar className="text-gray-400" />
+                                </div>
+                                <input
+                                  type="number"
+                                  name="newSalary"
+                                  value={allowance.newSalary}
+                                  placeholder="New Salary"
+                                  onChange={(e) => handleAllowanceChange(index, e)}
+                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">Start Date</label>
                               <input
-                                type="number"
-                                name="newSalary"
-                                value={allowance.newSalary}
-                                placeholder="New Salary"
+                                type="date"
+                                name="startDate"
+                                value={allowance.startDate}
                                 onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                               />
                             </div>
-                          </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                            <input
-                              type="date"
-                              name="startDate"
-                              value={allowance.startDate}
-                              onChange={(e) => handleAllowanceChange(index, e)}
-                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                            />
-                          </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                            <input
-                              type="date"
-                              name="endDate"
-                              value={allowance.endDate}
-                              onChange={(e) => handleAllowanceChange(index, e)}
-                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                            />
-                          </div>
-      
-                          <div className="md:col-span-5 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => removeAllowance(index)}
-                              className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
-                            >
-                              <FaTrash className="text-white" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-      
-                      {formData.allowances.length > 0 && (
-                        <div className="flex justify-end mt-2">
-                          <div className="text-lg font-semibold text-gray-700">
-                            Total Allowances: {totalAllowances.toFixed(2)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-      
-                    <div className="mb-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-bold text-lg text-[#333]">Deductions</h3>
-                        <button
-                          type="button"
-                          onClick={addDeduction}
-                          className="px-3 py-2 rounded-md shadow text-white flex items-center gap-1 bg-[#A294F9] hover:bg-[#8a7ce0] transition"
-                        >
-                          <FiPlus size={16} />
-                          Add Deduction
-                        </button>
-                      </div>
-      
-                      {formData.deductions.map((deduction, index) => (
-                        <div key={`deduction-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">Type</label>
-                            <select
-                              name="type"
-                              value={deduction.type}
-                              onChange={(e) => handleDeductionChange(index, e)}
-                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                              required
-                            >
-                              <option value="">Select Type</option>
-                              {deductionTypes.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                  {type.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">Current Value</label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <BsCurrencyDollar className="text-gray-400" />
-                              </div>
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">End Date</label>
                               <input
-                                type="number"
-                                name="currentSalary"
-                                value={deduction.currentSalary}
-                                placeholder="Amount"
+                                type="date"
+                                name="endDate"
+                                value={allowance.endDate}
+                                onChange={(e) => handleAllowanceChange(index, e)}
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="md:col-span-5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => removeAllowance(index)}
+                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                              >
+                                <FaTrash className="text-white" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {formData.allowances.length > 0 && (
+                          <div className="flex justify-end mt-2">
+                            <div className="text-lg font-semibold text-gray-700">
+                              Total Allowances: {totalAllowances.toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mb-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-semibold text-lg text-[#333]">Deductions</h3>
+                          <button
+                            type="button"
+                            onClick={addDeduction}
+                            className="px-3 py-2 rounded-md shadow text-white flex items-center gap-1 bg-[#A294F9] hover:bg-[#8a7ce0] transition"
+                          >
+                            <FiPlus size={16} />
+                            Add Deduction
+                          </button>
+                        </div>
+
+                        {formData.deductions.map((deduction, index) => (
+                          <div key={`deduction-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">Type</label>
+                              <select
+                                name="type"
+                                value={deduction.type}
                                 onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                 required
-                              />
+                              >
+                                <option value="">Select Type</option>
+                                {deductionTypes.map((type) => (
+                                  <option key={type.value} value={type.value}>
+                                    {type.label}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
-                          </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">New Value</label>
-                            <div className="relative">
-                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <BsCurrencyDollar className="text-gray-400" />
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">Current Value</label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                  <BsCurrencyDollar className="text-gray-400" />
+                                </div>
+                                <input
+                                  type="number"
+                                  name="currentSalary"
+                                  value={deduction.currentSalary}
+                                  placeholder="Amount"
+                                  onChange={(e) => handleDeductionChange(index, e)}
+                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                  required
+                                />
                               </div>
+                            </div>
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">New Value</label>
+                              <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                  <BsCurrencyDollar className="text-gray-400" />
+                                </div>
+                                <input
+                                  type="number"
+                                  name="newSalary"
+                                  value={deduction.newSalary}
+                                  placeholder="New Salary"
+                                  onChange={(e) => handleDeductionChange(index, e)}
+                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">Start Date</label>
                               <input
-                                type="number"
-                                name="newSalary"
-                                value={deduction.newSalary}
-                                placeholder="New Salary"
+                                type="date"
+                                name="startDate"
+                                value={deduction.startDate}
                                 onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                               />
                             </div>
+
+                            <div className="md:col-span-1">
+                              <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                              <input
+                                type="date"
+                                name="endDate"
+                                value={deduction.endDate}
+                                onChange={(e) => handleDeductionChange(index, e)}
+                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="md:col-span-5 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => removeDeduction(index)}
+                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                              >
+                                <FaTrash className="text-white" />
+                              </button>
+                            </div>
                           </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                            <input
-                              type="date"
-                              name="startDate"
-                              value={deduction.startDate}
-                              onChange={(e) => handleDeductionChange(index, e)}
-                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                            />
+                        ))}
+
+                        {formData.deductions.length > 0 && (
+                          <div className="flex justify-end mt-2">
+                            <div className="text-lg font-semibold text-gray-700">
+                              Total Deductions: {totalDeductions.toFixed(2)}
+                            </div>
                           </div>
-      
-                          <div className="md:col-span-1">
-                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                            <input
-                              type="date"
-                              name="endDate"
-                              value={deduction.endDate}
-                              onChange={(e) => handleDeductionChange(index, e)}
-                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                            />
-                          </div>
-      
-                          <div className="md:col-span-5 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => removeDeduction(index)}
-                              className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
-                            >
-                              <FaTrash className="text-white" />
-                            </button>
-                          </div>
+                        )}
+                      </div>
+
+                      <div className="p-4 rounded-lg mt-6 mb-4 border border-gray-300 shadow-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-lg">Net Salary:</span>
+                          <span className="font-bold text-xl text-[#A294F9]">
+                            {totalSalary.toFixed(2)}
+                          </span>
                         </div>
-                      ))}
-      
-                      {formData.deductions.length > 0 && (
-                        <div className="flex justify-end mt-2">
-                          <div className="text-lg font-semibold text-gray-700">
-                            Total Deductions: {totalDeductions.toFixed(2)}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-      
-                    <div className="p-4 rounded-lg mt-6 mb-4 border border-gray-300 shadow-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-lg">Net Salary:</span>
-                        <span className="font-bold text-xl text-[#A294F9]">
-                          {totalSalary.toFixed(2)}
-                        </span>
                       </div>
                     </div>
-                  </div>
-      
-                  <div className="flex justify-end mt-8">
-                    <button
-                      type="button"
-                      onClick={() => closeEditModal()}
-                      className="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600 transition me-4"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
-                    >
-                      Save Salary Details
-                    </button>
-                  </div>
-                </form>
+
+                    <div className="flex justify-end mt-8">
+                      <button
+                        type="button"
+                        onClick={() => closeEditModal()}
+                        className="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600 transition me-4"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                      >
+                        Save Salary Details
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
-          </div>
         </div>
       )}
-
-
     </>
   );
 };
