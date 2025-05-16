@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiFilter, FiPlus, FiDollarSign, FiList } from 'react-icons/fi';
+import { FiFilter, FiPlus, FiDollarSign, FiList, FiCrosshair } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaEdit, FaTrashAlt, FaEye, FaSearch, FaFileDownload } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
@@ -10,6 +10,7 @@ import employeeService from '../../../services/employeeService';
 import { BsCurrencyDollar } from 'react-icons/bs';
 import { FaTrash } from 'react-icons/fa6';
 import TransactionTypeService from '../../../services/TransactionTypeService';
+import { BiCross, BiX } from 'react-icons/bi';
 
 const PayrollForm = () => {
   const navigate = useNavigate();
@@ -653,9 +654,21 @@ const handleSubmit = () => {
           }}
           >
           <div className="p-2 bg-[#F5EFFF] min-h-screen">
-            <div className="px-2 flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+          <div className="px-2 flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+            
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                title="Close"
+                onClick={() => setShowEditForm(false)} 
+                className="p-1 rounded shadow cursor-pointer"
+                style={{ backgroundColor: '#A294F9' , color:'white'}}
+              >
+                <BiX size={20} />
+              </button>
             </div>
+          </div>
       
             <div className="flex justify-center">
               <div className="p-8 w-full max-w-6xl">
@@ -663,7 +676,7 @@ const handleSubmit = () => {
                   <div className="mb-8">
                     <div className="mb-6">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-lg text-[#333]">Allowances</h3>
+                        <h3 className="font-bold text-lg text-[#333]">Allowances</h3>
                         <button
                           type="button"
                           onClick={addAllowance}
@@ -774,7 +787,7 @@ const handleSubmit = () => {
       
                     <div className="mb-6">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-lg text-[#333]">Deductions</h3>
+                        <h3 className="font-bold text-lg text-[#333]">Deductions</h3>
                         <button
                           type="button"
                           onClick={addDeduction}
