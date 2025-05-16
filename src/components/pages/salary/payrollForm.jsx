@@ -563,6 +563,7 @@ const PayrollForm = () => {
               <Pagination />
             </div>
           </div>
+
           <table className="min-w-full table-auto text-sm">
             <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
               <tr>
@@ -644,31 +645,32 @@ const PayrollForm = () => {
             </tbody>
           </table>
 
-          {/* Month, Year and Status Selectors */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Replace the month and year selectors with this */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payroll Date</label>
-              <input
-                type="date"
-                value={payrollDate}
-                onChange={(e) => setPayrollDate(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-          {/* Create Payroll Button - Added at the bottom of the table */}
+          {/* Payroll Date and Create Button Row */}
           {selectedEmployees.length > 0 && (
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={handleCreatePayroll}
-                className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
-                style={{ backgroundColor: '#A294F9' }}
-              >
-                <FiDollarSign className="mr-2" />
-                Create Payroll for {selectedEmployees.length} Employee(s)
-              </button>
+            <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              {/* Payroll Date Input - Left Side (now with moderate width) */}
+              <div className="w-full md:w-70">  {/* Fixed moderate width on desktop, full width on mobile */}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payroll Date</label>
+                <input
+                  type="date"
+                  value={payrollDate}
+                  onChange={(e) => setPayrollDate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  required
+                />
+              </div>
+
+              {/* Create Payroll Button - Right Side */}
+              <div className="w-full md:w-auto">  {/* Auto width on desktop, full width on mobile */}
+                <button
+                  onClick={handleCreatePayroll}
+                  className="w-full md:w-auto mt-4 px-6 py-3 rounded-md shadow text-white font-medium flex items-center justify-center"
+                  style={{ backgroundColor: '#A294F9' }}
+                >
+                  <FiDollarSign className="mr-2" />
+                  Create Payroll for {selectedEmployees.length} Employee(s)
+                </button>
+              </div>
             </div>
           )}
         </div>
