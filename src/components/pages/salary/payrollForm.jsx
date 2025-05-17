@@ -18,6 +18,7 @@ const PayrollForm = () => {
   const navigate = useNavigate();
   const { monthYear } = useParams();
 
+  // Parse month and year from URL (e.g., "June-2025")
   const [month, year] = monthYear ? monthYear.split('-') : [];
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
@@ -77,9 +78,10 @@ const PayrollForm = () => {
         if (payrollForThisMonth) {
           setExistingPayroll(payrollForThisMonth);
           setIsExistingPayroll(true);
-          const employeeIds = payrollForThisMonth.employees.map(e =>
-            e.employeeId._id || e.employeeId
-          );
+          const employeeIds = payrollForThisMonth.employees
+          ?.filter(e => e?.employeeId) // Filter out null/undefined employeeId
+          ?.map(e => e.employeeId._id || e.employeeId) || [];
+        
           setSelectedEmployees(employeeIds);
           setTotalAllowances(payrollForThisMonth.summary.totalAllowance);
           setTotalDeductions(payrollForThisMonth.summary.totalDeduction);
@@ -193,7 +195,6 @@ const PayrollForm = () => {
         : [...prev, employeeId]
     );
   };
-
 const toggleSelectAll = () => {
   if (selectAll || selectedEmployees.length === salaries.length) {
     setSelectedEmployees([]);
