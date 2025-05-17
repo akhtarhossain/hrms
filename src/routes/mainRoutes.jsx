@@ -20,6 +20,7 @@ import PayrollForm from '../components/pages/salary/payrollForm';
 import TransactionTypeForm from '../components/Transaction/transactionForm';
 import TransactionList from '../components/Transaction/transactionList';
 import EmployeePayslip from '../components/pages/salary/payslip';
+import PayrollList from '../components/pages/salary/payrollList';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -59,6 +60,8 @@ const router = createBrowserRouter([
           { path: 'transaction-form/:id', element: <TransactionTypeForm /> },
           { path: 'transaction', element: <TransactionList /> },
           { path: 'transaction', element: <TransactionList /> },
+          { path: 'payroll', element: <PayrollList /> },
+          { path: 'payroll-form/:monthYear', element: <PayrollForm /> }
         ],
       },
     ],
