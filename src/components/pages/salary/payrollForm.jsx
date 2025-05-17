@@ -18,7 +18,6 @@ const PayrollForm = () => {
   const navigate = useNavigate();
   const { monthYear } = useParams();
 
-  // Parse month and year from URL (e.g., "June-2025")
   const [month, year] = monthYear ? monthYear.split('-') : [];
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
@@ -195,10 +194,18 @@ const PayrollForm = () => {
     );
   };
 
-  const toggleSelectAll = () => {
-    setSelectedEmployees(selectAll ? [] : salaries.map(employee => employee._id));
-    setSelectAll(!selectAll);
-  };
+const toggleSelectAll = () => {
+  if (selectAll || selectedEmployees.length === salaries.length) {
+    setSelectedEmployees([]);
+  } else {
+    setSelectedEmployees(salaries.map(employee => employee._id));
+  }
+  setSelectAll(!selectAll);
+};
+useEffect(() => {
+  // Update selectAll when all employees are selected or deselected
+  setSelectAll(selectedEmployees.length > 0 && selectedEmployees.length === salaries.length);
+}, [selectedEmployees, salaries.length]);
 
   const calculateSelectedTotals = () => {
     const selected = salaries.filter(employee => selectedEmployees.includes(employee._id));
@@ -237,6 +244,9 @@ const PayrollForm = () => {
       })) || []
     });
     setShowEditForm(true);
+    setSelectedEmployees(prev => 
+    prev.includes(employee._id) ? prev : [...prev, employee._id]
+  );
   };
 
   const handleCreatePayroll = () => {
