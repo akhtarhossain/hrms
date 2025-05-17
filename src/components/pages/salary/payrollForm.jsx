@@ -58,6 +58,34 @@ const PayrollForm = () => {
     year: ''
   });
 
+  const [modalTotals, setModalTotals] = useState({
+    totalAllowances: 0,
+    totalDeductions: 0,
+    totalSalary: 0
+  });
+
+  const calculateModalTotals = () => {
+    const allowancesTotal = formData.allowances.reduce((total, allowance) => {
+      return total + (Number(allowance.newSalary) || 0);
+    }, 0);
+
+    const deductionsTotal = formData.deductions.reduce((total, deduction) => {
+      return total + (Number(deduction.newSalary) || 0);
+    }, 0);
+
+    const netSalary = allowancesTotal - deductionsTotal;
+
+    setModalTotals({
+      totalAllowances: allowancesTotal,
+      totalDeductions: deductionsTotal,
+      totalSalary: netSalary
+    });
+  };
+
+  useEffect(() => {
+    calculateModalTotals();
+  }, [formData.allowances, formData.deductions]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -79,9 +107,9 @@ const PayrollForm = () => {
           setExistingPayroll(payrollForThisMonth);
           setIsExistingPayroll(true);
           const employeeIds = payrollForThisMonth.employees
-          ?.filter(e => e?.employeeId) // Filter out null/undefined employeeId
-          ?.map(e => e.employeeId._id || e.employeeId) || [];
-        
+            ?.filter(e => e?.employeeId) // Filter out null/undefined employeeId
+            ?.map(e => e.employeeId._id || e.employeeId) || [];
+
           setSelectedEmployees(employeeIds);
           setTotalAllowances(payrollForThisMonth.summary.totalAllowance);
           setTotalDeductions(payrollForThisMonth.summary.totalDeduction);
@@ -195,18 +223,18 @@ const PayrollForm = () => {
         : [...prev, employeeId]
     );
   };
-const toggleSelectAll = () => {
-  if (selectAll || selectedEmployees.length === salaries.length) {
-    setSelectedEmployees([]);
-  } else {
-    setSelectedEmployees(salaries.map(employee => employee._id));
-  }
-  setSelectAll(!selectAll);
-};
-useEffect(() => {
-  // Update selectAll when all employees are selected or deselected
-  setSelectAll(selectedEmployees.length > 0 && selectedEmployees.length === salaries.length);
-}, [selectedEmployees, salaries.length]);
+  const toggleSelectAll = () => {
+    if (selectAll || selectedEmployees.length === salaries.length) {
+      setSelectedEmployees([]);
+    } else {
+      setSelectedEmployees(salaries.map(employee => employee._id));
+    }
+    setSelectAll(!selectAll);
+  };
+  useEffect(() => {
+    // Update selectAll when all employees are selected or deselected
+    setSelectAll(selectedEmployees.length > 0 && selectedEmployees.length === salaries.length);
+  }, [selectedEmployees, salaries.length]);
 
   const calculateSelectedTotals = () => {
     const selected = salaries.filter(employee => selectedEmployees.includes(employee._id));
@@ -224,6 +252,11 @@ useEffect(() => {
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
     };
+
+    // Calculate initial totals
+    const initialAllowances = employee.allowances?.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0) || 0;
+    const initialDeductions = employee.deductions?.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0) || 0;
+    const initialNet = initialAllowances - initialDeductions;
 
     setCurrentEmployee(employee);
     setEditIndex(index);
@@ -244,10 +277,17 @@ useEffect(() => {
         endDate: formatDateForInput(d.endDate)
       })) || []
     });
+
+    setModalTotals({
+      totalAllowances: initialAllowances,
+      totalDeductions: initialDeductions,
+      totalSalary: initialNet
+    });
+
     setShowEditForm(true);
-    setSelectedEmployees(prev => 
-    prev.includes(employee._id) ? prev : [...prev, employee._id]
-  );
+    setSelectedEmployees(prev =>
+      prev.includes(employee._id) ? prev : [...prev, employee._id]
+    );
   };
 
   const handleCreatePayroll = () => {
@@ -278,7 +318,7 @@ useEffect(() => {
       month: monthNum.toString(), // Convert to string
       year: year.toString(), // Convert to string
       payrollDate: new Date().toISOString(), // Or use month/year date
-      status: "draft",
+      status: "DRAFT",
       summary: {
         totalAllowance: totals.totalAllowance,
         totalDeduction: totals.totalDeduction,
@@ -621,9 +661,7 @@ useEffect(() => {
           </table>
 
           {/* Payroll Date and Create Button Row */}
-          <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-
-            {/* Create Payroll Button - Right Side */}
+          <div className="mt-4 flex flex-col items-end md:items-end gap-4">
             {selectedEmployees.length > 0 && (
               <div className="mt-4 flex justify-end">
                 <button
@@ -800,7 +838,7 @@ useEffect(() => {
                         {formData.allowances.length > 0 && (
                           <div className="flex justify-end mt-2">
                             <div className="text-lg font-semibold text-gray-700">
-                              Total Allowances: {totalAllowances.toFixed(2)}
+                              Total Allowances: {modalTotals.totalAllowances.toFixed(2)}
                             </div>
                           </div>
                         )}
@@ -911,7 +949,7 @@ useEffect(() => {
                         {formData.deductions.length > 0 && (
                           <div className="flex justify-end mt-2">
                             <div className="text-lg font-semibold text-gray-700">
-                              Total Deductions: {totalDeductions.toFixed(2)}
+                              Total Deductions: {modalTotals.totalDeductions.toFixed(2)}
                             </div>
                           </div>
                         )}
@@ -921,7 +959,7 @@ useEffect(() => {
                         <div className="flex justify-between items-center">
                           <span className="font-semibold text-lg">Net Salary:</span>
                           <span className="font-bold text-xl text-[#A294F9]">
-                            {totalSalary.toFixed(2)}
+                            {modalTotals.totalSalary.toFixed(2)}
                           </span>
                         </div>
                       </div>
