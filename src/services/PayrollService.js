@@ -19,14 +19,21 @@ class PayrollService extends HttpService {
   }
   
 
-  getPayrollById(payrollId) {
-    return this.get(`/payroll/${payrollId}`).then((response) => response.data)
-        .catch((error) => {
-          console.error('Error fetching payroll data by ID:', error);
-          toast.error(`${error}`);
-          throw error;
-        });
-  }
+getPayrollById(payrollId) {
+  return this.get(`/payroll/${payrollId}`)
+    .then((response) => {
+      if (!response.data) {
+        throw new Error('No data found for the given ID.');
+      }
+      return response.data;
+    })
+    .catch((error) => {
+      console.error('Error fetching payroll data by ID:', error);
+      toast.error(`Error: ${error.message}`);
+      throw error;
+    });
+}
+
 
   createPayroll(PayrollData) {
     return this.post('/payroll', PayrollData).then((response) => response.data)
