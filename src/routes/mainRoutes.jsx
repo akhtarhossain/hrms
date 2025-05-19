@@ -21,6 +21,7 @@ import TransactionTypeForm from '../components/Transaction/transactionForm';
 import TransactionList from '../components/Transaction/transactionList';
 import EmployeePayslip from '../components/pages/salary/payslip';
 import PayrollList from '../components/pages/salary/payrollList';
+import PaymentForm from '../components/pages/salary/payments';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -55,7 +56,7 @@ const router = createBrowserRouter([
           { path: 'employSalaryform/:id', element: <EmploySalaryForm /> },
           { path: 'change-password', element: <ChangePasswordPage /> },
           { path: 'payslip/:id', element: <EmployeePayslip /> },
-          { path: 'payroll-form', element: <PayrollForm /> },
+          { path: 'payments/:id', element: <PaymentForm /> },
           { path: 'transaction-form', element: <TransactionTypeForm /> },
           { path: 'transaction-form/:id', element: <TransactionTypeForm /> },
           { path: 'transaction', element: <TransactionList /> },
