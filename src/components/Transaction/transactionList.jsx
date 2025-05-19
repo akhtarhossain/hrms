@@ -27,9 +27,9 @@ const TransactionList = () => {
   const fetchTransactions = () => {
     setLoading(true);
     TransactionTypeService.getTransactionTypes()
-    .then((data) => {
-      setTransactions(data || []);
-    })
+      .then((data) => {
+        setTransactions(data || []);
+      })
       .catch((error) => {
         console.error('Error fetching transactions:', error);
         toast.error('Failed to load transaction records');
@@ -37,7 +37,7 @@ const TransactionList = () => {
       .finally(() => {
         setLoading(false);
       });
-      console.log(transactions);
+    console.log(transactions);
   };
 
   const handleFilterChange = (e) => {
@@ -56,7 +56,7 @@ const TransactionList = () => {
         ...(filters.name && { name: filters.name }),
         ...(filters.transactionType && { transactionType: filters.transactionType })
       };
-  
+
       const data = await TransactionTypeService.getTransactionTypes(apiFilters);
       setTransactions(data || []);
     } catch (error) {
@@ -199,39 +199,39 @@ const TransactionList = () => {
               </tr>
             </thead>
             <tbody>
-            {Array.isArray(transactions) && transactions.length > 0 ? (
-  transactions.map((transaction) => (
-    <tr key={transaction._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
-      <td className="px-4 py-3 capitalize">{transaction.transactionType}</td>
-      <td className="px-4 py-3">{transaction.name}</td>
-      <td className="px-4 py-3">{new Date(transaction.createdAt).toLocaleDateString()}</td>
-      <td className="px-4 py-3">
-        <div className="flex space-x-2">
-          <button
-            title="Edit"
-            className="p-2 rounded shadow cursor-pointer"
-            style={{ backgroundColor: '#A294F9' }}
-            onClick={() => navigate(`/transaction-form/${transaction._id}`)}
-          >
-            <FaEdit className="text-white" />
-          </button>
-          <button
-            title="Delete"
-            className="p-2 rounded shadow cursor-pointer"
-            style={{ backgroundColor: '#F87171' }}
-            onClick={() => handleDeleteClick(transaction._id)}
-          >
-            <FaTrashAlt className="text-white" />
-          </button>
-        </div>
-      </td>
-    </tr>
-  ))
-) : (
-  <tr>
-    <td colSpan="4" className="px-4 py-6 text-center text-gray-500">No transaction records found</td>
-  </tr>
-)}
+              {Array.isArray(transactions) && transactions.length > 0 ? (
+                transactions.map((transaction) => (
+                  <tr key={transaction._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
+                    <td className="px-4 py-3 capitalize">{transaction.transactionType}</td>
+                    <td className="px-4 py-3">{transaction.name}</td>
+                    <td className="px-4 py-3">{new Date(transaction.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex space-x-2">
+                        <button
+                          title="Edit"
+                          className="p-2 rounded shadow cursor-pointer"
+                          style={{ backgroundColor: '#A294F9' }}
+                          onClick={() => navigate(`/transaction-form/${transaction._id}`)}
+                        >
+                          <FaEdit className="text-white" />
+                        </button>
+                        <button
+                          title="Delete"
+                          className="p-2 rounded shadow cursor-pointer"
+                          style={{ backgroundColor: '#F87171' }}
+                          onClick={() => handleDeleteClick(transaction._id)}
+                        >
+                          <FaTrashAlt className="text-white" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="px-4 py-6 text-center text-gray-500">No transaction records found</td>
+                </tr>
+              )}
 
             </tbody>
           </table>
