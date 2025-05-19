@@ -184,7 +184,7 @@ const Employees = () => {
             <tr>
               <th className="px-4 py-3 text-left">Profile</th>
               <th className="px-4 py-3 text-left">Employee ID</th>
-              <th className="px-4 py-3 text-left">Name</th>
+              {/* <th className="px-4 py-3 text-left">Name</th> */}
               <th className="px-4 py-3 text-left">Email</th>
               <th className="px-4 py-3 text-left">Department</th>
               <th className="px-4 py-3 text-left">Designation</th>
@@ -194,19 +194,28 @@ const Employees = () => {
           <tbody>
             {employees.map((employee, index) => (
               <tr key={index} className="border-t hover:bg-[#CDC1FF] text-gray-600">
-                <td className="px-4 py-3">
-                  {employee.profilePicture ? (
-                    <img
-                      src={employee.profilePicture}
-                      alt="Profile"
-                      className="w-15 h-15 rounded-full object-cover border"
-                    />
-                  ) : (
-                    <span className="text-gray-400 italic">No image</span>
-                  )}
-                </td>
+        <td className="px-4 py-3">
+  <div className="flex items-center gap-3">
+    {employee.profilePicture ? (
+      <img
+        src={employee.profilePicture}
+        alt="Profile"
+        className="w-10 h-10 rounded-full object-cover border"
+      />
+    ) : (
+      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 text-sm italic">
+        No Img
+      </div>
+    )}
+    <span className="text-gray-800">
+      {employee.firstName} {employee.lastName}
+    </span>
+  </div>
+</td>
+
+
                 <td className="px-4 py-3">{employee.employeeId || `EMP${index + 1}`}</td>
-                <td className="px-4 py-3">{employee.firstName} {employee.lastName} </td>
+                {/* <td className="px-4 py-3"> </td> */}
                 <td className="px-4 py-3">{employee.email}</td>
                 <td className="px-4 py-3">{employee.department}</td>
                 <td className="px-4 py-3">{employee.designation}</td>
