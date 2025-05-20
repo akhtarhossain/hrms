@@ -194,7 +194,8 @@ useEffect(() => {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
     3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus'],
-    5: ['certificates'],
+    4: ['educations'], // <-- education step
+    6: ['certificates'], // <-- certificate step
   };
 
   const handleNext = () => {
@@ -229,628 +230,721 @@ useEffect(() => {
     }));
   };
 
-  const isStepValid = () => {
-    const fields = requiredFields[step] || [];
-    let valid = true;
-    const newErrors = {};
-    return valid;
-  };
+const isStepValid = () => {
+  const fields = requiredFields[step] || [];
+  let valid = true;
+  const newErrors = {};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const finalData = {
-      ...formData,
-      educations: educationList,
-      certificates: documentList,
-      profilePicture: imageUrl,
-      totalValue : String(totalSalary)
-    };
-    console.log(finalData , "final daat");
-    
-    if (id) {
-      employeeService.updateEmployee(id, finalData)
-        .then((response) => {
-          console.log('Employee updated successfully:', response);
-          toast.success('Employee updated successfully!');
-          navigate('/employees');
-        })
-        .catch((error) => {
-          console.error('Error updating employee:', error);
-          toast.error('Error updating employee. Please try again.');
+  for (const field of fields) {
+    if (field === 'certificates') {
+      if (!documentList || documentList.length === 0) {
+        valid = false;
+        newErrors[field] = 'At least one certificate is required';
+      } else {
+        documentList.forEach((item, index) => {
+          if (!item.type || !item.fileUrl) {
+            valid = false;
+            if (!newErrors[field]) newErrors[field] = {};
+            newErrors[field][index] = {
+              ...(item.type ? {} : { type: 'Type is required' }),
+              ...(item.fileUrl ? {} : { fileUrl: 'File URL is required' }),
+            };
+          }
         });
+      }
+    } else if (field === 'educations') {
+      if (!educationList || educationList.length === 0) {
+        valid = false;
+        newErrors[field] = 'At least one education entry is required';
+      toast.error("Please add at least one item")
+      } else {
+        educationList.forEach((item, index) => {
+          const eduErrors = {};
+          if (!item.educationType) eduErrors.educationType = 'Education Type is required';
+          if (!item.institute) eduErrors.institute = 'Institute is required';
+          if (!item.yearOfPassing) eduErrors.yearOfPassing = 'Year of Passing is required';
+          if (!item.gradePercentage) eduErrors.gradePercentage = 'Grade % is required';
+
+          if (Object.keys(eduErrors).length > 0) {
+            valid = false;
+            if (!newErrors[field]) newErrors[field] = {};
+            newErrors[field][index] = eduErrors;
+          }
+        });
+      }
     } else {
-      employeeService.createEmployee(finalData)
-        .then((response) => {
-          console.log('Employee created successfully:', response);
-          toast.success('Employee created successfully!');
-          navigate('/employees');
-        })
-        .catch((error) => {
-          console.error('Error creating employee:', error);
-          toast.error('Error creating employee. Please try again.');
-        });
+      const value = formData[field]; // Replace this line depending on how you store values
+      if (!value || value === '') {
+        valid = false;
+        newErrors[field] = `${field} is required`;
+      }
     }
+  }
+
+  setErrors(newErrors);
+  return valid;
+};
+
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  const fields = requiredFields[step] || [];
+  let valid = true;
+  const newErrors = {};
+
+  for (const field of fields) {
+    if (field === 'certificates') {
+      if (!documentList || documentList.length === 0) {
+        valid = false;
+        toast.error('Please add at least one certificate.');
+        newErrors[field] = 'At least one certificate is required';
+      } else {
+        documentList.forEach((item, index) => {
+          if (!item.type || !item.fileUrl) {
+            valid = false;
+            if (!newErrors[field]) newErrors[field] = {};
+            newErrors[field][index] = {
+              ...(item.type ? {} : { type: 'Type is required' }),
+              ...(item.fileUrl ? {} : { fileUrl: 'File URL is required' }),
+            };
+          }
+        });
+      }
+    } else {
+      const value = formData[field];
+      if (!value || value === '') {
+        valid = false;
+        newErrors[field] = `${field} is required`;
+      }
+    }
+  }
+
+  setErrors(newErrors);
+
+  if (!valid) return; // 💥 Stop here if invalid
+
+  const finalData = {
+    ...formData,
+    educations: educationList,
+    certificates: documentList,
+    profilePicture: imageUrl,
+    totalValue: String(totalSalary),
   };
 
-  const renderInput = (label, name, type = 'text', placeholder = '', onChangeHandler = null) => {
-    if (name === 'country') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Nationality</option>
-            {countryOptions.map((country) => (
-              <option key={country.value} value={country.value}>
-                {country.label}
-              </option>
-            ))}
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  console.log(finalData, 'final data');
 
-    if (name === 'nationality') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Nationality</option>
-            <option value="Pakistani">Pakistani</option>
-            <option value="Indian">Indian</option>
-            <option value="Bangladeshi">Bangladeshi</option>
-            <option value="Afghan">Afghan</option>
-            <option value="American">American</option>
-            <option value="British">British</option>
-            <option value="Canadian">Canadian</option>
-            <option value="Chinese">Chinese</option>
-            <option value="German">German</option>
-            <option value="Other">Other</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (id) {
+    employeeService.updateEmployee(id, finalData)
+      .then((response) => {
+        console.log('Employee updated successfully:', response);
+        toast.success('Employee updated successfully!');
+        navigate('/employees');
+      })
+      .catch((error) => {
+        console.error('Error updating employee:', error);
+        toast.error('Error updating employee. Please check fields.');
+      });
+  } else {
+    employeeService.createEmployee(finalData)
+      .then((response) => {
+        console.log('Employee created successfully:', response);
+        toast.success('Employee created successfully!');
+        navigate('/employees');
+      })
+      .catch((error) => {
+        console.error('Error creating employee:', error);
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.status === 400
+        ) {
+          toast.error('Employee ID already exists!');
+        } else {
+          toast.error('Error creating employee. Please check fields.');
+        }
+      });
+  }
+};
 
-    if (name === 'emergencyContactRelation') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Relation</option>
-            <option value="Father">Father</option>
-            <option value="Mother">Mother</option>
-            <option value="Brother">Brother</option>
-            <option value="Uncle">Uncle</option>
-            <option value="Friend">Friend</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+const renderInput = (label, name, type = 'text', placeholder = '', onChangeHandler = null) => {
+  if (name === 'country') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Nationality</option>
+          {countryOptions.map((country) => (
+            <option key={country.value} value={country.value}>
+              {country.label}
+            </option>
+          ))}
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'gender') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'nationality') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Nationality</option>
+          <option value="Pakistani">Pakistani</option>
+          <option value="Indian">Indian</option>
+          <option value="Bangladeshi">Bangladeshi</option>
+          <option value="Afghan">Afghan</option>
+          <option value="American">American</option>
+          <option value="British">British</option>
+          <option value="Canadian">Canadian</option>
+          <option value="Chinese">Chinese</option>
+          <option value="German">German</option>
+          <option value="Other">Other</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'maritalStatus') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Marital Status</option>
-            <option value="Single">Single</option>
-            <option value="Married">Married</option>
-            <option value="Divorced">Divorced</option>
-            <option value="Widowed">Widowed</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'emergencyContactRelation') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Relation</option>
+          <option value="Father">Father</option>
+          <option value="Mother">Mother</option>
+          <option value="Brother">Brother</option>
+          <option value="Uncle">Uncle</option>
+          <option value="Friend">Friend</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'employmentType') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Employment Type</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contractual">Contractual</option>
-            <option value="Internship">Internship</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'gender') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'employeeStatus') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={formData[name]}
-            onChange={handleChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Employee Status</option>
-            <option value="Active">Active</option>
-            <option value="On Leave">On Leave</option>
-            <option value="Resigned">Resigned</option>
-            <option value="Terminated">Terminated</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'maritalStatus') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Marital Status</option>
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+          <option value="Divorced">Divorced</option>
+          <option value="Widowed">Widowed</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'educationType') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name={name}
-            value={educationType}
-            onChange={(e) => setEducationType(e.target.value)}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          >
-            <option value="">Select Education Type</option>
-            <option value="Matriculation">Matriculation</option>
-            <option value="Intermediate">Intermediate</option>
-            <option value="Bachelor">Bachelor</option>
-            <option value="Graduate">Graduate</option>
-            <option value="Master">Master</option>
-            <option value="Post Graduate">Post Graduate</option>
-          </select>
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'employmentType') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Employment Type</option>
+          <option value="Full-time">Full-time</option>
+          <option value="Part-time">Part-time</option>
+          <option value="Contractual">Contractual</option>
+          <option value="Internship">Internship</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'institute') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name={name}
-            placeholder="Institute Name"
-            value={institute}
-            onChange={(e) => setInstitute(e.target.value)}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          />
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'employeeStatus') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Employee Status</option>
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+          <option value="Resigned">Resigned</option>
+          <option value="Terminated">Terminated</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'yearOfPassing') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            name={name}
-            placeholder="Year of Passing"
-            value={yearOfPassing}
-            onChange={(e) => setYearOfPassing(e.target.value)}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          />
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
+  if (name === 'educationType') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <select
+          name={name}
+          value={educationType}
+          onChange={(e) => setEducationType(e.target.value)}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        >
+          <option value="">Select Education Type</option>
+          <option value="Matriculation">Matriculation</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Bachelor">Bachelor</option>
+          <option value="Graduate">Graduate</option>
+          <option value="Master">Master</option>
+          <option value="Post Graduate">Post Graduate</option>
+        </select>
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
 
-    if (name === 'gradePercentage') {
-      return (
-        <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {label} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name={name}
-            placeholder="Grade Percentage"
-            value={gradePercentage}
-            onChange={(e) => setGradePercentage(e.target.value)}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-          />
-          {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
-        </div>
-      );
-    }
-
-    if (name === 'cnic') {
-      return (
-        <div className="w-full sm:w-1/2 px-2 mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">CNIC / National ID Number</label>
-          <input
-            type="text"
-            value={formData.cnic}
-            onChange={handleCnicChange}
-            className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-            placeholder="XXXXX-XXXXXXX-X"
-            maxLength={15}
-          />
-        </div>
-      );
-    }
-
+  if (name === 'institute') {
     return (
       <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {label} <span className="text-red-500">*</span>
         </label>
         <input
-          type={type}
+          type="text"
           name={name}
-          placeholder={placeholder}
-          value={type !== 'file' ? formData[name] || '' : undefined}
-          onChange={handleChange}
+          placeholder="Institute Name"
+          value={institute}
+          onChange={(e) => setInstitute(e.target.value)}
           className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
         />
         {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
       </div>
     );
+  }
+
+  if (name === 'yearOfPassing') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          name={name}
+          placeholder="Year of Passing"
+          value={yearOfPassing}
+          onChange={(e) => setYearOfPassing(e.target.value)}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        />
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
+
+  if (name === 'gradePercentage') {
+    return (
+      <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          {label} <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name={name}
+          placeholder="Grade Percentage"
+          value={gradePercentage}
+          onChange={(e) => setGradePercentage(e.target.value)}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+        />
+        {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  }
+
+  if (name === 'cnic') {
+    return (
+      <div className="w-full sm:w-1/2 px-2 mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">CNIC / National ID Number</label>
+        <input
+          type="text"
+          value={formData.cnic}
+          onChange={handleCnicChange}
+          className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+          placeholder="XXXXX-XXXXXXX-X"
+          maxLength={15}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder}
+        value={type !== 'file' ? formData[name] || '' : undefined}
+        onChange={handleChange}
+        className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+      />
+      {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+    </div>
+  );
+};
+
+const steps = [
+  { label: 'Basic Info', icon: <BsPerson size={20} onClick={() => handleStepClick(0)} /> },
+  { label: 'Contact', icon: <BsTelephone size={20} onClick={() => handleStepClick(1)} /> },
+  { label: 'Employment', icon: <BsBriefcase size={20} onClick={() => handleStepClick(2)} /> },
+  { label: 'Education', icon: <BsBook size={20} onClick={() => handleStepClick(3)} /> },
+  { label: 'Salary', icon: <BsCurrencyDollar size={20} onClick={() => handleStepClick(4)} /> },
+  { label: 'Documents', icon: <BsFileEarmarkText size={20} onClick={() => handleStepClick(5)} /> },
+];
+
+const handleStepClick = (index) => {
+  setStep(index + 1); 
+};
+
+const handleFileUpload = async (e) => {
+  const file = e.target?.files?.[0] || e;
+  if (!file) return;
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'video/mp4', 'video/3gp', 'text/srt'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('File type not supported. Allowed: jpg, jpeg, png, webp, mp4, 3gp, srt.');
+    return;
+  }
+  setImageName(file.name);
+  setUploadStatus('uploading');
+  try {
+    const projectData = {
+      name: file.name,
+      access: "public-read",
+    };
+    const response = await employeeService.uploadImage(projectData);
+    if (response?.message && Array.isArray(response.message)) {
+      response.message.forEach((msg) => toast.error(msg));
+      setUploadStatus('idle');
+      return;
+    }
+    const uploadUrl = response.location;
+    if (!uploadUrl) {
+      toast.error("No upload URL received.");
+      setUploadStatus('idle');
+      return;
+    }
+    const source = axios.CancelToken.source();
+    await axios.put(uploadUrl, file, {
+      headers: {
+        "Content-Type": file.type,
+        "x-amz-acl": "public-read",
+      },
+      cancelToken: source.token,
+      onUploadProgress: (progressEvent) => {
+        const total = progressEvent.total ?? 1;
+        const percent = Math.round((progressEvent.loaded * 100) / total);
+      }
+    });
+    const trimmedUrl = uploadUrl.split("?")[0];
+    setImageUrl(trimmedUrl);
+    setUploadStatus('uploaded');
+    toast.success("File uploaded successfully!");
+    setFormData((prev) => ({
+      ...prev,
+      profilePicture: trimmedUrl,
+    }));
+  } catch (err) {
+    if (axios.isCancel(err)) {
+      console.log("Upload cancelled:", err.message);
+    } else {
+      console.error("Upload failed:", err);
+      toast.error("Upload failed! Please try again.");
+    }
+    setUploadStatus('idle');
+  }
+};
+
+const handleAddEducation = () => {
+  if (!institute || !yearOfPassing || !gradePercentage || !educationType) {
+    toast.error('Please fill all education fields before adding.');
+    return;
+  }
+
+  const newEducation = {
+    institute,
+    yearOfPassing,
+    gradePercentage,
+    educationType
   };
 
-  const steps = [
-    { label: 'Basic Info', icon: <BsPerson size={20} onClick={() => handleStepClick(0)} /> },
-    { label: 'Contact', icon: <BsTelephone size={20} onClick={() => handleStepClick(1)} /> },
-    { label: 'Employment', icon: <BsBriefcase size={20} onClick={() => handleStepClick(2)} /> },
-    { label: 'Education', icon: <BsBook size={20} onClick={() => handleStepClick(3)} /> },
-    { label: 'Salary', icon: <BsCurrencyDollar size={20} onClick={() => handleStepClick(4)} /> },
-    { label: 'Documents', icon: <BsFileEarmarkText size={20} onClick={() => handleStepClick(5)} /> },
+  if (isEditing && editIndex !== null) {
+    const updatedList = [...educationList];
+    updatedList[editIndex] = newEducation;
+    setEducationList(updatedList);
+    setIsEditing(false);
+    setEditIndex(null);
+  } else {
+    setEducationList((prevList) => [...prevList, newEducation]);
+  }
+
+  setInstitute('');
+  setYearOfPassing('');
+  setGradePercentage('');
+  setEducationType('');
+};
+
+const handleDeleteEducation = (index) => {
+  const newList = [...educationList];
+  newList.splice(index, 1);
+  setEducationList(newList);
+  toast.success("Education deleted successfully!");
+};
+
+const handleEditEducation = (index) => {
+  const edu = educationList[index];
+  setInstitute(edu.institute);
+  setYearOfPassing(edu.yearOfPassing);
+  setGradePercentage(edu.gradePercentage);
+  setEducationType(edu.educationType);
+  setIsEditing(true);
+  setEditIndex(index);
+};
+
+const handleDocumentUpload = async (e) => {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  setDocumentName('');
+  setDocumentUploadStatus('uploading');
+  const allowedTypes = [
+    'image/jpeg', 'image/png', 'image/webp',
+    'image/jpg', 'video/mp4', 'video/3gpp', 'text/srt',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
 
-  const handleStepClick = (index) => {
-    setStep(index + 1); 
-  };
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('File type not supported.');
+    setDocumentUploadStatus('idle');
+    return;
+  }
 
-  const handleFileUpload = async (e) => {
-    const file = e.target?.files?.[0] || e;
-    if (!file) return;
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'video/mp4', 'video/3gp', 'text/srt'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('File type not supported. Allowed: jpg, jpeg, png, webp, mp4, 3gp, srt.');
+  try {
+    setDocumentName(file.name);
+    const projectData = { name: file.name, access: "public-read" };
+    const response = await employeeService.uploadDocument(projectData);
+
+    if (response?.message && Array.isArray(response.message)) {
+      response.message.forEach((msg) => toast.error(msg));
+      setDocumentUploadStatus('idle');
       return;
     }
+
+    const uploadUrl = response.location;
+    if (!uploadUrl) {
+      toast.error("No upload URL received.");
+      setDocumentUploadStatus('idle');
+      return;
+    }
+
+    await axios.put(uploadUrl, file, {
+      headers: {
+        "Content-Type": file.type,
+        "x-amz-acl": "public-read",
+      }
+    });
+
+    const trimmedDOCUrl = uploadUrl.split("?")[0];
+    setDocuUrl(trimmedDOCUrl);
     setImageName(file.name);
-    setUploadStatus('uploading');
-    try {
-      const projectData = {
-        name: file.name,
-        access: "public-read",
-      };
-      const response = await employeeService.uploadImage(projectData);
-      if (response?.message && Array.isArray(response.message)) {
-        response.message.forEach((msg) => toast.error(msg));
-        setUploadStatus('idle');
-        return;
-      }
-      const uploadUrl = response.location;
-      if (!uploadUrl) {
-        toast.error("No upload URL received.");
-        setUploadStatus('idle');
-        return;
-      }
-      const source = axios.CancelToken.source();
-      await axios.put(uploadUrl, file, {
-        headers: {
-          "Content-Type": file.type,
-          "x-amz-acl": "public-read",
-        },
-        cancelToken: source.token,
-        onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total ?? 1;
-          const percent = Math.round((progressEvent.loaded * 100) / total);
-        }
-      });
-      const trimmedUrl = uploadUrl.split("?")[0];
-      setImageUrl(trimmedUrl);
-      setUploadStatus('uploaded');
-      toast.success("File uploaded successfully!");
-      setFormData((prev) => ({
-        ...prev,
-        profilePicture: trimmedUrl,
-      }));
-    } catch (err) {
-      if (axios.isCancel(err)) {
-        console.log("Upload cancelled:", err.message);
-      } else {
-        console.error("Upload failed:", err);
-        toast.error("Upload failed! Please try again.");
-      }
-      setUploadStatus('idle');
-    }
+    setUploadedFile(file);
+    setDocumentUploadStatus('uploaded');
+    toast.success("Document uploaded successfully!");
+  } catch (err) {
+    console.error("Upload failed:", err);
+    setDocumentUploadStatus('idle');
+    toast.error("Upload failed! Please try again.");
+  } finally {
+    e.target.value = '';
+  }
+};
+
+const handleAddDocument = () => {
+  if (!selectedDocType || !uploadedFile || !DocuUrl) {
+    toast.error("Please select document type and upload a document.");
+    return;
+  }
+
+  const newDocument = {
+    type: selectedDocType,
+    file: uploadedFile,
+    fileUrl: DocuUrl,
   };
 
-  const handleAddEducation = () => {
-    if (!institute || !yearOfPassing || !gradePercentage || !educationType) {
-      toast.error('Please fill all education fields before adding.');
-      return;
-    }
-
-    const newEducation = {
-      institute,
-      yearOfPassing,
-      gradePercentage,
-      educationType
-    };
-
-    if (isEditing && editIndex !== null) {
-      const updatedList = [...educationList];
-      updatedList[editIndex] = newEducation;
-      setEducationList(updatedList);
-      setIsEditing(false);
-      setEditIndex(null);
-    } else {
-      setEducationList((prevList) => [...prevList, newEducation]);
-    }
-
-    setInstitute('');
-    setYearOfPassing('');
-    setGradePercentage('');
-    setEducationType('');
-  };
-
-  const handleDeleteEducation = (index) => {
-    const newList = [...educationList];
-    newList.splice(index, 1);
-    setEducationList(newList);
-    toast.success("Education deleted successfully!");
-  };
-
-  const handleEditEducation = (index) => {
-    const edu = educationList[index];
-    setInstitute(edu.institute);
-    setYearOfPassing(edu.yearOfPassing);
-    setGradePercentage(edu.gradePercentage);
-    setEducationType(edu.educationType);
-    setIsEditing(true);
-    setEditIndex(index);
-  };
-
-  const handleDocumentUpload = async (e) => {
-    const file = e.target?.files?.[0];
-    if (!file) return;
-    setDocumentName('');
-    setDocumentUploadStatus('uploading');
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/webp',
-      'image/jpg', 'video/mp4', 'video/3gpp', 'text/srt',
-      'application/pdf', 'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('File type not supported.');
-      setDocumentUploadStatus('idle');
-      return;
-    }
-
-    try {
-      setDocumentName(file.name);
-      const projectData = { name: file.name, access: "public-read" };
-      const response = await employeeService.uploadDocument(projectData);
-
-      if (response?.message && Array.isArray(response.message)) {
-        response.message.forEach((msg) => toast.error(msg));
-        setDocumentUploadStatus('idle');
-        return;
-      }
-
-      const uploadUrl = response.location;
-      if (!uploadUrl) {
-        toast.error("No upload URL received.");
-        setDocumentUploadStatus('idle');
-        return;
-      }
-
-      await axios.put(uploadUrl, file, {
-        headers: {
-          "Content-Type": file.type,
-          "x-amz-acl": "public-read",
-        }
-      });
-
-      const trimmedDOCUrl = uploadUrl.split("?")[0];
-      setDocuUrl(trimmedDOCUrl);
-      setImageName(file.name);
-      setUploadedFile(file);
-      setDocumentUploadStatus('uploaded');
-      toast.success("Document uploaded successfully!");
-    } catch (err) {
-      console.error("Upload failed:", err);
-      setDocumentUploadStatus('idle');
-      toast.error("Upload failed! Please try again.");
-    } finally {
-      e.target.value = '';
-    }
-  };
-
-  const handleAddDocument = () => {
-    if (!selectedDocType || !uploadedFile || !DocuUrl) {
-      toast.error("Please select document type and upload a document.");
-      return;
-    }
-
-    const newDocument = {
-      type: selectedDocType,
-      file: uploadedFile,
-      fileUrl: DocuUrl,
-    };
-
-    if (isEditingDoc && editIndexDoc !== null) {
-      const updatedList = [...documentList];
-      updatedList[editIndexDoc] = newDocument;
-      setDocumentList(updatedList);
-      setIsEditingDoc(false);
-      setEditIndexDoc(null);
-    } else {
-      setDocumentList(prevList => [...prevList, newDocument]);
-    }
-
-    setSelectedDocType('');
-    setImageName('');
-    setUploadedFile(null);
-    setDocuUrl('');
-  };
-
-  const handleDeleteDocument = (index) => {
-    const updatedList = documentList.filter((_, i) => i !== index);
+  if (isEditingDoc && editIndexDoc !== null) {
+    const updatedList = [...documentList];
+    updatedList[editIndexDoc] = newDocument;
     setDocumentList(updatedList);
-  };
+    setIsEditingDoc(false);
+    setEditIndexDoc(null);
+  } else {
+    setDocumentList(prevList => [...prevList, newDocument]);
+  }
 
-  const handleEditDocuments = (index) => {
-    const doc = documentList[index];
-    setSelectedDocType(doc.type);
-    setUploadedFile(doc.file);
-    setIsEditingDoc(true);
-    setEditIndexDoc(index);
-  };
+  setSelectedDocType('');
+  setImageName('');
+  setUploadedFile(null);
+  setDocuUrl('');
+};
 
-  const handleDownloadEducation = async (index) => {
-    const edu = documentList[index];
-    if (!edu || !edu.fileUrl || !edu.type) return;
-    try {
-      const response = await fetch(edu.fileUrl);
-      const blob = await response.blob();
-      const extension = edu.type.split('/')[1] || 'file';
-      const fileName = `document-${index + 1}.${extension}`;
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      toast.error('File download failed', error);
-    }
-  };
+const handleDeleteDocument = (index) => {
+  const updatedList = documentList.filter((_, i) => i !== index);
+  setDocumentList(updatedList);
+};
 
-  const handleCnicChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 13) value = value.slice(0, 13);
-    let formatted = value;
-    if (value.length > 5 && value.length <= 12) {
-      formatted = `${value.slice(0, 5)}-${value.slice(5)}`;
-    } else if (value.length > 12) {
-      formatted = `${value.slice(0, 5)}-${value.slice(5, 12)}-${value.slice(12)}`;
-    }
-    setFormData(prev => ({ ...prev, cnic: formatted }));
-  };
-  const addAllowance = () => {
-    setFormData({
-      ...formData,
-      allowances: [...formData.allowances, { type: "", amount: "" , currentSalary: "0" }],
-    });
-  };
+const handleEditDocuments = (index) => {
+  const doc = documentList[index];
+  setSelectedDocType(doc.type);
+  setUploadedFile(doc.file);
+  setIsEditingDoc(true);
+  setEditIndexDoc(index);
+};
 
-  const addDeduction = () => {
-    setFormData({
-      ...formData,
-      deductions: [...formData.deductions, { type: "", amount: "" , currentSalary: "0"}],
-    });
-  };
-  const calculateTotals = () => {
-    let allowancesTotal = 0;
-    let deductionsTotal = 0;
-  
-    (formData?.allowances || []).forEach((allowance) => {
-      const amount = Number(allowance?.amount) || 0;
-      const newSalary = Number(allowance?.newSalary) || 0;
-      allowancesTotal += amount + newSalary;
-    });
-    (formData?.deductions || []).forEach((deduction) => {
-      const amount = Number(deduction?.amount) || 0;
-      const newSalary = Number(deduction?.newSalary) || 0;
-      deductionsTotal += amount + newSalary;
-    });
-    const total = allowancesTotal - deductionsTotal;
-    setTotalAllowances(allowancesTotal);
-    setTotalDeductions(deductionsTotal);
-    setTotalSalary(total);
-  };
+const handleDownloadEducation = async (index) => {
+  const edu = documentList[index];
+  if (!edu || !edu.fileUrl || !edu.type) return;
+  try {
+    const response = await fetch(edu.fileUrl);
+    const blob = await response.blob();
+    const extension = edu.type.split('/')[1] || 'file';
+    const fileName = `document-${index + 1}.${extension}`;
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    toast.error('File download failed', error);
+  }
+};
 
-    const handleAllowanceChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedAllowances = [...formData.allowances];
-    updatedAllowances[index][name] = value;
-    setFormData({ ...formData, allowances: updatedAllowances });
-  };
+const handleCnicChange = (e) => {
+  let value = e.target.value.replace(/\D/g, '');
+  if (value.length > 13) value = value.slice(0, 13);
+  let formatted = value;
+  if (value.length > 5 && value.length <= 12) {
+    formatted = `${value.slice(0, 5)}-${value.slice(5)}`;
+  } else if (value.length > 12) {
+    formatted = `${value.slice(0, 5)}-${value.slice(5, 12)}-${value.slice(12)}`;
+  }
+  setFormData(prev => ({ ...prev, cnic: formatted }));
+};
+const addAllowance = () => {
+  setFormData({
+    ...formData,
+    allowances: [...formData.allowances, { type: "", amount: "" , currentSalary: "0" }],
+  });
+};
 
-  const handleDeductionChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedDeductions = [...formData.deductions];
-    updatedDeductions[index][name] = value;
-    setFormData({ ...formData, deductions: updatedDeductions });
-  };
+const addDeduction = () => {
+  setFormData({
+    ...formData,
+    deductions: [...formData.deductions, { type: "", amount: "" , currentSalary: "0"}],
+  });
+};
+const calculateTotals = () => {
+  let allowancesTotal = 0;
+  let deductionsTotal = 0;
+
+  (formData?.allowances || []).forEach((allowance) => {
+    const amount = Number(allowance?.amount) || 0;
+    const newSalary = Number(allowance?.newSalary) || 0;
+    allowancesTotal += amount + newSalary;
+  });
+  (formData?.deductions || []).forEach((deduction) => {
+    const amount = Number(deduction?.amount) || 0;
+    const newSalary = Number(deduction?.newSalary) || 0;
+    deductionsTotal += amount + newSalary;
+  });
+  const total = allowancesTotal - deductionsTotal;
+  setTotalAllowances(allowancesTotal);
+  setTotalDeductions(deductionsTotal);
+  setTotalSalary(total);
+};
+
+const handleAllowanceChange = (index, e) => {
+  const { name, value } = e.target;
+  const updatedAllowances = [...formData.allowances];
+  updatedAllowances[index][name] = value;
+  setFormData({ ...formData, allowances: updatedAllowances });
+};
+
+const handleDeductionChange = (index, e) => {
+  const { name, value } = e.target;
+  const updatedDeductions = [...formData.deductions];
+  updatedDeductions[index][name] = value;
+  setFormData({ ...formData, deductions: updatedDeductions });
+};
 
 useEffect(() => {
   if (formData) {
@@ -861,15 +955,15 @@ useEffect(() => {
 }, [formData]);
 
 
-  const removeAllowance = (index) => {
-    const updatedAllowances = formData.allowances.filter((_, i) => i !== index);
-    setFormData({ ...formData, allowances: updatedAllowances });
-  };
+const removeAllowance = (index) => {
+  const updatedAllowances = formData.allowances.filter((_, i) => i !== index);
+  setFormData({ ...formData, allowances: updatedAllowances });
+};
 
-  const removeDeduction = (index) => {
-    const updatedDeductions = formData.deductions.filter((_, i) => i !== index);
-    setFormData({ ...formData, deductions: updatedDeductions });
-  };
+const removeDeduction = (index) => {
+  const updatedDeductions = formData.deductions.filter((_, i) => i !== index);
+  setFormData({ ...formData, deductions: updatedDeductions });
+};
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
@@ -1332,7 +1426,10 @@ useEffect(() => {
               <>
                 <div className="flex flex-wrap -mx-2 w-full">
                   <div className="w-full sm:w-1/2 px-2 mb-4">
-                    <label className="block text-sm font-medium mb-1 text-gray-700">Document Type</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Document Type
+                      <span className="text-red-500">*</span>
+                    </label>
+                    
                     <select
                       value={selectedDocType}
                       onChange={(e) => setSelectedDocType(e.target.value)}

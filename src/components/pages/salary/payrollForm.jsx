@@ -665,12 +665,17 @@ const PayrollForm = () => {
             {selectedEmployees.length > 0 && (
               <div className="mt-4 flex justify-end">
                 <button
+                  onClick={() => navigate('/payroll')}
+                  className="bg-gray-500 px-6 py-3 rounded-md shadow text-white hover:bg-gray-600  font-medium flex items-center me-2"
+                >
+                  Cancel
+                </button>
+                  <button
                   onClick={handleCreatePayroll}
                   className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
                   style={{ backgroundColor: '#A294F9' }}
                 >
-                  <FiDollarSign className="mr-2" />
-                  {isExistingPayroll ? 'Update' : 'Create'} Payroll for {month} {year} ({selectedEmployees.length} Employees)
+                  {isExistingPayroll ? 'Update' : 'Create'} Payroll for {month} {year}
                 </button>
               </div>
             )}
