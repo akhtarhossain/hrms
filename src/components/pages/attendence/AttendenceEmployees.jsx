@@ -81,7 +81,7 @@ const AttendenceEmployees = () => {
       </div>
 
       {/* Modal */}
-      {selectedDate && (
+     {selectedDate && (
         <Modal
           isOpen={modalIsOpen}
           onRequestClose={() => setModalIsOpen(false)}
@@ -92,39 +92,78 @@ const AttendenceEmployees = () => {
             beforeClose: '',
           }}
         >
-          <h3 className="text-xl sm:text-2xl font-bold mb-6 text-[#A294F9]">
-            Attendance Details for {formatReadableDate(selectedDate.date)}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold text-lg mb-2 text-gray-700">Check-In</h4>
-              <p className="text-gray-600 mb-2">Time: {selectedDate.checkIn || 'N/A'}</p>
-              {selectedDate.checkInImg ? (
-                <img src={selectedDate.checkInImg} alt="Check-in" className="w-full rounded shadow" />
-              ) : (
-                <p className="text-gray-400 italic">No image</p>
-              )}
-            </div>
-            <div>
-              <h4 className="font-semibold text-lg mb-2 text-gray-700">Check-Out</h4>
-              <p className="text-gray-600 mb-2">Time: {selectedDate.checkOut || 'N/A'}</p>
-              {selectedDate.checkOutImg ? (
-                <img src={selectedDate.checkOutImg} alt="Check-out" className="w-full rounded shadow" />
-              ) : (
-                <p className="text-gray-400 italic">No image</p>
-              )}
-            </div>
-          </div>
-          <div className="text-right mt-8">
-            <button
-              onClick={() => setModalIsOpen(false)}
-              className="px-5 py-2 rounded bg-[#A294F9] text-white hover:bg-[#8e7cf4] transition"
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
+              padding: '1rem',
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: '#fff',
+                padding: '40px 40px',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '800px',
+                boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+                transform: modalIsOpen ? 'scale(1)' : 'scale(0.95)',
+                opacity: modalIsOpen ? 1 : 0,
+                transition: 'all 0.3s ease-out',
+              }}
             >
-              Close
-            </button>
+              <h2
+                style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
+                  marginBottom: '2rem',
+                  color: '#1f2937',
+                }}
+              >
+              Attendance Details for {formatReadableDate(selectedDate.date)}
+
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-lg mb-2 text-gray-700">Check-In</h4>
+                  <p className="text-gray-600 mb-2">Time: {selectedDate.checkIn || 'N/A'}</p>
+                  {selectedDate.checkInImg ? (
+                    <img src={selectedDate.checkInImg} alt="Check-in" className="w-full rounded shadow" />
+                  ) : (
+                    <p className="text-gray-400 italic">No image</p>
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-lg mb-2 text-gray-700">Check-Out</h4>
+                  <p className="text-gray-600 mb-2">Time: {selectedDate.checkOut || 'N/A'}</p>
+                  {selectedDate.checkOutImg ? (
+                    <img src={selectedDate.checkOutImg} alt="Check-out" className="w-full rounded shadow" />
+                  ) : (
+                    <p className="text-gray-400 italic">No image</p>
+                  )}
+                </div>
+              </div>
+              <div className="text-right mt-8">
+                <button
+                  onClick={() => setModalIsOpen(false)}
+                  className="px-5 py-2 rounded bg-[#A294F9] text-white hover:bg-[#8e7cf4] transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </Modal>
       )}
+
     </div>
   );
 };

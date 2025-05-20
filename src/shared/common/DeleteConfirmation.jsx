@@ -5,7 +5,6 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Delay for smooth animation
       setTimeout(() => setShowModal(true), 10);
     } else {
       setShowModal(false);
