@@ -113,7 +113,7 @@ const TransactionTypeForm = () => {
             <div className="flex justify-end gap-4">
               <button
                 type="button"
-                onClick={() => navigate('/transaction-types')}
+                onClick={() => navigate('/transaction')}
                 className="px-4 py-2 rounded shadow text-white bg-gray-500"
               >
                 Cancel
