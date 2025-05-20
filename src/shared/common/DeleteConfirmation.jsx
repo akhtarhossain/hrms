@@ -5,7 +5,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
 
   useEffect(() => {
     if (isOpen) {
-      // Trigger enter animation
+      // Delay for smooth animation
       setTimeout(() => setShowModal(true), 10);
     } else {
       setShowModal(false);
@@ -15,26 +15,99 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-white-10 bg-opacity-5 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+        padding: '1rem',
+      }}
+    >
       <div
-        className={`bg-white rounded-2xl shadow-2xl max-w-xl w-full p-8 transform transition-all duration-300 ease-out ${
-          showModal ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-        }`}
+        style={{
+          backgroundColor: '#fff',
+          padding: '20px 30px',
+          borderRadius: '16px',
+          width: '100%',
+          maxWidth: '500px',
+          boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+          transform: showModal ? 'scale(1)' : 'scale(0.95)',
+          opacity: showModal ? 1 : 0,
+          transition: 'all 0.3s ease-out',
+        }}
       >
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Delete Confirmation</h2>
-        <p className="text-gray-600 text-lg">
-          Are you sure you want to delete this <span className="font-semibold text-red-500">this Record</span>? This action cannot be undone.
+        <h2
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            marginBottom: '1rem',
+            color: '#1f2937',
+          }}
+        >
+          Delete Confirmation
+        </h2>
+
+        <p style={{ color: '#4b5563', fontSize: '1.125rem' }}>
+          Are you sure you want to delete this{' '}
+          <span style={{ fontWeight: '600', color: '#ef4444' }}>record</span>? This action cannot be undone.
         </p>
-        <div className="flex justify-end mt-8 space-x-4">
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: '2rem',
+            gap: '1rem',
+          }}
+        >
           <button
-            className="px-6 py-2.5 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
             onClick={onClose}
+            style={{
+              padding: '10px 24px',
+              backgroundColor: '#e5e7eb',
+              color: '#374151',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = '#d1d5db')
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = '#e5e7eb')
+            }
           >
             Cancel
           </button>
           <button
-            className="px-6 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition"
-            onClick={onConfirm}
+            onClick={() => {
+              setShowModal(false);
+              onConfirm();
+            }}
+            style={{
+              padding: '10px 24px',
+              backgroundColor: '#dc2626',
+              color: '#fff',
+              fontWeight: '500',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = '#b91c1c')
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = '#dc2626')
+            }
           >
             Delete
           </button>
