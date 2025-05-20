@@ -174,380 +174,367 @@ function Sidebar() {
       </header>
 
       <aside
-        id="logo-sidebar"
-        aria-label="Sidebar"
-        className={`w-64 h-full border-r border-gray-200 transition-transform duration-300 ease-in-out 
-    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-    sm:translate-x-0`}
-        style={{
-          gridArea: "sidebar",
-          backgroundColor: "#E5D9F2",
-        }}
-      >
-        <div className="h-full px-3 pb-4 overflow-y-auto">
-          <ul className="space-y-2 font-medium">
-            {/* Dashboard */}
-            <li>
-              <a
-                href="#"
-                className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiHome className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="ms-3">Dashboard</span>
-              </a>
-            </li>
+      id="logo-sidebar"
+      aria-label="Sidebar"
+      className={`w-64 h-full border-r border-gray-200 transition-transform duration-300 ease-in-out 
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+        sm:translate-x-0`}
+      style={{
+        gridArea: "sidebar",
+        backgroundColor: "#E5D9F2",
+      }}
+    >
+      <div className="h-full px-3 pb-4 overflow-y-auto">
+        <ul className="space-y-2 font-medium">
+          {/* Dashboard */}
+          <li>
+            <a
+              href="#"
+              className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiHome className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="ms-3">Dashboard</span>
+            </a>
+          </li>
 
-            {/* Employees */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Employees")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiUsers className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span
-                  className="flex-1 ms-3 text-left whitespace-nowrap"
-                >
-                  Employees
-                </span>
-                {openDropdown === "Employees" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Employees" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap"
-                        onClick={() => navigate("/employees")}
-                      >
-                        Employee List
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap"
-                        onClick={() => navigate("/employee-form")}
-                      >
-                        Add Employee
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Employee Profile
-                      </span>
-                    </a>
-                  </li>
-                </ul>
+          {/* Employees */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Employees")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiUsers className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Employees
+              </span>
+              {openDropdown === "Employees" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
+            </button>
+            {openDropdown === "Employees" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap"
+                      onClick={() => navigate("/employees")}
+                    >
+                      Employee List
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap"
+                      onClick={() => navigate("/employee-form")}
+                    >
+                      Add Employee
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Employee Profile
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
 
-            {/* Attendance */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Attendance")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiClock className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="flex-1 ms-3 text-left whitespace-nowrap">
-                  Attendance
-                </span>
-                {openDropdown === "Attendance" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Attendance" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Attendance Records
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Time Tracking
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Absence Management
-                      </span>
-                    </a>
-                  </li>
-                </ul>
+          {/* Attendance */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Attendance")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiClock className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Attendance
+              </span>
+              {openDropdown === "Attendance" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
+            </button>
+            {openDropdown === "Attendance" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap"
+                    onClick={() => navigate("/attendence")}
+                    >
+                      Attendance Records
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap" 
+                    onClick={() => navigate("/admin-attendence")}
+                    >
+                      Time Tracking
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
 
-            {/* Request */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Request")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiMail className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="flex-1 ms-3 text-left whitespace-nowrap">
-                  Request
-                </span>
-                {openDropdown === "Request" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Request" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Leave Requests
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Overtime Requests
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Permission Requests
-                      </span>
-                    </a>
-                  </li>
-                </ul>
+          {/* Request */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Request")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiMail className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Request
+              </span>
+              {openDropdown === "Request" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
+            </button>
+            {openDropdown === "Request" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Leave Requests
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Overtime Requests
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Permission Requests
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
 
-            {/* Salary */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Salary")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span
-                  className="flex-1 ms-3 text-left whitespace-nowrap"
-                >
-                  Salary
-                </span>
-                {openDropdown === "employSalaryform" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Salary" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap" onClick={() => navigate("/salary")}>Salary</span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap"
-                        onClick={() => navigate("/transaction")}
-                      >
-                        Transaction Type
-                      </span>
-                    </a>
-                  </li>
-                </ul>
+          {/* Salary */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Salary")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Salary
+              </span>
+              {openDropdown === "Salary" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
-
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Payroll")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span
-                  className="flex-1 ms-3 text-left whitespace-nowrap"
-                >
-                  Payroll
-                </span>
-                {openDropdown === "employPayrollform" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Payroll" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+            </button>
+            {openDropdown === "Salary" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap" onClick={() => navigate("/salary")}>Salary</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap"
+                      onClick={() => navigate("/transaction")}
                     >
-                      <span className="flex-1 whitespace-nowrap" onClick={() => navigate("/payroll")}>Payroll</span>
-                    </a>
-                  </li>
-                </ul>
+                      Transaction Type
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          {/* Payroll */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Payroll")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiDollarSign className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Payroll
+              </span>
+              {openDropdown === "Payroll" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
+            </button>
+            {openDropdown === "Payroll" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap" onClick={() => navigate("/payroll")}>Payroll</span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
 
-            {/* Event & Holiday */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Event")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiCalendar className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="flex-1 ms-3 text-left whitespace-nowrap">
-                  Event & Holiday
-                </span>
-                {openDropdown === "Event" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Event" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Company Events
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Holiday Calendar
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Time-off Planner
-                      </span>
-                    </a>
-                  </li>
-                </ul>
+          {/* Event & Holiday */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Event")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiCalendar className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Event & Holiday
+              </span>
+              {openDropdown === "Event" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
+            </button>
+            {openDropdown === "Event" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Company Events
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Holiday Calendar
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Time-off Planner
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
 
-            {/* Reports */}
-            <li>
-              <button
-                type="button"
-                onClick={() => toggleDropdown("Reports")}
-                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-              >
-                <FiFileText className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-                <span className="flex-1 ms-3 text-left whitespace-nowrap">
-                  Reports
-                </span>
-                {openDropdown === "Reports" ? (
-                  <FiChevronDown className="w-4 h-4" />
-                ) : (
-                  <FiChevronRight className="w-4 h-4" />
-                )}
-              </button>
-              {openDropdown === "Reports" && (
-                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Monthly Reports
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Annual Reports
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                      <span className="flex-1 whitespace-nowrap">
-                        Custom Reports
-                      </span>
-                    </a>
-                  </li>
-                </ul>
+          {/* Reports */}
+          <li>
+            <button
+              type="button"
+              onClick={() => toggleDropdown("Reports")}
+              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+            >
+              <FiFileText className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+              <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                Reports
+              </span>
+              {openDropdown === "Reports" ? (
+                <FiChevronDown className="w-4 h-4" />
+              ) : (
+                <FiChevronRight className="w-4 h-4" />
               )}
-            </li>
-          </ul>
-        </div>
-
-      </aside>
-
+            </button>
+            {openDropdown === "Reports" && (
+              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Monthly Reports
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Annual Reports
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
+                  >
+                    <span className="flex-1 whitespace-nowrap">
+                      Custom Reports
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            )}
+          </li>
+        </ul>
+      </div>
+    </aside>
       <main
         style={{
           height: "100%",

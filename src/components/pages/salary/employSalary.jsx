@@ -444,7 +444,7 @@ const EmployeeSalaryForm = () => {
             <div className="flex justify-end mt-8">
               <button
                 type="button"
-                onClick={() => navigate('/employees')}
+                onClick={() => navigate('/salary')}
                 className="bg-gray-500 text-white px-5 py-2 rounded-md hover:bg-gray-600 transition me-4"
               >
                 Cancel
