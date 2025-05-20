@@ -20,6 +20,8 @@ import PayrollForm from '../components/pages/salary/payrollForm';
 import TransactionTypeForm from '../components/Transaction/transactionForm';
 import TransactionList from '../components/Transaction/transactionList';
 import EmployeePayslip from '../components/pages/salary/payslip';
+import AttendenceEmployees from '../components/pages/attendence/AttendenceEmployees';
+import AdminAttendanceView from '../components/pages/attendence/AdminAttendanceView';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -59,6 +61,8 @@ const router = createBrowserRouter([
           { path: 'transaction-form/:id', element: <TransactionTypeForm /> },
           { path: 'transaction', element: <TransactionList /> },
           { path: 'transaction', element: <TransactionList /> },
+          { path: 'attendence', element: <AttendenceEmployees /> },
+          { path: 'admin-attendence', element: <AdminAttendanceView /> },
         ],
       },
     ],
