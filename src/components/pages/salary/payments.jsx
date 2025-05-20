@@ -294,18 +294,20 @@ const PaymentForm = () => {
 
                   {isExpanded && (
                     <tr>
-                      <td colSpan="5" className="py-4">
-                        <div className="p-4">
-                          <div className="flex justify-between items-end mb-3 mr-3">
-                            <h4 className="text-sm font-medium text-gray-700">Payment Details</h4>
-                            <button
-                              onClick={() => addPayment(index)}
-                              style={{ backgroundColor: '#A294F9' }}
-                              className="p-2 rounded shadow cursor-pointer text-white"
-                            >
-                              <FiPlus />
-                            </button>
-                          </div>
+                      <td colSpan="5" className="py-6">
+                        <div className="p-4 border-b border-gray-300 rounded-lg">
+                        <div className="flex justify-between items-start mb-3 mr-3">
+                        <h4 className="text-sm font-bold text-gray-700">Payment Details</h4>
+                        <button
+                          onClick={() => addPayment(index)}
+                          style={{ backgroundColor: '#A294F9' }}
+                          className="p-2 rounded shadow cursor-pointer text-white flex items-center gap-1"
+                        >
+                          <FiPlus />
+                          Add Payment Detail
+                        </button>
+                      </div>
+
 
                           <div className="space-y-3">
                             {payment.payments.map((pmt, pmtIndex) => (
@@ -316,12 +318,14 @@ const PaymentForm = () => {
                                 {/* Date */}
                                 <div className="col-span-3">
                                   <label className="block text-xs text-gray-500 mb-1">Date</label>
-                                  <input
+                                   <input
                                     type="date"
+                                    name={name}
+                                    placeholder="Year of Passing"
                                     value={pmt.date}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'date', e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
-                                  />
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+                                  />                       
                                 </div>
 
                                 {/* Type */}
@@ -330,7 +334,7 @@ const PaymentForm = () => {
                                   <select
                                     value={pmt.type}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'type', e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
                                   >
                                     {paymentTypes.map(type => (
                                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -342,14 +346,12 @@ const PaymentForm = () => {
                                 <div className="col-span-3">
                                   <label className="block text-xs text-gray-500 mb-1">Amount</label>
                                   <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                                      <BsCurrencyDollar className="text-gray-400" />
-                                    </div>
+                                 
                                     <input
                                       type="number"
                                       value={pmt.amount}
                                       onChange={(e) => handlePaymentChange(index, pmtIndex, 'amount', e.target.value)}
-                                      className="pl-7 w-full p-2 border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                                      className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
                                     />
                                   </div>
                                 </div>
@@ -361,7 +363,7 @@ const PaymentForm = () => {
                                     type="text"
                                     value={pmt.notes}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'notes', e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded focus:ring-purple-500 focus:border-purple-500"
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
                                   />
                                 </div>
 
@@ -370,7 +372,7 @@ const PaymentForm = () => {
                                   <button
                                     onClick={() => removePayment(index, pmtIndex)}
                                     // style={{ backgroundColor: '#A294F9' }}
-                                    className="p-2 rounded shadow cursor-pointer bg-red-500 hover:bg-red-200"
+                                    className="p-2 rounded shadow cursor-pointer bg-red-500 hover:bg-red-200 mt-3"
                                     title="Remove payment"
                                   >
                                     <FaTrash className="text-white" />
