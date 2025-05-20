@@ -301,57 +301,75 @@ function Sidebar() {
           </li>
 
           {/* Request */}
-          <li>
-            <button
-              type="button"
-              onClick={() => toggleDropdown("Request")}
-              className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
-            >
-              <FiMail className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-              <span className="flex-1 ms-3 text-left whitespace-nowrap">
-                Request
-              </span>
-              {openDropdown === "Request" ? (
-                <FiChevronDown className="w-4 h-4" />
-              ) : (
-                <FiChevronRight className="w-4 h-4" />
+           <li>
+              <button
+                type="button"
+                onClick={() => toggleDropdown("Request")}
+                className="flex items-center w-full p-2 text-gray-900 transition duration-75 rounded-lg hover:bg-[#CDC1FF] group"
+              >
+                <FiMail className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
+                <span className="flex-1 ms-3 text-left whitespace-nowrap">
+                  Request
+                </span>
+                {openDropdown === "Request" ? (
+                  <FiChevronDown className="w-4 h-4" />
+                ) : (
+                  <FiChevronRight className="w-4 h-4" />
+                )}
+              </button>
+              {openDropdown === "Request" && (
+                <ul className="py-2 space-y-2 pl-[44px] ml-5 border-l-[2px] border-[#A294F9] relative">
+                  <li>
+                    <a
+                      href="#"
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
+                     <span className="flex-1 whitespace-nowrap"
+                        onClick={() => navigate("/request-form")}
+                      >
+                        Add Request
+                      </span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#"
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
+                    <span className="flex-1 whitespace-nowrap"
+                        onClick={() => navigate("/request-list")}
+                      >
+                        Request List
+                      </span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#"
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
+                    <span className="flex-1 whitespace-nowrap"
+                        onClick={() => navigate("/support-form")}
+                      >
+                       Support
+                      </span>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="#"
+                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
+                    >
+                    <span className="flex-1 whitespace-nowrap"
+                        onClick={() => navigate("/support-list")}
+                      >
+                       Support List
+                      </span>
+                    </a>
+                  </li>
+                </ul>
               )}
-            </button>
-            {openDropdown === "Request" && (
-              <ul className="py-2 space-y-2 pl-[30px] ml-5 border-l-[2px] border-[#A294F9] relative">
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
-                  >
-                    <span className="flex-1 whitespace-nowrap">
-                      Leave Requests
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
-                  >
-                    <span className="flex-1 whitespace-nowrap">
-                      Overtime Requests
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
-                  >
-                    <span className="flex-1 whitespace-nowrap">
-                      Permission Requests
-                    </span>
-                  </a>
-                </li>
-              </ul>
-            )}
-          </li>
+              </li>
 
           {/* Salary */}
           <li>
