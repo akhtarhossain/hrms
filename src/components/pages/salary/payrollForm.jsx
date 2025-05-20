@@ -8,7 +8,7 @@ import DeleteModal from '../../../shared/common/DeleteConfirmation';
 import EmploySalaryService from '../../../services/EmploySalaryService';
 import employeeService from '../../../services/employeeService';
 import EmployeeSalaryForm from '../salary/employSalary';
-import PayrollService from '../../../services/PayrollService'; // Import the PayrollService
+import PayrollService from '../../../services/PayrollService';
 import { BsCurrencyDollar } from 'react-icons/bs';
 import { FaTrash } from 'react-icons/fa6';
 import TransactionTypeService from '../../../services/TransactionTypeService';
@@ -16,12 +16,19 @@ import { BiX } from 'react-icons/bi';
 
 const PayrollForm = () => {
   const navigate = useNavigate();
+  const { monthYear } = useParams();
+
+  // Parse month and year from URL (e.g., "June-2025")
+  const [month, year] = monthYear ? monthYear.split('-') : [];
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  const monthNum = monthNames.indexOf(month) + 1;
+
   const [allowanceTypes, setAllowanceTypes] = useState([]);
   const [deductionTypes, setDeductionTypes] = useState([]);
   const [totalAllowances, setTotalAllowances] = useState(0);
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [totalSalary, setTotalSalary] = useState(0);
-
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
@@ -31,8 +38,9 @@ const PayrollForm = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
-  const [payrollDate, setPayrollDate] = useState(''); // Replace month and year states
   const [editIndex, setEditIndex] = useState(null);
+  const [existingPayroll, setExistingPayroll] = useState(null);
+  const [isExistingPayroll, setIsExistingPayroll] = useState(false);
 
   const [formData, setFormData] = useState({
     type: '',
@@ -44,103 +52,123 @@ const PayrollForm = () => {
     deductions: []
   });
 
-
   const [filters, setFilters] = useState({
     employeeName: '',
     month: '',
     year: ''
   });
-  const fetchTransactions = () => {
-    TransactionTypeService.getTransactionTypes()
-      .then((data) => {
-        const transactions = data || [];
+
+  const [modalTotals, setModalTotals] = useState({
+    totalAllowances: 0,
+    totalDeductions: 0,
+    totalSalary: 0
+  });
+
+  const calculateModalTotals = () => {
+    const allowancesTotal = formData.allowances.reduce((total, allowance) => {
+      return total + (Number(allowance.newSalary) || 0);
+    }, 0);
+
+    const deductionsTotal = formData.deductions.reduce((total, deduction) => {
+      return total + (Number(deduction.newSalary) || 0);
+    }, 0);
+
+    const netSalary = allowancesTotal - deductionsTotal;
+
+    setModalTotals({
+      totalAllowances: allowancesTotal,
+      totalDeductions: deductionsTotal,
+      totalSalary: netSalary
+    });
+  };
+
+  useEffect(() => {
+    calculateModalTotals();
+  }, [formData.allowances, formData.deductions]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch both payroll and employees in parallel
+        const [allPayrolls, employees] = await Promise.all([
+          PayrollService.getPayroll(),
+          employeeService.getEmployee()
+        ]);
+
+        setSalaries(employees || []);
+
+        const payrollForThisMonth = allPayrolls.find(p =>
+          `${monthNames[p.month - 1]}-${p.year}` === monthYear
+        );
+
+        if (payrollForThisMonth) {
+          setExistingPayroll(payrollForThisMonth);
+          setIsExistingPayroll(true);
+          const employeeIds = payrollForThisMonth.employees
+            ?.filter(e => e?.employeeId) // Filter out null/undefined employeeId
+            ?.map(e => e.employeeId._id || e.employeeId) || [];
+
+          setSelectedEmployees(employeeIds);
+          setTotalAllowances(payrollForThisMonth.summary.totalAllowance);
+          setTotalDeductions(payrollForThisMonth.summary.totalDeduction);
+          setTotalSalary(payrollForThisMonth.summary.totalSalary);
+        }
+
+        // Fetch transaction types
+        const transactions = await TransactionTypeService.getTransactionTypes();
         const formattedAllowances = transactions
-          .filter((item) => item.transactionType === "allowance")
-          .map((item) => ({
+          .filter(item => item.transactionType === "allowance")
+          .map(item => ({
             value: item.name,
             label: item.name,
           }));
+
         const formattedDeductions = transactions
-          .filter((item) => item.transactionType === "deduction")
-          .map((item) => ({
+          .filter(item => item.transactionType === "deduction")
+          .map(item => ({
             value: item.name,
             label: item.name,
           }));
 
         setAllowanceTypes(formattedAllowances);
         setDeductionTypes(formattedDeductions);
-      })
-      .catch((error) => {
-        console.error("Error fetching transactions:", error);
-        toast.error("Failed to load transaction records");
-      });
-  };
 
-  useEffect(() => {
-    fetchSalaries();
-    fetchTransactions()
-  }, []);
-
-  useEffect(() => {
-    const storedSalaries = localStorage.getItem("salaries");
-    if (storedSalaries) {
-      setSalaries(JSON.parse(storedSalaries));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("salaries", JSON.stringify(salaries));
-  }, [salaries]);
-
-  const fetchSalaries = () => {
-    setLoading(true);
-    employeeService.getEmployee()
-      .then((data) => {
-        setSalaries(data || []);
-        setSelectedEmployees([]);
-        setSelectAll(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching salaries:', error);
-        toast.error('Failed to load salary records');
-      })
-      .finally(() => {
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load data");
+      } finally {
         setLoading(false);
-      });
-  };
+      }
+    };
+
+    if (month && year) {
+      fetchData();
+    }
+  }, [monthYear]);
 
   const calculateTotalAllowances = (employee) => {
-    if (!employee) return 0;
-    if (!Array.isArray(employee.allowances)) return 0;
-
+    if (!employee || !Array.isArray(employee.allowances)) return 0;
     return employee.allowances.reduce((total, allowance) => {
-      const amount = Number(allowance?.newSalary) || 0;
-      return total + amount;
+      return total + (Number(allowance?.newSalary) || 0);
     }, 0);
   };
 
   const calculateTotalDeductions = (employee) => {
-    if (!employee) return 0;
-    if (!Array.isArray(employee.deductions)) return 0;
-
+    if (!employee || !Array.isArray(employee.deductions)) return 0;
     return employee.deductions.reduce((total, deduction) => {
-      const amount = Number(deduction?.newSalary) || 0;
-      return total + amount;
+      return total + (Number(deduction?.newSalary) || 0);
     }, 0);
   };
 
   const calculateTotalSalary = (employee) => {
-    const allowances = calculateTotalAllowances(employee);
-    const deductions = calculateTotalDeductions(employee);
-    return allowances - deductions;
+    return calculateTotalAllowances(employee) - calculateTotalDeductions(employee);
   };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFilters(prev => ({ ...prev, [name]: value }));
   };
 
   const applyFilters = () => {
@@ -150,23 +178,20 @@ const PayrollForm = () => {
         setSalaries(response.data || []);
         setSelectedEmployees([]);
         setSelectAll(false);
-        setLoading(false);
       })
       .catch((error) => {
         console.error('Error filtering salaries:', error);
         toast.error('Failed to filter salary records');
+      })
+      .finally(() => {
         setLoading(false);
+        setShowFilter(false);
       });
-    setShowFilter(false);
   };
 
   const closeFilter = () => {
     setShowFilter(false);
-    setFilters({
-      employeeName: '',
-      month: '',
-      year: ''
-    });
+    setFilters({ employeeName: '', month: '', year: '' });
     fetchSalaries();
   };
 
@@ -192,53 +217,34 @@ const PayrollForm = () => {
   };
 
   const toggleEmployeeSelection = (employeeId) => {
-    setSelectedEmployees(prev => {
-      if (prev.includes(employeeId)) {
-        return prev.filter(id => id !== employeeId);
-      } else {
-        return [...prev, employeeId];
-      }
-    });
+    setSelectedEmployees(prev =>
+      prev.includes(employeeId)
+        ? prev.filter(id => id !== employeeId)
+        : [...prev, employeeId]
+    );
   };
-
   const toggleSelectAll = () => {
-    if (selectAll) {
+    if (selectAll || selectedEmployees.length === salaries.length) {
       setSelectedEmployees([]);
     } else {
       setSelectedEmployees(salaries.map(employee => employee._id));
     }
     setSelectAll(!selectAll);
   };
+  useEffect(() => {
+    // Update selectAll when all employees are selected or deselected
+    setSelectAll(selectedEmployees.length > 0 && selectedEmployees.length === salaries.length);
+  }, [selectedEmployees, salaries.length]);
 
   const calculateSelectedTotals = () => {
     const selected = salaries.filter(employee => selectedEmployees.includes(employee._id));
-
-    const totalAllowance = selected.reduce((sum, employee) => {
-      return sum + calculateTotalAllowances(employee);
-    }, 0);
-
-    const totalDeduction = selected.reduce((sum, employee) => {
-      return sum + calculateTotalDeductions(employee);
-    }, 0);
-
-    const totalSalary = selected.reduce((sum, employee) => {
-      return sum + calculateTotalSalary(employee);
-    }, 0);
-
     return {
-      totalAllowance,
-      totalDeduction,
-      totalSalary,
+      totalAllowance: selected.reduce((sum, emp) => sum + calculateTotalAllowances(emp), 0),
+      totalDeduction: selected.reduce((sum, emp) => sum + calculateTotalDeductions(emp), 0),
+      totalSalary: selected.reduce((sum, emp) => sum + calculateTotalSalary(emp), 0),
       selectedEmployees: selected
     };
   };
-
-  useEffect(() => {
-    if (showEditForm) {
-      calculateTotals(formData);
-    }
-
-  }, [formData, showEditForm]);
 
   const handleEditClick = (employee, index) => {
     const formatDateForInput = (dateString) => {
@@ -246,98 +252,100 @@ const PayrollForm = () => {
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
     };
-    console.log(employee, index, "in ty");
+
+    // Calculate initial totals
+    const initialAllowances = employee.allowances?.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0) || 0;
+    const initialDeductions = employee.deductions?.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0) || 0;
+    const initialNet = initialAllowances - initialDeductions;
 
     setCurrentEmployee(employee);
     setEditIndex(index);
-
     setFormData({
       type: '',
       currentSalary: employee?.currentSalary?.toString() || '',
       newSalary: employee?.newSalary?.toString() || '',
       startDate: employee?.startDate || '',
       endDate: employee?.endDate || '',
-      allowances: employee.allowances?.map(allowance => ({
-        ...allowance,
-        startDate: formatDateForInput(allowance.startDate),
-        endDate: formatDateForInput(allowance.endDate)
+      allowances: employee.allowances?.map(a => ({
+        ...a,
+        startDate: formatDateForInput(a.startDate),
+        endDate: formatDateForInput(a.endDate)
       })) || [],
-
-      deductions: employee.deductions?.map(deduction => ({
-        ...deduction,
-        startDate: formatDateForInput(deduction.startDate),
-        endDate: formatDateForInput(deduction.endDate)
+      deductions: employee.deductions?.map(d => ({
+        ...d,
+        startDate: formatDateForInput(d.startDate),
+        endDate: formatDateForInput(d.endDate)
       })) || []
     });
 
-    setShowEditForm(true);
-  };
+    setModalTotals({
+      totalAllowances: initialAllowances,
+      totalDeductions: initialDeductions,
+      totalSalary: initialNet
+    });
 
-  const closeEditModal = () => {
-    setShowEditForm(false);
-    setCurrentEmployee(null);
+    setShowEditForm(true);
+    setSelectedEmployees(prev =>
+      prev.includes(employee._id) ? prev : [...prev, employee._id]
+    );
   };
 
   const handleCreatePayroll = () => {
     if (selectedEmployees.length === 0) {
-      toast.warning("Please select at least one employee to create payroll");
-      return;
-    }
-    if (!payrollDate) {
-      toast.warning("Please select a date for payroll");
+      toast.warning("Please select at least one employee");
       return;
     }
 
-    // Get the selected employee objects with all required fields
-    const selectedEmployeeObjects = salaries.filter(employee =>
-      selectedEmployees.includes(employee._id)
-    ).map(employee => ({
-      employeeId: employee._id,
-      name: `${employee.firstName} ${employee.lastName}`,
-      totalAllowance: calculateTotalAllowances(employee),
-      totalDeduction: calculateTotalDeductions(employee),
-      totalSalary: calculateTotalSalary(employee)
-    }));
+    const selectedEmployeeObjects = salaries
+      .filter(emp => selectedEmployees.includes(emp._id))
+      .map(emp => ({
+        employeeId: emp._id,  // Ensure this is the MongoDB ObjectId
+        name: `${emp.firstName} ${emp.lastName}`,
+        totalAllowance: calculateTotalAllowances(emp),
+        totalDeduction: calculateTotalDeductions(emp),
+        totalSalary: calculateTotalSalary(emp)
+      }));
 
-    // Calculate totals for the summary
-    const totals = selectedEmployeeObjects.reduce((acc, employee) => ({
-      totalAllowance: acc.totalAllowance + employee.totalAllowance,
-      totalDeduction: acc.totalDeduction + employee.totalDeduction,
-      totalSalary: acc.totalSalary + employee.totalSalary
+    const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
+      totalAllowance: acc.totalAllowance + emp.totalAllowance,
+      totalDeduction: acc.totalDeduction + emp.totalDeduction,
+      totalSalary: acc.totalSalary + emp.totalSalary
     }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
 
-    // Extract month and year from the payrollDate
-    const dateObj = new Date(payrollDate);
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-    const year = String(dateObj.getFullYear());
-
+    // Create payload according to API requirements
     const payrollData = {
       employees: selectedEmployeeObjects,
-      payrollDate, // Send the full date string
-      month,       // Include month separately if backend needs it
-      year,        // Include year separately if backend needs it
-      status: "draft",
+      month: monthNum.toString(), // Convert to string
+      year: year.toString(), // Convert to string
+      payrollDate: new Date().toISOString(), // Or use month/year date
+      status: "DRAFT",
       summary: {
         totalAllowance: totals.totalAllowance,
         totalDeduction: totals.totalDeduction,
         totalSalary: totals.totalSalary,
-        selectedEmployees: selectedEmployees // Array of MongoDB IDs
+        selectedEmployees: selectedEmployees // This should already be an array of ObjectIds
       }
     };
 
-    // Call the PayrollService to create the payroll
-    PayrollService.createPayroll(payrollData)
-      .then((response) => {
-        console.log("Payroll created successfully:", response);
-        toast.success(`Payroll created for ${selectedEmployees.length} employees`);
-        setSelectedEmployees([]);
-        setSelectAll(false);
-        setPayrollDate(''); // Clear the date field instead of month/year
+    // Debug: Log the payload before sending
+    console.log("Payload:", JSON.stringify(payrollData, null, 2));
+
+    const payrollAction = isExistingPayroll
+      ? PayrollService.updatePayroll(existingPayroll._id, payrollData)
+      : PayrollService.createPayroll(payrollData);
+
+    payrollAction
+      .then(() => {
+        toast.success(
+          isExistingPayroll
+            ? `Payroll updated for ${month} ${year}`
+            : `Payroll created for ${month} ${year}`
+        );
+        navigate('/payroll');
       })
-      .catch((error) => {
-        console.error("Error creating payroll:", error);
-        const errorMessage = error.response?.data?.message || "Failed to create payroll";
-        toast.error(`Error: ${errorMessage}`);
+      .catch(error => {
+        console.error("Error saving payroll:", error);
+        toast.error(error.response?.data?.message || "Failed to save payroll");
       });
   };
 
@@ -586,47 +594,53 @@ const PayrollForm = () => {
             </thead>
             <tbody>
               {salaries.length > 0 ? (
-                salaries.map((employee, index) => (
-                  <tr key={employee._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedEmployees.includes(employee._id)}
-                        onChange={() => toggleEmployeeSelection(employee._id)}
-                        className="form-checkbox h-4 w-4 text-[#A294F9] rounded focus:ring-[#A294F9]"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      {employee?.profilePicture ? (
-                        <img
-                          src={employee.profilePicture}
-                          alt="Profile"
-                          className="w-10 h-10 rounded-full object-cover border"
+                salaries.map((employee, index) => {
+                  const isSelected = selectedEmployees.includes(employee._id);
+                  return (
+                    <tr
+                      key={employee._id}
+                      className={`border-t hover:bg-[#CDC1FF] text-gray-600 ${isSelected ? 'bg-[#E5D9F2]' : ''}`}
+                    >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleEmployeeSelection(employee._id)}
+                          className="form-checkbox h-4 w-4 text-[#A294F9] rounded focus:ring-[#A294F9]"
                         />
-                      ) : (
-                        <span className="text-gray-400 italic">No image</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">{employee.firstName} {employee.lastName}</td>
-                    <td className="px-4 py-3">{calculateTotalAllowances(employee).toFixed(2)}</td>
-                    <td className="px-4 py-3">{calculateTotalDeductions(employee).toFixed(2)}</td>
-                    <td className="px-4 py-3 font-semibold">
-                      {calculateTotalSalary(employee).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex space-x-2">
-                        <button
-                          title="Edit"
-                          className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#A294F9' }}
-                          onClick={() => handleEditClick(employee, index)} // or 'deduction' depending on context
-                        >
-                          <FaEdit className="text-white" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-4 py-3">
+                        {employee?.profilePicture ? (
+                          <img
+                            src={employee.profilePicture}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <span className="text-gray-400 italic">No image</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">{employee.firstName} {employee.lastName}</td>
+                      <td className="px-4 py-3">{calculateTotalAllowances(employee).toFixed(2)}</td>
+                      <td className="px-4 py-3">{calculateTotalDeductions(employee).toFixed(2)}</td>
+                      <td className="px-4 py-3 font-semibold">
+                        {calculateTotalSalary(employee).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex space-x-2">
+                          <button
+                            title="Edit"
+                            className="p-2 rounded shadow cursor-pointer"
+                            style={{ backgroundColor: '#A294F9' }}
+                            onClick={() => handleEditClick(employee, index)} // or 'deduction' depending on context
+                          >
+                            <FaEdit className="text-white" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="7" className="px-4 py-6 text-center text-gray-500">No salary records found</td>
@@ -647,33 +661,25 @@ const PayrollForm = () => {
           </table>
 
           {/* Payroll Date and Create Button Row */}
-          {selectedEmployees.length > 0 && (
-            <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              {/* Payroll Date Input - Left Side (now with moderate width) */}
-              <div className="w-full md:w-70">  {/* Fixed moderate width on desktop, full width on mobile */}
-                <label className="block text-sm font-medium text-gray-700 mb-1">Payroll Date</label>
-                <input
-                  type="date"
-                  value={payrollDate}
-                  onChange={(e) => setPayrollDate(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  required
-                />
-              </div>
-
-              {/* Create Payroll Button - Right Side */}
-              <div className="w-full md:w-auto">  {/* Auto width on desktop, full width on mobile */}
+          <div className="mt-4 flex flex-col items-end md:items-end gap-4">
+            {selectedEmployees.length > 0 && (
+              <div className="mt-4 flex justify-end">
                 <button
+                  onClick={() => navigate('/payroll')}
+                  className="bg-gray-500 px-6 py-3 rounded-md shadow text-white hover:bg-gray-600  font-medium flex items-center me-2"
+                >
+                  Cancel
+                </button>
+                  <button
                   onClick={handleCreatePayroll}
-                  className="w-full md:w-auto mt-4 px-6 py-3 rounded-md shadow text-white font-medium flex items-center justify-center"
+                  className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
                   style={{ backgroundColor: '#A294F9' }}
                 >
-                  <FiDollarSign className="mr-2" />
-                  Create Payroll for {selectedEmployees.length} Employee(s)
+                  {isExistingPayroll ? 'Update' : 'Create'} Payroll for {month} {year}
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -712,21 +718,21 @@ const PayrollForm = () => {
             }}
           >
             <div className="p-2 bg-[#F5EFFF] min-h-screen">
-               <div className="px-2 flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
-            
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                title="Close"
-                onClick={() => setShowEditForm(false)} 
-                className="p-1 rounded shadow cursor-pointer"
-                style={{ backgroundColor: '#A294F9' , color:'white'}}
-              >
-                <BiX size={20} />
-              </button>
-            </div>
-          </div>
+              <div className="px-2 flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold text-gray-800">Salary Form</h2>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    title="Close"
+                    onClick={() => setShowEditForm(false)}
+                    className="p-1 rounded shadow cursor-pointer"
+                    style={{ backgroundColor: '#A294F9', color: 'white' }}
+                  >
+                    <BiX size={20} />
+                  </button>
+                </div>
+              </div>
 
               <div className="flex justify-center">
                 <div className="p-8 w-full max-w-6xl">
@@ -837,7 +843,7 @@ const PayrollForm = () => {
                         {formData.allowances.length > 0 && (
                           <div className="flex justify-end mt-2">
                             <div className="text-lg font-semibold text-gray-700">
-                              Total Allowances: {totalAllowances.toFixed(2)}
+                              Total Allowances: {modalTotals.totalAllowances.toFixed(2)}
                             </div>
                           </div>
                         )}
@@ -948,7 +954,7 @@ const PayrollForm = () => {
                         {formData.deductions.length > 0 && (
                           <div className="flex justify-end mt-2">
                             <div className="text-lg font-semibold text-gray-700">
-                              Total Deductions: {totalDeductions.toFixed(2)}
+                              Total Deductions: {modalTotals.totalDeductions.toFixed(2)}
                             </div>
                           </div>
                         )}
@@ -958,7 +964,7 @@ const PayrollForm = () => {
                         <div className="flex justify-between items-center">
                           <span className="font-semibold text-lg">Net Salary:</span>
                           <span className="font-bold text-xl text-[#A294F9]">
-                            {totalSalary.toFixed(2)}
+                            {modalTotals.totalSalary.toFixed(2)}
                           </span>
                         </div>
                       </div>
