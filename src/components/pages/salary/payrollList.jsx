@@ -154,19 +154,19 @@ const PayrollList = () => {
                           <FaEdit className="text-white" />
                         </button>
                         <button
+                        title="Payments"
+                        style={{ backgroundColor: '#A294F9' }}
+                        className="p-2 rounded shadow cursor-pointer"
+                        onClick={() => navigate(`/payments/${payroll._id}`)}
+                      >
+                        <MdPayments className="text-white" />
+                      </button>
+                        <button
                           title="Delete"
                           className="p-2 rounded shadow cursor-pointer bg-red-500"
                           onClick={() => handleDeleteClick(payroll._id)}
                         >
                           <FaTrashAlt className="text-white" />
-                        </button>
-                        <button
-                          title="Payments"
-                          style={{ backgroundColor: '#A294F9' }}
-                          className="p-2 rounded shadow cursor-pointer"
-                          onClick={() => navigate(`/payments/${payroll._id}`)}
-                        >
-                          <MdPayments className="text-white" />
                         </button>
                       </div>
                     </td>

@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiChevronDown, FiChevronUp, FiPlus, FiDollarSign } from 'react-icons/fi';
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaTrashAlt } from 'react-icons/fa';
 import PayrollService from '../../../services/PayrollService';
 import { toast } from 'react-toastify';
 import { BsCurrencyDollar } from 'react-icons/bs';
 
 const PaymentForm = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [payroll, setPayroll] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedRows, setExpandedRows] = useState({});
   const [payments, setPayments] = useState([]);
+  const navigate = useNavigate();
 
   const paymentTypes = [
     { value: 'cash', label: 'Cash' },
@@ -116,26 +116,63 @@ const PaymentForm = () => {
     setPayments(updatedPayments);
   };
 
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
-      const payload = {
-        ...payroll,
-        payments: payments,
-        status: 'PAID'
+const handleSubmit = async () => {
+  try {
+    setLoading(true);
+    
+    // 1. Create a new employees array with only allowed fields
+    const updatedEmployees = payroll.employees.map(employee => {
+      // Find corresponding payment data
+      const paymentData = payments.find(p => 
+        p.employeeId === (employee.employeeId?._id || employee.employeeId)
+      );
+      
+      // Clean payments array to ensure amount is string if required
+      const cleanedPayments = (paymentData?.payments || []).map(payment => ({
+        ...payment,
+        amount: payment.amount.toString() // Convert amount to string if required
+      }));
+
+      return {
+        employeeId: employee.employeeId?._id || employee.employeeId, // Just the ID string
+        name: employee.name,
+        totalAllowance: employee.totalAllowance,
+        totalDeduction: employee.totalDeduction,
+        totalSalary: employee.totalSalary,
+        payments: cleanedPayments
+        // Remove totalPaid and totalPayable as per error
       };
+    });
 
-      await PayrollService.updatePayroll(id, payload);
-      toast.success("Payments saved successfully");
-      navigate('/payroll');
-    } catch (error) {
-      console.error("Error saving payments:", error);
-      toast.error(error.response?.data?.message || "Failed to save payments");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 2. Clean the summary.selectedEmployees to be just IDs
+    const cleanedSummary = {
+      ...payroll.summary,
+      selectedEmployees: payroll.summary.selectedEmployees.map(emp => 
+        emp._id // Just the ID string
+      )
+    };
 
+    // 3. Create the final payload
+    const payload = {
+      employees: updatedEmployees,
+      summary: cleanedSummary,
+      month: payroll.month,
+      year: payroll.year,
+      status: 'PAID'
+      // Remove _id, createdAt, updatedAt, __v as per error
+    };
+
+    // 4. Send the payload
+    await PayrollService.updatePayroll(id, payload);
+    toast.success("Payments saved successfully");
+    navigate('/payroll');
+  } catch (error) {
+    console.error("Error saving payments:", error);
+    toast.error(error.response?.data?.message || "Failed to save payments");
+  } finally {
+    setLoading(false);
+  }
+};
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -269,14 +306,14 @@ const PaymentForm = () => {
                   </tr>
 
                   {isExpanded && (
-                    <tr className="bg-gray-50">
+                    <tr className="">
                       <td colSpan="5" className="px-6 py-4">
-                        <div className="pl-16">
+                        <div className="pl-1">
                           <h4 className="text-sm font-medium text-gray-700 mb-3">Payment Details</h4>
                           {payment.payments.map((pmt, pmtIndex) => (
                             <div
                               key={pmtIndex}
-                              className="flex items-center space-x-4 bg-white p-3 rounded shadow"
+                              className="flex items-center space-x-4 bg-gray p-3 rounded shadow"
                               style={{ gap: '1rem' }}
                             >
                               {/* Date */}
@@ -332,13 +369,20 @@ const PaymentForm = () => {
                               </div>
 
                               {/* Delete Button */}
-                              <div className="flex items-end">
-                                <button
+                              <div className="flex flex-col px-2 mt-3">
+                                {/* <button
                                   onClick={() => removePayment(index, pmtIndex)}
-                                  className="text-red-600 hover:text-red-900 p-2"
+                                  className="text-red-600 hover:text-red-900 align-center"
                                   title="Remove payment"
                                 >
                                   <FaTrashAlt />
+                                </button> */}
+                                <button
+                                  type="button"
+                                  onClick={() => removeAllowance(index)}
+                                  className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                                >
+                                  <FaTrash className="text-white" />
                                 </button>
                               </div>
                             </div>
