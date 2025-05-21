@@ -193,7 +193,9 @@ function Sidebar() {
               className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group"
             >
               <FiHome className="w-5 h-5 text-gray-500 group-hover:text-gray-900" />
-              <span className="ms-3">Dashboard</span>
+              <span className="ms-3"
+              onClick={() => navigate("/")}
+              >Dashboard</span>
             </a>
           </li>
 
@@ -223,19 +225,7 @@ function Sidebar() {
                     <span className="flex-1 whitespace-nowrap"
                       onClick={() => navigate("/employees")}
                     >
-                      Employee List
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-17px] before:top-1/2 before:transform before:-translate-y-1/2"
-                  >
-                    <span className="flex-1 whitespace-nowrap"
-                      onClick={() => navigate("/employee-form")}
-                    >
-                      Add Employee
+                      Employees
                     </span>
                   </a>
                 </li>
@@ -329,19 +319,7 @@ function Sidebar() {
                     <span className="flex-1 whitespace-nowrap"
                         onClick={() => navigate("/request-list")}
                       >
-                        Request List
-                      </span>
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="flex items-center p-2 text-gray-900 rounded-lg hover:bg-[#CDC1FF] group relative before:content-[''] before:w-2 before:h-2 before:bg-[#A294F9] before:rounded-full before:absolute before:left-[-26px] before:top-1/2 before:transform before:-translate-y-1/2"
-                    >
-                    <span className="flex-1 whitespace-nowrap"
-                        onClick={() => navigate("/support-form")}
-                      >
-                       Support
+                        Request
                       </span>
                     </a>
                   </li>
@@ -353,7 +331,7 @@ function Sidebar() {
                     <span className="flex-1 whitespace-nowrap"
                         onClick={() => navigate("/support-list")}
                       >
-                       Support List
+                       Support
                       </span>
                     </a>
                   </li>
