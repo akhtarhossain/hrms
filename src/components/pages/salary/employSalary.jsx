@@ -58,9 +58,16 @@ const EmployeeSalaryForm = () => {
     employeeService.getEmployeeById(id)
       .then((response) => {
         const employeeData = response;
+        const formatDates = (items) => {
+          return items.map(item => ({
+            ...item,
+            startDate: item.startDate ? item.startDate.split('T')[0] : "", // Format date to YYYY-MM-DD
+            endDate: item.endDate ? item.endDate.split('T')[0] : "" // Format date to YYYY-MM-DD
+          }));
+        };
         setFormData({
-          allowances: employeeData.allowances || [],
-          deductions: employeeData.deductions || [],
+          allowances: formatDates(employeeData.allowances || []),
+          deductions: formatDates(employeeData.deductions || []),
         });
         calculateTotals({
           allowances: employeeData.allowances || [],
@@ -197,7 +204,7 @@ const EmployeeSalaryForm = () => {
         <h2 className="text-3xl font-bold text-gray-800">Employee Salary Form</h2>
         <div className="flex space-x-2">
           <button
-            onClick={() => navigate('/employees')}
+            onClick={() => navigate('/salary')}
             title="List"
             className="p-2 bg-[#A294F9] rounded shadow">
             <FiList className="text-white" />
