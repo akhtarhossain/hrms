@@ -11,15 +11,21 @@ import {
   FiChevronRight,
   FiLock,
   FiLogOut,
+  FiUser,
 } from "react-icons/fi";
 import { Outlet, useNavigate } from "react-router-dom";
 import logo from "../../src/assets/logo.png";
 import SessionService from "../services/SessionService";
+import { IoSettingsOutline } from "react-icons/io5";
 
 function Sidebar() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    fullName: '',
+    email: ''
+  });
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const toggleDropdown = (menu) => {
@@ -48,6 +54,22 @@ function Sidebar() {
     navigate("/login");
   };
 
+const GetUser = () => {
+  const user = SessionService.getLoggedIn();
+  return user;
+};
+
+useEffect(() => {
+  const userResponse = GetUser();
+  if (userResponse?.data) {
+    const { firstName, lastName, email } = userResponse.data; // Destructure once
+    const fullName = `${firstName} ${lastName}`;
+    setUserInfo({
+    fullName: `${firstName} ${lastName}`,
+    email: email
+  });
+  }
+}, []); 
   return (
     <div
       style={{
@@ -127,46 +149,89 @@ function Sidebar() {
                 </div>
 
                 {/* Dropdown */}
-                {open && (
-                  <div className="absolute right-0 z-10 mt-3 w-56 bg-white border border-[#E5D9F2] rounded-xl shadow-lg dark:bg-gray-800 dark:border-gray-600 animate-fade-in">
-                    <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
-                      <li>
-                        <a
-                          onClick={() => {
-                            setOpen(false);
-                            navigate("/change-password");
-                          }}
-                          className="flex items-center gap-3 px-5 py-3 relative group text-black dark:text-white cursor-pointer"
-                        >
-                          <FiLock
-                            className="text-lg"
-                            style={{ color: "#A294F9" }}
-                          />
-                          Change Password
-                          <span className="absolute left-5 bottom-2 w-0 h-[2px] bg-[#E5D9F2] transition-all duration-300 group-hover:w-[85%]" />
-                        </a>
-                      </li>
-                      <li>
-                        <a
-                          onClick={() => {
-                            setOpen(false);
-                            logout();
-                          }}
-                          className="flex items-center gap-3 px-5 py-3 relative group text-black dark:text-white cursor-pointer"
-                        >
-                          <FiLogOut
-                            className="text-lg"
-                            style={{ color: "#A294F9" }}
-                          />
-                          Logout
-                          <span className="absolute left-5 bottom-2 w-0 h-[2px] bg-[#E5D9F2] transition-all duration-300 group-hover:w-[85%]" />
-                        </a>
-                      </li>
-                    </ul>
-                    {/* Permanent line below menu */}
-                    <div className="h-[2px] bg-[#E5D9F2] w-full" />
+           {open && (
+            <div className="absolute right-0 z-20 mt-2 w-72 border border-gray-100 rounded-lg shadow-xl dark:bg-gray-800 dark:border-gray-700 animate-fade-in overflow-hidden"
+            style={{ backgroundColor: '#E5D9F2' }}
+            >
+              {/* User Info Section */}
+              <div className="px-4 py-3 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
+                      <span className="text-purple-600 dark:text-purple-300 font-medium text-sm">
+                        {userInfo.fullName?.charAt(0) || 'U'}
+                      </span>
+                    </div>
                   </div>
-                )}
+                  <div className="min-w-0 py-3">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {userInfo.fullName || 'User Name'} 
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {userInfo.email || 'user@example.com'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu Items */}
+              <ul style={{ backgroundColor: '#F5EFFF'}}  className="py-1 text-sm text-gray-700 dark:text-gray-200"
+              >
+                <li>
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      navigate("/profile-settings");
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
+                  >
+                    <FiUser className="text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400" />
+                    <span>Profile</span>
+                  </a>
+                </li>
+                  <li>
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      navigate("/profile-settings");
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
+                  >
+                    <IoSettingsOutline className="text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400" />
+                    <span>Settings</span>
+                  </a>
+                </li>
+                <li>
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      navigate("/change-password");
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
+                  >
+                    <FiLock className="text-gray-500 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400" />
+                    <span>Change Password</span>
+                  </a>
+                </li>
+                <li className="border-t border-gray-100 dark:border-gray-700 mt-1">
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      logout();
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer group"
+                  >
+                    <FiLogOut className="group-hover:text-red-700 dark:group-hover:text-red-400" />
+                    <span>Logout</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          )}
               </div>
             </div>
           </div>
