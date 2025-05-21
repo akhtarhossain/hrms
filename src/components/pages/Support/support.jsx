@@ -216,7 +216,7 @@ const Support = () => {
               <tr>
                 <th className="px-4 py-3 text-left">Name</th>
                 <th className="px-4 py-3 text-left">Subject</th>
-                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Description</th>
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
             </thead>
@@ -226,10 +226,7 @@ const Support = () => {
                   <tr key={ticket._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
                     <td className="px-4 py-3">{ticket.name}</td>
                     <td className="px-4 py-3">{ticket.subject}</td>
-                    <td className="px-4 py-3 flex items-center">
-                      {getStatusIcon(ticket.status)}
-                      <span className="ml-2">{ticket.status}</span>
-                    </td>
+                    <td className="px-4 py-3">{ticket.description}</td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
