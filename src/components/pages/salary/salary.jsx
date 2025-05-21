@@ -137,14 +137,6 @@ const EmploySalaryList = () => {
             >
               <FiFilter className="text-white" />
             </button>
-            <button
-              title="Create Salary"
-              onClick={() => navigate('/employSalaryform')}
-              className="p-2 rounded shadow cursor-pointer"
-              style={{ backgroundColor: '#A294F9' }}
-            >
-              <FiPlus className="text-white" />
-            </button>
           </div>
         </div>
 
