@@ -194,8 +194,8 @@ useEffect(() => {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
     3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus'],
-    4: ['educations'], // <-- education step
-    6: ['certificates'], // <-- certificate step
+    4: ['educations'],
+    6: ['certificates'],
   };
 
   const handleNext = () => {
@@ -256,7 +256,7 @@ const isStepValid = () => {
       if (!educationList || educationList.length === 0) {
         valid = false;
         newErrors[field] = 'At least one education entry is required';
-      toast.error("Please add at least one item")
+      toast.error("Please add one item")
       } else {
         educationList.forEach((item, index) => {
           const eduErrors = {};
@@ -343,6 +343,7 @@ const handleSubmit = (e) => {
       .catch((error) => {
         console.error('Error updating employee:', error);
         toast.error('Error updating employee. Please check fields.');
+        toast.error('EmployeeId already exist');
       });
   } else {
     employeeService.createEmployee(finalData)

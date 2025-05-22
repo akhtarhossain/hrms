@@ -13,39 +13,45 @@ const Employees = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10 records per page
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [filters, setFilters] = useState({
     name: '',
     department: '',
     designation: ''
   });
+ useEffect(() => {
+    fetchEmployees();
+  }, [currentPage, searchQuery]);
 
-  useEffect(() => {
-    employeeService.getEmployee()
-      .then((response) => {
-        setEmployees(response);
-      })
-      .catch((error) => {
-        console.error('Error fetching employee data:', error);
-      });
-  }, []);
-
-  const deleteEmployee = (employeeId) => {
-    if (window.confirm("Are you sure you want to delete this employee?")) {
-      employeeService.deleteEmployee(employeeId)
-        .then((response) => {
-          console.log("Employee deleted successfully", response);
-          toast.success("Employee deleted successfully");
-          setEmployees((prevEmployees) =>
-            prevEmployees.filter((employee) => employee._id !== employeeId)
-          );
-        })
-        .catch((error) => {
-          console.error('Error deleting employee:', error);
-          toast.error('Failed to delete employee');
-        });
-    }
+  // useEffect(() => {
+  //   employeeService.getEmployee()
+  //     .then((response) => {
+  //        setEmployees(response.list);
+  //     setTotalCount(response.count);
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching employee data:', error);
+  //     });
+  // }, []);
+  const fetchEmployees = () => {
+    employeeService.getEmployee({
+      s: searchQuery,
+      l: pageSize,
+      o: (currentPage - 1) * pageSize, // Calculate offset
+    })
+    .then((response) => {
+      setEmployees(response.list);
+      setTotalCount(response.count);
+    })
+    .catch((error) => {
+      console.error('Error fetching employee data:', error);
+    });
   };
+
   const handleDeleteClick = (employeeId) => {
     setSelectedEmployeeId(employeeId);
     setShowDeleteModal(true);
@@ -87,7 +93,9 @@ const Employees = () => {
       designation: ''
     });
   };
-
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
   return (
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
@@ -171,13 +179,24 @@ const Employees = () => {
         </div>
 
         <div className="overflow-x-auto p-3 border-radius-100px">
-          <div className="flex justify-between items-center mb-3">
-            <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">1</span> to <span className="font-semibold text-gray-800">10</span> of <span className="font-semibold text-gray-800">50</span> entries
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Pagination />
-            </div>
+           <div className="flex justify-between items-center mb-3">
+          <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
+            Showing <span className="font-semibold text-gray-800">
+              {(currentPage - 1) * pageSize + 1}
+            </span> to <span className="font-semibold text-gray-800">
+              {Math.min(currentPage * pageSize, totalCount)}
+            </span> of <span className="font-semibold text-gray-800">
+              {totalCount}
+            </span> entries
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Pagination 
+              currentPage={currentPage}
+              totalCount={totalCount}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+            />
+          </div>
           </div>
           <table className="min-w-full table-auto text-sm">
             <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
