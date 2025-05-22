@@ -296,19 +296,17 @@ const PaymentForm = () => {
                     <tr>
                       <td colSpan="5" className="py-6">
                         <div className="p-4 border-b border-gray-300 rounded-lg">
-                        <div className="flex justify-between items-start mb-3 mr-3">
-                        <h4 className="text-sm font-bold text-gray-700">Payment Details</h4>
-                        <button
-                          onClick={() => addPayment(index)}
-                          style={{ backgroundColor: '#A294F9' }}
-                          className="p-2 rounded shadow cursor-pointer text-white flex items-center gap-1"
-                        >
-                          <FiPlus />
-                          Add Payment Detail
-                        </button>
-                      </div>
-
-
+                          <div className="flex justify-between items-start mb-3 mr-3">
+                            <h4 className="text-sm font-bold text-gray-700">Payment Details</h4>
+                            <button
+                              onClick={() => addPayment(index)}
+                              style={{ backgroundColor: '#A294F9' }}
+                              className="p-2 rounded shadow cursor-pointer text-white flex items-center gap-1"
+                            >
+                              <FiPlus />
+                              Add Payment Detail
+                            </button>
+                          </div>
                           <div className="space-y-3">
                             {payment.payments.map((pmt, pmtIndex) => (
                               <div
@@ -318,14 +316,14 @@ const PaymentForm = () => {
                                 {/* Date */}
                                 <div className="col-span-3">
                                   <label className="block text-xs text-gray-500 mb-1">Date</label>
-                                   <input
+                                  <input
                                     type="date"
                                     name={name}
                                     placeholder="Year of Passing"
                                     value={pmt.date}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'date', e.target.value)}
                                     className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
-                                  />                       
+                                  />
                                 </div>
 
                                 {/* Type */}
@@ -346,7 +344,7 @@ const PaymentForm = () => {
                                 <div className="col-span-3">
                                   <label className="block text-xs text-gray-500 mb-1">Amount</label>
                                   <div className="relative">
-                                 
+
                                     <input
                                       type="number"
                                       value={pmt.amount}
