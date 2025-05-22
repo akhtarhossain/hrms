@@ -16,42 +16,39 @@ const Employees = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10); // 10 records per page
-  const [searchQuery, setSearchQuery] = useState('');
+ const [isLoading, setIsLoading] = useState(false);
 
   const [filters, setFilters] = useState({
-    name: '',
+    firstName: '',
     department: '',
     designation: ''
   });
  useEffect(() => {
     fetchEmployees();
-  }, [currentPage, searchQuery]);
+  }, [currentPage]);
 
-  // useEffect(() => {
-  //   employeeService.getEmployee()
-  //     .then((response) => {
-  //        setEmployees(response.list);
-  //     setTotalCount(response.count);
-  //     })
-  //     .catch((error) => {
-  //       console.error('Error fetching employee data:', error);
-  //     });
-  // }, []);
-  const fetchEmployees = () => {
-    employeeService.getEmployee({
-      s: searchQuery,
-      l: pageSize,
-      o: (currentPage - 1) * pageSize, // Calculate offset
-    })
-    .then((response) => {
-      setEmployees(response.list);
-      setTotalCount(response.count);
-    })
-    .catch((error) => {
-      console.error('Error fetching employee data:', error);
-    });
-  };
+const fetchEmployees = () => {
+  setIsLoading(true);
+  employeeService.getEmployee({
+    firstName: filters.firstName,
+    department: filters.department,
+    designation: filters.designation,
+    l: pageSize,
+    o: (currentPage - 1) * pageSize,
+  })
+  .then((response) => {
+    setEmployees(response.list);
+    setTotalCount(response.count);
+  })
+  .catch((error) => {
+    console.error('Error fetching employee data:', error);
+  })
+  .finally(() => {
+    setIsLoading(false);
+  });
+};
 
+{isLoading && <div className="text-center py-4 text-bold">Loading...</div>}
   const handleDeleteClick = (employeeId) => {
     setSelectedEmployeeId(employeeId);
     setShowDeleteModal(true);
@@ -73,26 +70,28 @@ const Employees = () => {
       });
   };
 
-  const handleFilterChange = (e) => {
+   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
       [name]: value
     }));
   };
-
   const applyFilters = () => {
-    console.log('Applying filters:', filters);
+    setCurrentPage(1); // Reset to first page when filters change
+    // setShowFilter(false);
+    fetchEmployees();
   };
 
   const closeFilter = () => {
     setShowFilter(false);
     setFilters({
-      name: '',
+      firstName: '',
       department: '',
       designation: ''
     });
   };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -122,61 +121,59 @@ const Employees = () => {
 
         {/* Filter Dropdown with Transition */}
         <div className={`overflow-hidden transition-all duration-400 ease-in-out ${showFilter ? 'max-h-96' : 'max-h-0'}`}>
-          <div className="p-4 rounded-lg shadow-md">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={filters.name}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  placeholder="Search by name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                <input
-                  type="text"
-                  name="department"
-                  value={filters.department}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  placeholder="Search by department"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                <input
-                  type="text"
-                  name="designation"
-                  value={filters.designation}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  placeholder="Search by designation"
-                />
-              </div>
+        <div className="p-4 rounded-lg shadow-md">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <input
+                type="text"
+                name="firstName"
+                value={filters.firstName}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                placeholder="Search by name"
+              />
             </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={closeFilter}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
-              >
-                <div className="flex items-center">
-                  Close
-                </div>
-              </button>
-              <button
-                onClick={applyFilters}
-                className="px-4 py-2 rounded shadow text-white cursor-pointer"
-                style={{ backgroundColor: '#A294F9' }}
-              >
-                Search
-              </button>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+              <input
+                type="text"
+                name="department"
+                value={filters.department}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                placeholder="Search by department"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+              <input
+                type="text"
+                name="designation"
+                value={filters.designation}
+                onChange={handleFilterChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                placeholder="Search by designation"
+              />
             </div>
           </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={closeFilter}
+              className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              onClick={applyFilters}
+              className="px-4 py-2 rounded shadow text-white cursor-pointer"
+              style={{ backgroundColor: '#A294F9' }}
+            >
+              Search
+            </button>
+          </div>
         </div>
+      </div>
 
         <div className="overflow-x-auto p-3 border-radius-100px">
            <div className="flex justify-between items-center mb-3">
