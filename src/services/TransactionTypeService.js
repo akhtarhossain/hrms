@@ -11,15 +11,24 @@ class TransactionTypeService extends HttpService {
    * @param {Object} params - Optional query parameters
    * @returns {Promise<any[]>}
    */
-  getTransactionTypes(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return this.get(`/transaction-type${queryString ? `?${queryString}` : ''}`)
-      .then((response) => response.data)
-      .catch((error) => {
-        console.error('Error fetching transaction types:', error);
-        toast.error('Error fetching transaction types');
-        throw error;
-      });
+  // getTransactionTypes(params = {}) {
+  //   const queryString = new URLSearchParams(params).toString();
+  //   return this.get(`/transaction-type${queryString ? `?${queryString}` : ''}`)
+  //     .then((response) => response.data)
+  //     .catch((error) => {
+  //       console.error('Error fetching transaction types:', error);
+  //       toast.error('Error fetching transaction types');
+  //       throw error;
+  //     });
+  // }
+
+  getTransactionTypes(EmployeeData) {
+    return this.get('/transaction-type', EmployeeData).then((response) => response.data)
+        .catch((error) => {
+          console.error('Error fetching license rights:', error);
+          toast.error(`${error}`);
+          throw error;
+        });
   }
 
   /**

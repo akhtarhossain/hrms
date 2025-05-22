@@ -10,10 +10,13 @@ import TransactionTypeService from '../../services/TransactionTypeService';
 const TransactionList = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10 records per page
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [filters, setFilters] = useState({
     name: '',
@@ -22,22 +25,27 @@ const TransactionList = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+  }, [currentPage, searchQuery]);
 
+  // useEffect(() => {
+  //   employeeService.getEmployee()
+  //     .then((response) => {
+  //        setEmployees(response.list);
+  //     setTotalCount(response.count);
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching employee data:', error);
+  //     });
+  // }, []);
   const fetchTransactions = () => {
-    setLoading(true);
     TransactionTypeService.getTransactionTypes()
-      .then((data) => {
-        setTransactions(data || []);
+      .then((response) => {
+        setTransactions(response.list);
+        setTotalCount(response.count);
       })
       .catch((error) => {
-        console.error('Error fetching transactions:', error);
-        toast.error('Failed to load transaction records');
-      })
-      .finally(() => {
-        setLoading(false);
+        console.error('Error fetching employee data:', error);
       });
-    console.log(transactions);
   };
 
   const handleFilterChange = (e) => {
@@ -49,7 +57,6 @@ const TransactionList = () => {
   };
 
   const applyFilters = async () => {
-    setLoading(true);
     try {
       // Prepare filters - only include non-empty values
       const apiFilters = {
@@ -63,7 +70,6 @@ const TransactionList = () => {
       console.error('Filter error:', error);
       toast.error(error.response?.data?.message || 'Filtering failed');
     } finally {
-      setLoading(false);
       setShowFilter(false);
     }
   };
@@ -97,14 +103,9 @@ const TransactionList = () => {
         setSelectedTransactionId(null);
       });
   };
-
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading transaction records...</div>
-      </div>
-    );
-  }
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   return (
     <>
@@ -183,10 +184,21 @@ const TransactionList = () => {
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{transactions.length}</span> transaction records
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
           <table className="min-w-full table-auto text-sm">
