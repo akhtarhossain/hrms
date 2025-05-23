@@ -97,7 +97,7 @@ const PayrollForm = () => {
           employeeService.getEmployee()
         ]);
 
-        setSalaries(employees || []);
+        setSalaries(employees?.list || []);
 
         const payrollForThisMonth = allPayrolls.find(p =>
           `${monthNames[p.month - 1]}-${p.year}` === monthYear
@@ -118,14 +118,14 @@ const PayrollForm = () => {
 
         // Fetch transaction types
         const transactions = await TransactionTypeService.getTransactionTypes();
-        const formattedAllowances = transactions
+        const formattedAllowances = transactions?.list
           .filter(item => item.transactionType === "allowance")
           .map(item => ({
             value: item.name,
             label: item.name,
           }));
 
-        const formattedDeductions = transactions
+        const formattedDeductions = transactions?.list
           .filter(item => item.transactionType === "deduction")
           .map(item => ({
             value: item.name,
