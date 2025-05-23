@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrashAlt, FaEye, FaSearch, FaFileDownload } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
-import DeleteModal from '../../../shared/common/DeleteConfirmation';
-import EmploySalaryService from '../../../services/EmploySalaryService';
 import employeeService from '../../../services/employeeService';
 
 const EmploySalaryList = () => {
@@ -13,25 +11,28 @@ const EmploySalaryList = () => {
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedSalaryId, setSelectedSalaryId] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10 records per page
 
   const [filters, setFilters] = useState({
     employeeName: '',
-    month: '',
-    year: ''
   });
 
   useEffect(() => {
     fetchSalaries();
-  }, []);
+  }, [currentPage]);
 
   const fetchSalaries = () => {
     setLoading(true);
-    employeeService.getEmployee()
+    employeeService.getEmployee({
+      firstName: filters.employeeName,
+      l: pageSize,
+      o: (currentPage - 1) * pageSize,
+    })
       .then((data) => {
-        setSalaries(data || []);
-        console.log(data, "data");
+        setSalaries(data.list || []);
+        setTotalCount(data.count);
       })
       .catch((error) => {
         console.error('Error fetching salaries:', error);
@@ -69,51 +70,21 @@ const EmploySalaryList = () => {
       [name]: value
     }));
   };
-
   const applyFilters = () => {
-    setLoading(true);
-    EmploySalaryService.getSalary(filters)
-      .then((response) => {
-        setSalaries(response.data || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error filtering salaries:', error);
-        toast.error('Failed to filter salary records');
-        setLoading(false);
-      });
-    setShowFilter(false);
+    setCurrentPage(1);
+    fetchSalaries();
   };
 
   const closeFilter = () => {
     setShowFilter(false);
     setFilters({
       employeeName: '',
-      month: '',
-      year: ''
     });
     fetchSalaries();
   };
 
-  const handleDeleteClick = (salaryId) => {
-    setSelectedSalaryId(salaryId);
-    setShowDeleteModal(true);
-  };
-  
-  const confirmDelete = () => {
-    EmploySalaryService.deleteSalary(selectedSalaryId)
-      .then(() => {
-        toast.success("Salary record deleted successfully");
-        setSalaries(prev => prev.filter(s => s._id !== selectedSalaryId));
-      })
-      .catch((error) => {
-        console.error('Error deleting salary:', error);
-        toast.error('Failed to delete salary record');
-      })
-      .finally(() => {
-        setShowDeleteModal(false);
-        setSelectedSalaryId(null);
-      });
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   if (loading) {
@@ -155,34 +126,6 @@ const EmploySalaryList = () => {
                   placeholder="Search by name"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
-                <select
-                  name="month"
-                  value={filters.month}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Months</option>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <select
-                  name="year"
-                  value={filters.year}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Years</option>
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>
-                  ))}
-                </select>
-              </div>
             </div>
             <div className="flex justify-end space-x-2">
               <button
@@ -207,10 +150,21 @@ const EmploySalaryList = () => {
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{salaries.length}</span> salary records
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
           <table className="min-w-full table-auto text-sm">
@@ -238,7 +192,7 @@ const EmploySalaryList = () => {
                       ) : (
                         <span className="text-gray-400 italic">No image</span>
                       )}
-                    </td>           
+                    </td>
                     <td className="px-4 py-3">{employee.firstName} {employee.lastName}</td>
                     <td className="px-4 py-3">{calculateTotalAllowances(employee).toFixed(2)}</td>
                     <td className="px-4 py-3">{calculateTotalDeductions(employee).toFixed(2)}</td>
@@ -276,11 +230,6 @@ const EmploySalaryList = () => {
           </table>
         </div>
       </div>
-      <DeleteModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={confirmDelete}
-      />
     </>
   );
 };
