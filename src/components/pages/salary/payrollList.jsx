@@ -15,6 +15,17 @@ const PayrollList = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedPayrollId, setSelectedPayrollId] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState({
+    payrollDate: '',
+    status: '', 
+    year: '', 
+    month: '', 
+  });
+
   const [selectedDate, setSelectedDate] = useState({
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear()
@@ -22,13 +33,35 @@ const PayrollList = () => {
 
   useEffect(() => {
     fetchPayrolls();
-  }, []);
+  }, [currentPage]);
+  
 
   const fetchPayrolls = () => {
     setLoading(true);
-    PayrollService.getPayroll()
-      .then((data) => {
-        setPayrolls(data || []);
+    const queryParams = {
+    l: pageSize,
+    o: (currentPage - 1) * pageSize,
+    };
+     if (filters.payrollDate) {
+    // Convert to YYYY-MM-DD format that backend expects
+    const date = new Date(filters.payrollDate);
+    const formattedDate = date.toISOString().split('T')[0];
+    queryParams.payrollDate = formattedDate;
+  }
+  
+  if (filters.status) {
+    queryParams.status = filters.status;
+  }
+    if (filters.year) {
+    queryParams.year = filters.year;
+  }
+    if (filters.month) {
+    queryParams.month = filters.month;
+  }
+    PayrollService.getPayroll(queryParams)
+      .then((response) => {
+      setPayrolls(response.list || []);
+      setTotalCount(response.count);
       })
       .catch((error) => {
         console.error('Error fetching payrolls:', error);
@@ -37,6 +70,7 @@ const PayrollList = () => {
       .finally(() => {
         setLoading(false);
       });
+      
   };
 
   const formatDate = (dateString) => {
@@ -93,13 +127,54 @@ const PayrollList = () => {
       </div>
     );
   }
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'payrollDate') {
+      // Convert to ISO string for backend validation
+      setFilters(prev => ({
+        ...prev,
+        [name]: value ? new Date(value).toISOString() : ''
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
 
+  const applyFilters = () => {
+    setCurrentPage(1); // Reset to first page when filters change
+    fetchPayrolls();
+  };
+
+// Reset filters handler
+  const closeFilter = () => {
+    setFilters({
+      payrollDate: '',
+      status: ''
+    });
+    setCurrentPage(1);
+    fetchPayrolls();
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
   return (
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
         <div className="py-4 px-2 flex justify-between items-center mb-3">
           <h2 className="text-3xl font-bold text-gray-800">Payroll Records</h2>
           <div className="flex space-x-2">
+              <button
+                title="filter"
+                className="p-2 bg-[#A294F9] rounded shadow cursor-pointer"
+                onClick={() => setShowFilter(!showFilter)}
+              >
+                <FiFilter className="text-white" />
+              </button>
             <button
               title="Create Payroll"
               onClick={() => setShowDateModal(true)}
@@ -110,17 +185,90 @@ const PayrollList = () => {
             </button>
           </div>
         </div>
+         <div className={`overflow-hidden transition-all duration-400 ease-in-out ${showFilter ? 'max-h-96' : 'max-h-0'}`}>
+        <div className="p-4 rounded-lg shadow-md">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                   {/* Month Input */}
+     <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+      <select
+        name="month"
+        value={filters.month}
+        onChange={handleFilterChange}
+        className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+      >
+        <option value="">Select month</option>
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+    </div>
+          <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select
+            name="status"
+            value={filters.status}
+            onChange={handleFilterChange}
+            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+          >
+            <option value="">Select status</option>
+            <option value="DRAFT">DRAFT</option>
+            <option value="APPROVED">APPROVED</option>
+            <option value="PAID">PAID</option>
+            <option value="PENDING">PENDING</option>
+            <option value="REVIEWONGOING">REVIEWONGOING</option>
+          </select>
+        </div>
 
+
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={closeFilter}
+              className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              onClick={applyFilters}
+              className="px-4 py-2 rounded shadow text-white cursor-pointer"
+              style={{ backgroundColor: '#A294F9' }}
+            >
+              Search
+            </button>
+          </div>
+        </div>
+        </div>
         {/* Payroll List Table */}
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{payrolls.length}</span> payroll records
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination 
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
-          </div>
+           </div>
           <table className="min-w-full table-auto text-sm">
             <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
               <tr>

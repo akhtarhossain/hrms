@@ -8,12 +8,12 @@ class EmployeeService extends HttpService {
   }
 
   getEmployee(EmployeeData) {
-    return this.get('/employ', EmployeeData).then((response) => response.data)
-        .catch((error) => {
-          console.error('Error fetching license rights:', error);
-          toast.error(`${error}`);
-          throw error;
-        });
+  return this.get('/employ', EmployeeData).then((response) => response.data)
+    .catch((error) => {
+      console.error('Error fetching license rights:', error);
+      toast.error(`${error}`);
+      throw error;
+    });
   }
     getEmployeeById(employeeId) {
       return this.get(`/employ/${employeeId}`).then((response) => response.data)

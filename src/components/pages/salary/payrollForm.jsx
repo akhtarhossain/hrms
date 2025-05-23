@@ -92,11 +92,11 @@ const PayrollForm = () => {
         setLoading(true);
 
         // Fetch both payroll and employees in parallel
-        const [allPayrolls, employees] = await Promise.all([
+        const [payrollResponse, employees] = await Promise.all([
           PayrollService.getPayroll(),
           employeeService.getEmployee()
         ]);
-
+        const allPayrolls = payrollResponse?.list || [];
         setSalaries(employees?.list || []);
 
         const payrollForThisMonth = allPayrolls.find(p =>
