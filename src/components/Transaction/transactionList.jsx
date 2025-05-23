@@ -16,7 +16,6 @@ const TransactionList = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10); // 10 records per page
-  const [searchQuery, setSearchQuery] = useState('');
 
   const [filters, setFilters] = useState({
     name: '',
@@ -25,20 +24,20 @@ const TransactionList = () => {
 
   useEffect(() => {
     fetchTransactions();
-  }, [currentPage, searchQuery]);
+  }, [currentPage]);
 
-  // useEffect(() => {
-  //   employeeService.getEmployee()
-  //     .then((response) => {
-  //        setEmployees(response.list);
-  //     setTotalCount(response.count);
-  //     })
-  //     .catch((error) => {
-  //       console.error('Error fetching employee data:', error);
-  //     });
-  // }, []);
   const fetchTransactions = () => {
-    TransactionTypeService.getTransactionTypes()
+    const params = {
+      name: filters.name,
+      l: pageSize,
+      o: (currentPage - 1) * pageSize,
+    };
+
+    if (filters.transactionType === 'allowance' || filters.transactionType === 'deduction') {
+      params.transactionType = filters.transactionType;
+    }
+
+    TransactionTypeService.getTransactionTypes(params)
       .then((response) => {
         setTransactions(response.list);
         setTotalCount(response.count);
@@ -48,6 +47,7 @@ const TransactionList = () => {
       });
   };
 
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
@@ -55,23 +55,9 @@ const TransactionList = () => {
       [name]: value
     }));
   };
-
-  const applyFilters = async () => {
-    try {
-      // Prepare filters - only include non-empty values
-      const apiFilters = {
-        ...(filters.name && { name: filters.name }),
-        ...(filters.transactionType && { transactionType: filters.transactionType })
-      };
-
-      const data = await TransactionTypeService.getTransactionTypes(apiFilters);
-      setTransactions(data || []);
-    } catch (error) {
-      console.error('Filter error:', error);
-      toast.error(error.response?.data?.message || 'Filtering failed');
-    } finally {
-      setShowFilter(false);
-    }
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchTransactions();
   };
 
   const closeFilter = () => {
@@ -80,7 +66,7 @@ const TransactionList = () => {
       name: '',
       transactionType: ''
     });
-    fetchTransactions(); // Reset to all records
+    fetchTransactions();
   };
 
   const handleDeleteClick = (transactionId) => {
