@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FiFilter, FiPlus } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrashAlt, FaEye, FaSearch, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
-import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
 import DeleteModal from '../../../shared/common/DeleteConfirmation';
 import SupportService from '../../../services/SupportService';
+import { Pagination } from '../../../shared/common/Pagination';
 
 const Support = () => {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ const Support = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [filters, setFilters] = useState({
     name: '',
@@ -23,15 +26,25 @@ const Support = () => {
 
   useEffect(() => {
     fetchSupportTickets();
-  }, []);
+  }, [currentPage]);
 
   const fetchSupportTickets = () => {
     setLoading(true);
-    SupportService.getSupport()
+    const queryParams = {
+      l: pageSize,
+      o: (currentPage - 1) * pageSize,
+    };
+    if (filters.name) {
+      queryParams.name = filters.name;
+    }
+    if (filters.subject) {
+      queryParams.subject = filters.subject;
+    }
+
+    SupportService.getSupport(queryParams)
       .then((data) => {
-        console.log(data);
-        
-        setSupportTickets(data || []);
+        setSupportTickets(data.list || []);
+        setTotalCount(data.count || 0); // ✅ Set total count
       })
       .catch((error) => {
         console.error('Error fetching support tickets:', error);
@@ -42,44 +55,12 @@ const Support = () => {
       });
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const applyFilters = () => {
-    setLoading(true);
-    SupportService.filterSupportTickets(filters)
-      .then((response) => {
-        setSupportTickets(response.data || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error filtering support tickets:', error);
-        toast.error('Failed to filter support tickets');
-        setLoading(false);
-      });
-    setShowFilter(false);
-  };
-
-  const closeFilter = () => {
-    setShowFilter(false);
-    setFilters({
-      name: '',
-      subject: '',
-      status: ''
-    });
-    fetchSupportTickets();
-  };
 
   const handleDeleteClick = (ticketId) => {
     setSelectedTicketId(ticketId);
     setShowDeleteModal(true);
   };
-  
+
   const confirmDelete = () => {
     SupportService.deleteSupport(selectedTicketId)
       .then(() => {
@@ -97,7 +78,7 @@ const Support = () => {
   };
 
   const getStatusIcon = (status) => {
-    switch(status) {
+    switch (status) {
       case 'Resolved':
         return <FaCheckCircle className="text-green-500" />;
       case 'Pending':
@@ -116,7 +97,33 @@ const Support = () => {
       </div>
     );
   }
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchSupportTickets();
+  };
+
+  const closeFilter = () => {
+    setFilters({
+      name: '',
+      subject: '',
+
+    });
+    // setCurrentPage(1);
+    fetchSupportTickets();
+  };
+
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
   return (
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
@@ -167,20 +174,7 @@ const Support = () => {
                   placeholder="Search by subject"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  name="status"
-                  value={filters.status}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Resolved">Resolved</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
+
             </div>
             <div className="flex justify-end space-x-2">
               <button
@@ -205,10 +199,21 @@ const Support = () => {
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{supportTickets.length}</span> support tickets
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
           <table className="min-w-full table-auto text-sm">
@@ -216,7 +221,8 @@ const Support = () => {
               <tr>
                 <th className="px-4 py-3 text-left">Name</th>
                 <th className="px-4 py-3 text-left">Subject</th>
-                <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-left">createdAt</th>
+                <th className="px-4 py-3 text-left">Status</th>
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
             </thead>
@@ -226,7 +232,9 @@ const Support = () => {
                   <tr key={ticket._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
                     <td className="px-4 py-3">{ticket.name}</td>
                     <td className="px-4 py-3">{ticket.subject}</td>
-                    <td className="px-4 py-3">{ticket.description}</td>
+                    <td className="px-4 py-3">
+                      {new Date(ticket.createdAt).toISOString().split('T')[0]}
+                    </td>                    <td className="px-4 py-3">  {getStatusIcon(ticket.status)}</td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
