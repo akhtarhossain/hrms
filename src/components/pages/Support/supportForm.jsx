@@ -54,25 +54,25 @@ const SupportForm = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (id) {
-            SupportService.updateSupport(id, formData)
-                .then(() => {
-                    toast.success('Support request updated!');
-                    navigate('/support-list');
-                })
-                .catch(() => {
-                    toast.error('Error updating support request');
-                });
-        } else {
-            SupportService.createSupport(formData)
-                .then(() => {
-                    toast.success("Support request submitted!");
-                    navigate('/support-list');
-                })
-                .catch(() => {
-                    toast.error("Error submitting support request");
-                });
-        }
+    if (id) {
+        SupportService.updateSupport(id, formData)
+            .then(() => {
+                toast.success('Support request updated!');
+                navigate('/support-list');
+            })
+            .catch(() => {
+                toast.error('Error updating support request');
+            });
+    } else {
+        SupportService.createSupport(formData)
+            .then(() => {
+                toast.success("Support request submitted!");
+                navigate('/support-list');
+            })
+            .catch(() => {
+                toast.error("Error submitting support request");
+            });
+    }
     };
 
     return (
