@@ -9,7 +9,6 @@ import employeeService from '../../../services/employeeService';
 const EmploySalaryList = () => {
   const navigate = useNavigate();
   const [salaries, setSalaries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,7 +23,6 @@ const EmploySalaryList = () => {
   }, [currentPage]);
 
   const fetchSalaries = () => {
-    setLoading(true);
     employeeService.getEmployee({
       firstName: filters.employeeName,
       l: pageSize,
@@ -39,7 +37,6 @@ const EmploySalaryList = () => {
         toast.error('Failed to load salary records');
       })
       .finally(() => {
-        setLoading(false);
       });
   };
 
@@ -86,14 +83,6 @@ const EmploySalaryList = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading salary records...</div>
-      </div>
-    );
-  }
 
   return (
     <>
