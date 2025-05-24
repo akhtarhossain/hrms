@@ -13,6 +13,7 @@ const SupportForm = () => {
         name: '',
         subject: '',
         description: '',
+        status:'Pending'
     });
 
     const GetUser = () => {

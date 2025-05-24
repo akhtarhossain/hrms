@@ -7,16 +7,29 @@ class LeaveService extends HttpService {
     super();
   }
 
-  getLeaves(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return this.get(`/Leave${queryString ? `?${queryString}` : ''}`)
+  // getLeaves(params = {}) {
+  //   const queryString = new URLSearchParams(params).toString();
+  //   return this.get(`/Leave${queryString ? `?${queryString}` : ''}`)
+  //     .then((response) => response.data)
+  //     .catch((error) => {
+  //       console.error('Error fetching leave data:', error);
+  //       toast.error(`${error}`);
+  //       throw error;
+  //     });
+  // }
+
+
+    getLeaves(data) {
+    return this.get(`/leave` , data)
       .then((response) => response.data)
       .catch((error) => {
-        console.error('Error fetching leave data:', error);
+        console.error('Error fetching salary data:', error);
         toast.error(`${error}`);
         throw error;
       });
   }
+
+  
 
   getLeaveById(id) {
     return this.get(`/leave/${id}`).then((response) => response.data)

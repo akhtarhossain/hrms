@@ -14,32 +14,41 @@ const requestList = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedLeaveId, setSelectedLeaveId] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [filters, setFilters] = useState({
     employeeName: '',
-    leaveType: '',
-    status: ''
+    subject: '',
+    leaveType: ''
+    
   });
 
-  useEffect(() => {
+useEffect(() => {
     fetchLeaveRequests();
-  }, []);
+  }, [currentPage]);
 
-  const fetchLeaveRequests = () => {
-    setLoading(true);
-    LeaveService.getLeaves()
-      .then((data) => {
-        console.log(data);
-        setLeaveRequests(data || []);
-      })
-      .catch((error) => {
-        console.error('Error fetching leave requests:', error);
-        toast.error('Failed to load leave requests');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
+const fetchLeaveRequests = () => {
+  setLoading(true);
+  LeaveService.getLeaves({
+    employeeName: filters.employeeName,
+    leaveType: filters.leaveType,
+    l: pageSize,
+    o: (currentPage - 1) * pageSize,
+  })
+  .then((response) => {
+    setLeaveRequests(response.list);
+    setTotalCount(response.count);
+  })
+  .catch((error) => {
+    console.error('Error fetching employee data:', error);
+  })
+  .finally(() => {
+    setLoading(false);
+  });
+};
+
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -49,30 +58,19 @@ const requestList = () => {
     }));
   };
 
-  const applyFilters = () => {
-    setLoading(true);
-    LeaveService.filterLeaves(filters)
-      .then((response) => {
-        setLeaveRequests(response.data || []);
-      })
-      .catch((error) => {
-        console.error('Error filtering leave requests:', error);
-        toast.error('Failed to filter leave requests');
-      })
-      .finally(() => {
-        setLoading(false);
-        setShowFilter(false);
-      });
-  };
+const applyFilters = () => {
+  setCurrentPage(1);
+  fetchLeaveRequests();
+};
 
   const closeFilter = () => {
     setShowFilter(false);
     setFilters({
-      employeeName: '',
-      leaveType: '',
-      status: ''
-    });
-    fetchLeaveRequests();
+    employeeName: '',
+    subject: '',
+    leaveType: '',
+
+  });
   };
 
   const handleDeleteClick = (leaveId) => {
@@ -95,7 +93,9 @@ const requestList = () => {
         setSelectedLeaveId(null);
       });
   };
-
+ const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Approved':
@@ -156,6 +156,17 @@ const requestList = () => {
                   placeholder="Search by name"
                 />
               </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <input
+                  type="text"
+                  name="leaveType"
+                  value={filters.subject}
+                  onChange={handleFilterChange}
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  placeholder="Search by Subject"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
                 <input
@@ -167,20 +178,7 @@ const requestList = () => {
                   placeholder="Search by leave type"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  name="status"
-                  value={filters.status}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
+           
             </div>
             <div className="flex justify-end space-x-2">
               <button
@@ -205,10 +203,21 @@ const requestList = () => {
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{leaveRequests.length}</span> leave requests
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
           <table className="min-w-full table-auto text-sm">
@@ -219,8 +228,6 @@ const requestList = () => {
                 <th className="px-4 py-3 text-left">Leave Type</th>
                 <th className="px-4 py-3 text-left">Start Date</th>
                 <th className="px-4 py-3 text-left">End Date</th>
-
-                <th className="px-4 py-3 text-left">Reason</th>
                 <th className="px-4 py-3 text-left">Status</th>
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
@@ -250,7 +257,6 @@ const requestList = () => {
                         return `${day}-${month}-${year}`;
                       })()}
                     </td>
-                    <td className="px-4 py-3">{leave.leaveReason}</td>
                     <td className="px-4 py-3 flex items-center">
                       {getStatusIcon(leave.status)}
                       <span className="ml-2">{leave.status}</span>

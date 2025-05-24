@@ -32,7 +32,7 @@ const LeaveRequestForm = () => {
     useEffect(() => {
         employeeService.getEmployee()
             .then(response => {
-                const employees = response.data || response;
+                const employees = response.list || response;
                 setAllEmployees(Array.isArray(employees) ? employees : []);
             })
             .catch(error => {
