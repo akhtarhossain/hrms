@@ -14,6 +14,9 @@ const Support = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
+const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [filters, setFilters] = useState({
     name: '',
@@ -25,55 +28,35 @@ const Support = () => {
     fetchSupportTickets();
   }, []);
 
-  const fetchSupportTickets = () => {
-    setLoading(true);
-    SupportService.getSupport()
-      .then((data) => {
-        console.log(data);
-        
-        setSupportTickets(data || []);
-      })
-      .catch((error) => {
-        console.error('Error fetching support tickets:', error);
-        toast.error('Failed to load support tickets');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+const fetchSupportTickets = () => {
+  setLoading(true);
+  const queryParams = {
+    l: pageSize,
+    o: (currentPage - 1) * pageSize,
   };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const applyFilters = () => {
-    setLoading(true);
-    SupportService.filterSupportTickets(filters)
-      .then((response) => {
-        setSupportTickets(response.data || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error filtering support tickets:', error);
-        toast.error('Failed to filter support tickets');
-        setLoading(false);
-      });
-    setShowFilter(false);
-  };
-
-  const closeFilter = () => {
-    setShowFilter(false);
-    setFilters({
-      name: '',
-      subject: '',
-      status: ''
+if (filters.name) {
+    queryParams.name = filters.name;
+  }
+  if (filters.subject) {
+    queryParams.subject = filters.subject;
+  }
+  if (filters.name) {
+    queryParams.name = filters.name;
+  }
+  SupportService.getSupport(queryParams)
+    .then((data) => {
+      setSupportTickets(data.list || []);
+      setTotalCount(data.count || 0); // ✅ Set total count
+    })
+    .catch((error) => {
+      console.error('Error fetching support tickets:', error);
+      toast.error('Failed to load support tickets');
+    })
+    .finally(() => {
+      setLoading(false);
     });
-    fetchSupportTickets();
-  };
+};
+
 
   const handleDeleteClick = (ticketId) => {
     setSelectedTicketId(ticketId);
@@ -116,7 +99,33 @@ const Support = () => {
       </div>
     );
   }
+const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
+const applyFilters = () => {
+  setCurrentPage(1);
+  fetchSupportTickets();
+};
+
+const closeFilter = () => {
+  setFilters({
+    name: '',
+    subject: '',
+
+  });
+  setCurrentPage(1);
+  fetchSupportTickets();
+};
+
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
   return (
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
@@ -167,20 +176,7 @@ const Support = () => {
                   placeholder="Search by subject"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  name="status"
-                  value={filters.status}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Resolved">Resolved</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
+           
             </div>
             <div className="flex justify-end space-x-2">
               <button
@@ -203,14 +199,25 @@ const Support = () => {
 
         {/* Support List Table */}
         <div className="overflow-x-auto p-3">
-          <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{supportTickets.length}</span> support tickets
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination 
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
-          </div>
+           </div>
           <table className="min-w-full table-auto text-sm">
             <thead className="text-gray-700 uppercase text-xs font-medium" style={{ backgroundColor: '#E5D9F2' }}>
               <tr>

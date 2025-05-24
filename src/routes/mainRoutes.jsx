@@ -68,6 +68,7 @@ const router = createBrowserRouter([
           { path: 'transaction', element: <TransactionList /> },
           { path: 'transaction', element: <TransactionList /> },
           { path: 'request-form', element: <RequestForm /> },
+          { path: 'request-form/:id', element: <RequestForm /> },
           { path: 'request-list', element: <RequestList /> },
           { path: 'support-form', element: <SupportForm /> },
           { path: 'support-form/:id', element: <SupportForm /> },
