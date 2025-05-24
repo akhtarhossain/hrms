@@ -30,7 +30,6 @@ const PayrollForm = () => {
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [totalSalary, setTotalSalary] = useState(0);
   const [salaries, setSalaries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSalaryId, setSelectedSalaryId] = useState(null);
@@ -41,6 +40,9 @@ const PayrollForm = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [existingPayroll, setExistingPayroll] = useState(null);
   const [isExistingPayroll, setIsExistingPayroll] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10 records per page
 
   const [formData, setFormData] = useState({
     type: '',
@@ -89,16 +91,21 @@ const PayrollForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-
-        // Fetch both payroll and employees in parallel
+        // Fetch payroll and employees with pagination and filter
         const [payrollResponse, employees] = await Promise.all([
           PayrollService.getPayroll(),
-          employeeService.getEmployee()
+          employeeService.getEmployee({
+            firstName: filters.employeeName,
+            l: pageSize,
+            o: (currentPage - 1) * pageSize,
+          }),
         ]);
+
         const allPayrolls = payrollResponse?.list || [];
         setSalaries(employees?.list || []);
+        setTotalCount(employees?.count || 0); // totalCount for pagination
 
+        // Payroll for current month
         const payrollForThisMonth = allPayrolls.find(p =>
           `${monthNames[p.month - 1]}-${p.year}` === monthYear
         );
@@ -107,7 +114,7 @@ const PayrollForm = () => {
           setExistingPayroll(payrollForThisMonth);
           setIsExistingPayroll(true);
           const employeeIds = payrollForThisMonth.employees
-            ?.filter(e => e?.employeeId) // Filter out null/undefined employeeId
+            ?.filter(e => e?.employeeId)
             ?.map(e => e.employeeId._id || e.employeeId) || [];
 
           setSelectedEmployees(employeeIds);
@@ -115,8 +122,6 @@ const PayrollForm = () => {
           setTotalDeductions(payrollForThisMonth.summary.totalDeduction);
           setTotalSalary(payrollForThisMonth.summary.totalSalary);
         }
-
-        // Fetch transaction types
         const transactions = await TransactionTypeService.getTransactionTypes();
         const formattedAllowances = transactions?.list
           .filter(item => item.transactionType === "allowance")
@@ -139,14 +144,13 @@ const PayrollForm = () => {
         console.error("Error fetching data:", error);
         toast.error("Failed to load data");
       } finally {
-        setLoading(false);
       }
     };
 
     if (month && year) {
       fetchData();
     }
-  }, [monthYear]);
+  }, [monthYear, currentPage, filters.employeeName]);
 
   const calculateTotalAllowances = (employee) => {
     if (!employee || !Array.isArray(employee.allowances)) return 0;
@@ -168,31 +172,26 @@ const PayrollForm = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
   const applyFilters = () => {
-    setLoading(true);
-    EmploySalaryService.getSalary(filters)
-      .then((response) => {
-        setSalaries(response.data || []);
-        setSelectedEmployees([]);
-        setSelectAll(false);
-      })
-      .catch((error) => {
-        console.error('Error filtering salaries:', error);
-        toast.error('Failed to filter salary records');
-      })
-      .finally(() => {
-        setLoading(false);
-        setShowFilter(false);
-      });
+    setCurrentPage(1);
+    fetchData();
   };
 
   const closeFilter = () => {
     setShowFilter(false);
-    setFilters({ employeeName: '', month: '', year: '' });
-    fetchSalaries();
+    setFilters({
+      employeeName: '',
+    });
+    fetchData();
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const handleDeleteClick = (salaryId) => {
@@ -349,14 +348,6 @@ const PayrollForm = () => {
       });
   };
 
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading salary records...</div>
-      </div>
-    );
-  }
-
   const calculateTotals = (data) => {
     let allowancesTotal = 0;
     let deductionsTotal = 0;
@@ -479,7 +470,7 @@ const PayrollForm = () => {
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
         <div className="py-4 px-2 flex justify-between items-center mb-3">
-          <h2 className="text-3xl font-bold text-gray-800">Salary Records</h2>
+          <h2 className="text-3xl font-bold text-gray-800">Create Payroll</h2>
           <div className="flex space-x-2">
             <button
               title="filter"
@@ -566,10 +557,21 @@ const PayrollForm = () => {
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{salaries.length}</span> salary records
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
 
@@ -670,7 +672,7 @@ const PayrollForm = () => {
                 >
                   Cancel
                 </button>
-                  <button
+                <button
                   onClick={handleCreatePayroll}
                   className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
                   style={{ backgroundColor: '#A294F9' }}
