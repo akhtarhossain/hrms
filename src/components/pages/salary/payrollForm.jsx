@@ -295,58 +295,55 @@ const PayrollForm = () => {
       return;
     }
 
-    const selectedEmployeeObjects = salaries
-      .filter(emp => selectedEmployees.includes(emp._id))
-      .map(emp => ({
-        employeeId: emp._id,  // Ensure this is the MongoDB ObjectId
-        name: `${emp.firstName} ${emp.lastName}`,
-        totalAllowance: calculateTotalAllowances(emp),
-        totalDeduction: calculateTotalDeductions(emp),
-        totalSalary: calculateTotalSalary(emp)
-      }));
+  const selectedEmployeeObjects = salaries
+    .filter(emp => selectedEmployees.includes(emp._id))
+    .map(emp => ({
+      employeeId: emp._id,
+      name: `${emp.firstName} ${emp.lastName}`,
+      totalAllowance: calculateTotalAllowances(emp),
+      totalDeduction: calculateTotalDeductions(emp),
+      totalSalary: calculateTotalSalary(emp),
+      allowances: emp.allowances || [], // Include allowances array
+      deductions: emp.deductions || []  // Include deductions array
+    }));
 
-    const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
-      totalAllowance: acc.totalAllowance + emp.totalAllowance,
-      totalDeduction: acc.totalDeduction + emp.totalDeduction,
-      totalSalary: acc.totalSalary + emp.totalSalary
-    }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
+  const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
+    totalAllowance: acc.totalAllowance + emp.totalAllowance,
+    totalDeduction: acc.totalDeduction + emp.totalDeduction,
+    totalSalary: acc.totalSalary + emp.totalSalary
+  }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
 
-    // Create payload according to API requirements
-    const payrollData = {
-      employees: selectedEmployeeObjects,
-      month: monthNum.toString(), // Convert to string
-      year: year.toString(), // Convert to string
-      payrollDate: new Date().toISOString(), // Or use month/year date
-      status: "DRAFT",
-      summary: {
-        totalAllowance: totals.totalAllowance,
-        totalDeduction: totals.totalDeduction,
-        totalSalary: totals.totalSalary,
-        selectedEmployees: selectedEmployees // This should already be an array of ObjectIds
-      }
-    };
-
-    // Debug: Log the payload before sending
-    console.log("Payload:", JSON.stringify(payrollData, null, 2));
-
-    const payrollAction = isExistingPayroll
-      ? PayrollService.updatePayroll(existingPayroll._id, payrollData)
-      : PayrollService.createPayroll(payrollData);
-
-    payrollAction
-      .then(() => {
-        toast.success(
-          isExistingPayroll
-            ? `Payroll updated for ${month} ${year}`
-            : `Payroll created for ${month} ${year}`
-        );
-        navigate('/payroll');
-      })
-      .catch(error => {
-        console.error("Error saving payroll:", error);
-        toast.error(error.response?.data?.message || "Failed to save payroll");
-      });
+  const payrollData = {
+    employees: selectedEmployeeObjects,
+    month: monthNum.toString(),
+    year: year.toString(),
+    payrollDate: new Date().toISOString(),
+    status: "DRAFT",
+    summary: {
+      totalAllowance: totals.totalAllowance,
+      totalDeduction: totals.totalDeduction,
+      totalSalary: totals.totalSalary
+    }
   };
+
+  const payrollAction = isExistingPayroll
+    ? PayrollService.updatePayroll(existingPayroll._id, payrollData)
+    : PayrollService.createPayroll(payrollData);
+
+  payrollAction
+    .then(() => {
+      toast.success(
+        isExistingPayroll
+          ? `Payroll updated for ${month} ${year}`
+          : `Payroll created for ${month} ${year}`
+      );
+      navigate('/payroll');
+    })
+    .catch(error => {
+      console.error("Error saving payroll:", error);
+      toast.error(error.response?.data?.message || "Failed to save payroll");
+    });
+};
 
   const calculateTotals = (data) => {
     let allowancesTotal = 0;
@@ -431,39 +428,36 @@ const PayrollForm = () => {
       deductions: updatedDeductions
     }));
   };
-  const handleSubmit = () => {
-    const updatedSalaries = [...salaries];
-
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    
+    // Create updated employee data with allowances and deductions
     const updatedEmployee = {
-      ...updatedSalaries[editIndex],
-      allowances: formData.allowances,
-      deductions: formData.deductions,
-      currentSalary: formData.currentSalary,
-      newSalary: formData.newSalary,
+      ...currentEmployee,
+      allowances: formData.allowances.map(allowance => ({
+        ...allowance,
+        currentSalary: Number(allowance.currentSalary),
+        newSalary: Number(allowance.newSalary)
+      })),
+      deductions: formData.deductions.map(deduction => ({
+        ...deduction,
+        currentSalary: Number(deduction.currentSalary),
+        newSalary: Number(deduction.newSalary)
+      })),
+      currentSalary: Number(formData.currentSalary),
+      newSalary: Number(formData.newSalary),
       startDate: formData.startDate,
-      endDate: formData.endDate,
+      endDate: formData.endDate
     };
 
-    updatedSalaries[editIndex] = updatedEmployee;
+    // Update the salaries state
+    const updatedSalaries = salaries.map(emp => 
+      emp._id === currentEmployee._id ? updatedEmployee : emp
+    );
     setSalaries(updatedSalaries);
-
-    // Save to localStorage
-    localStorage.setItem("salaries", JSON.stringify(updatedSalaries));
-
-    // Reset form
     setShowEditForm(false);
-    setFormData({
-      type: '',
-      currentSalary: '',
-      newSalary: '',
-      startDate: '',
-      endDate: '',
-      allowances: [],
-      deductions: [],
-    });
-
-    setCurrentEmployee(null);
-    setEditIndex(null);
+    
+    toast.success("Salary details saved successfully");
   };
 
   return (
@@ -738,7 +732,7 @@ const PayrollForm = () => {
 
               <div className="flex justify-center">
                 <div className="p-8 w-full max-w-6xl">
-                  <form onSubmit={handleSubmit}>
+                  <form>
                     <div className="mb-8">
                       <div className="mb-6">
                         <div className="flex justify-between items-center mb-4">
@@ -983,6 +977,7 @@ const PayrollForm = () => {
                       <button
                         type="submit"
                         className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                        onClick={handleSubmit} // Add this onClick handler
                       >
                         Save Salary Details
                       </button>
