@@ -553,6 +553,10 @@ const PayrollForm = () => {
     toast.success("Salary details saved successfully");
   };
 
+  const closeEditModal = () =>{
+    setShowEditForm(false)
+  }
+
   return (
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
