@@ -28,6 +28,8 @@ import AttendenceEmployees from '../components/pages/attendence/AttendenceEmploy
 import AdminAttendanceView from '../components/pages/attendence/AdminAttendanceView';
 import PayrollList from '../components/pages/salary/payrollList';
 import PaymentForm from '../components/pages/salary/payments';
+import LeavePolicyForm from '../components/pages/Request/leavePolicyForm';
+import LeavePolicyList from '../components/pages/Request/leavePolicyList';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -74,6 +76,10 @@ const router = createBrowserRouter([
           { path: 'support-form/:id', element: <SupportForm /> },
 
           { path: 'support-list', element: <Support/> },
+          { path: 'leave-policy-form', element:<LeavePolicyForm/>},
+          { path: 'leave-policy-List', element:<LeavePolicyList/>},
+          { path: 'leave-policy-form/:id', element:<LeavePolicyForm/>},
+
 
 
 
