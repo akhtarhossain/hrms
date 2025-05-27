@@ -290,7 +290,20 @@ const PayrollList = () => {
                     <td className="px-4 py-3 font-semibold">
                       {payroll.summary?.totalSalary?.toFixed(2) || '0.00'}
                     </td>
-                    <td className="px-4 py-3">{payroll.status}</td>
+                      <td className="">
+                        <span
+                          className={`
+                            text-xs font-medium ms-3 px-3.5 py-1.5 rounded-sm border
+                            ${payroll.status === 'PAID' ? 'bg-green-100 text-green-800 border-green-400' : ''}
+                            ${payroll.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : ''}
+                            ${payroll.status === 'PENDING' ? 'bg-blue-100 text-blue-800 border-blue-400' : ''}
+                            dark:bg-gray-700 dark:text-white
+                          `}
+                        >
+                          {payroll.status.charAt(0).toUpperCase() + payroll.status.slice(1).toLowerCase()}
+                        </span>
+                      </td>
+
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
