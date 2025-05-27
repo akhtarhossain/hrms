@@ -232,9 +232,8 @@ const Support = () => {
                   <tr key={ticket._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
                     <td className="px-4 py-3">{ticket.name}</td>
                     <td className="px-4 py-3">{ticket.subject}</td>
-                    <td className="px-4 py-3">
-                      {new Date(ticket.createdAt).toISOString().split('T')[0]}
-                    </td>                    <td className="px-4 py-3">  {getStatusIcon(ticket.status)}</td>
+                    <td className="px-4 py-3">{new Date(ticket.createdAt).toISOString().split('T')[0]}</td>                   
+                    <td className="px-4 py-3">  {getStatusIcon(ticket.status)}</td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
