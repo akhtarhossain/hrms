@@ -152,19 +152,45 @@ const PayrollForm = () => {
     }
   }, [monthYear, currentPage, filters.employeeName]);
 
-  const calculateTotalAllowances = (employee) => {
-    if (!employee || !Array.isArray(employee.allowances)) return 0;
-    return employee.allowances.reduce((total, allowance) => {
-      return total + (Number(allowance?.newSalary) || 0);
-    }, 0);
-  };
+const calculateTotalAllowances = (employee) => {
+  // First check if this employee exists in payroll data with allowances
+  if (existingPayroll) {
+    const payrollEmployee = existingPayroll.employees.find(e => 
+      (e.employeeId._id || e.employeeId) === employee._id
+    );
+    if (payrollEmployee && payrollEmployee.allowances?.length > 0) {
+      return payrollEmployee.allowances.reduce((total, allowance) => {
+        return total + (Number(allowance?.newSalary) || 0);
+      }, 0);
+    }
+  }
+  
+  // Fall back to employee's own allowances if no payroll data
+  if (!employee || !Array.isArray(employee.allowances)) return 0;
+  return employee.allowances.reduce((total, allowance) => {
+    return total + (Number(allowance?.newSalary) || 0);
+  }, 0);
+};
 
-  const calculateTotalDeductions = (employee) => {
-    if (!employee || !Array.isArray(employee.deductions)) return 0;
-    return employee.deductions.reduce((total, deduction) => {
-      return total + (Number(deduction?.newSalary) || 0);
-    }, 0);
-  };
+const calculateTotalDeductions = (employee) => {
+  // First check if this employee exists in payroll data with deductions
+  if (existingPayroll) {
+    const payrollEmployee = existingPayroll.employees.find(e => 
+      (e.employeeId._id || e.employeeId) === employee._id
+    );
+    if (payrollEmployee && payrollEmployee.deductions?.length > 0) {
+      return payrollEmployee.deductions.reduce((total, deduction) => {
+        return total + (Number(deduction?.newSalary) || 0);
+      }, 0);
+    }
+  }
+  
+  // Fall back to employee's own deductions if no payroll data
+  if (!employee || !Array.isArray(employee.deductions)) return 0;
+  return employee.deductions.reduce((total, deduction) => {
+    return total + (Number(deduction?.newSalary) || 0);
+  }, 0);
+};
 
   const calculateTotalSalary = (employee) => {
     return calculateTotalAllowances(employee) - calculateTotalDeductions(employee);
@@ -245,49 +271,61 @@ const PayrollForm = () => {
     };
   };
 
-  const handleEditClick = (employee, index) => {
-    const formatDateForInput = (dateString) => {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toISOString().split('T')[0];
-    };
-
-    // Calculate initial totals
-    const initialAllowances = employee.allowances?.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0) || 0;
-    const initialDeductions = employee.deductions?.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0) || 0;
-    const initialNet = initialAllowances - initialDeductions;
-
-    setCurrentEmployee(employee);
-    setEditIndex(index);
-    setFormData({
-      type: '',
-      currentSalary: employee?.currentSalary?.toString() || '',
-      newSalary: employee?.newSalary?.toString() || '',
-      startDate: employee?.startDate || '',
-      endDate: employee?.endDate || '',
-      allowances: employee.allowances?.map(a => ({
-        ...a,
-        startDate: formatDateForInput(a.startDate),
-        endDate: formatDateForInput(a.endDate)
-      })) || [],
-      deductions: employee.deductions?.map(d => ({
-        ...d,
-        startDate: formatDateForInput(d.startDate),
-        endDate: formatDateForInput(d.endDate)
-      })) || []
-    });
-
-    setModalTotals({
-      totalAllowances: initialAllowances,
-      totalDeductions: initialDeductions,
-      totalSalary: initialNet
-    });
-
-    setShowEditForm(true);
-    setSelectedEmployees(prev =>
-      prev.includes(employee._id) ? prev : [...prev, employee._id]
-    );
+const handleEditClick = (employee, index) => {
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
   };
+
+  // First try to get data from payroll if exists
+  let payrollEmployeeData = null;
+  if (existingPayroll) {
+    payrollEmployeeData = existingPayroll.employees.find(e => 
+      (e.employeeId._id || e.employeeId) === employee._id
+    );
+  }
+
+  // Use payroll data if available, otherwise fall back to employee data
+  const allowances = payrollEmployeeData?.allowances || employee.allowances || [];
+  const deductions = payrollEmployeeData?.deductions || employee.deductions || [];
+  
+  // Calculate initial totals based on the source we're using
+  const initialAllowances = allowances.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0);
+  const initialDeductions = deductions.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0);
+  const initialNet = initialAllowances - initialDeductions;
+
+  setCurrentEmployee(employee);
+  setEditIndex(index);
+  setFormData({
+    type: '',
+    currentSalary: employee?.currentSalary?.toString() || '',
+    newSalary: employee?.newSalary?.toString() || '',
+    startDate: employee?.startDate || '',
+    endDate: employee?.endDate || '',
+    allowances: allowances.map(a => ({
+      ...a,
+      startDate: formatDateForInput(a.startDate),
+      endDate: formatDateForInput(a.endDate)
+    })) || [],
+    deductions: deductions.map(d => ({
+      ...d,
+      startDate: formatDateForInput(d.startDate),
+      endDate: formatDateForInput(d.endDate)
+    })) || []
+  });
+
+  setModalTotals({
+    totalAllowances: initialAllowances,
+    totalDeductions: initialDeductions,
+    totalSalary: initialNet
+  });
+
+  setShowEditForm(true);
+  setSelectedEmployees(prev =>
+    prev.includes(employee._id) ? prev : [...prev, employee._id]
+  );
+};
 
   const handleCreatePayroll = () => {
     if (selectedEmployees.length === 0) {
@@ -295,55 +333,66 @@ const PayrollForm = () => {
       return;
     }
 
-  const selectedEmployeeObjects = salaries
-    .filter(emp => selectedEmployees.includes(emp._id))
-    .map(emp => ({
-      employeeId: emp._id,
-      name: `${emp.firstName} ${emp.lastName}`,
-      totalAllowance: calculateTotalAllowances(emp),
-      totalDeduction: calculateTotalDeductions(emp),
-      totalSalary: calculateTotalSalary(emp),
-      allowances: emp.allowances || [], // Include allowances array
-      deductions: emp.deductions || []  // Include deductions array
-    }));
+    const cleanAllowances = (arr) =>
+      arr.map(({ type, currentSalary, newSalary, startDate, endDate }) => ({
+        type,
+        currentSalary: Number(currentSalary),
+        newSalary: Number(newSalary),
+        startDate: startDate ? new Date(startDate).toISOString() : null,
+        endDate: endDate ? new Date(endDate).toISOString() : null
+      }));
 
-  const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
-    totalAllowance: acc.totalAllowance + emp.totalAllowance,
-    totalDeduction: acc.totalDeduction + emp.totalDeduction,
-    totalSalary: acc.totalSalary + emp.totalSalary
-  }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
+    const selectedEmployeeObjects = salaries
+      .filter(emp => selectedEmployees.includes(emp._id))
+      .map(emp => ({
+        employeeId: emp._id,
+        name: `${emp.firstName} ${emp.lastName}`,
+        totalAllowance: calculateTotalAllowances(emp),
+        totalDeduction: calculateTotalDeductions(emp),
+        totalSalary: calculateTotalSalary(emp),
+        allowances: cleanAllowances(emp.allowances || []),
+        deductions: cleanAllowances(emp.deductions || [])
+      }));
 
-  const payrollData = {
-    employees: selectedEmployeeObjects,
-    month: monthNum.toString(),
-    year: year.toString(),
-    payrollDate: new Date().toISOString(),
-    status: "DRAFT",
-    summary: {
-      totalAllowance: totals.totalAllowance,
-      totalDeduction: totals.totalDeduction,
-      totalSalary: totals.totalSalary
-    }
+    const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
+      totalAllowance: acc.totalAllowance + emp.totalAllowance,
+      totalDeduction: acc.totalDeduction + emp.totalDeduction,
+      totalSalary: acc.totalSalary + emp.totalSalary
+    }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
+
+    const payrollData = {
+      employees: selectedEmployeeObjects,
+      month: monthNum.toString(),
+      year: year.toString(),
+      payrollDate: new Date().toISOString(),
+      status: "DRAFT",
+      summary: {
+        totalAllowance: totals.totalAllowance,
+        totalDeduction: totals.totalDeduction,
+        totalSalary: totals.totalSalary,
+        selectedEmployees // if backend requires this
+      }
+    };
+
+    const payrollAction = isExistingPayroll
+      ? PayrollService.updatePayroll(existingPayroll._id, payrollData)
+      : PayrollService.createPayroll(payrollData);
+
+    payrollAction
+      .then(() => {
+        toast.success(
+          isExistingPayroll
+            ? `Payroll updated for ${month} ${year}`
+            : `Payroll created for ${month} ${year}`
+        );
+        navigate('/payroll');
+      })
+      .catch(error => {
+        console.error("Error saving payroll:", error);
+        toast.error(error.response?.data?.message || "Failed to save payroll");
+      });
   };
 
-  const payrollAction = isExistingPayroll
-    ? PayrollService.updatePayroll(existingPayroll._id, payrollData)
-    : PayrollService.createPayroll(payrollData);
-
-  payrollAction
-    .then(() => {
-      toast.success(
-        isExistingPayroll
-          ? `Payroll updated for ${month} ${year}`
-          : `Payroll created for ${month} ${year}`
-      );
-      navigate('/payroll');
-    })
-    .catch(error => {
-      console.error("Error saving payroll:", error);
-      toast.error(error.response?.data?.message || "Failed to save payroll");
-    });
-};
 
   const calculateTotals = (data) => {
     let allowancesTotal = 0;
@@ -430,7 +479,7 @@ const PayrollForm = () => {
   };
   const handleSubmit = (e) => {
     e.preventDefault(); // Prevent default form submission
-    
+
     // Create updated employee data with allowances and deductions
     const updatedEmployee = {
       ...currentEmployee,
@@ -451,12 +500,12 @@ const PayrollForm = () => {
     };
 
     // Update the salaries state
-    const updatedSalaries = salaries.map(emp => 
+    const updatedSalaries = salaries.map(emp =>
       emp._id === currentEmployee._id ? updatedEmployee : emp
     );
     setSalaries(updatedSalaries);
     setShowEditForm(false);
-    
+
     toast.success("Salary details saved successfully");
   };
 
@@ -760,7 +809,7 @@ const PayrollForm = () => {
                               >
                                 <option value="">Select Type</option>
                                 {allowanceTypes.map((type) => (
-                                  <option key={type.value} value={type.value}>
+                                  <option key={type.index} value={type.value}>
                                     {type.label}
                                   </option>
                                 ))}
@@ -871,7 +920,7 @@ const PayrollForm = () => {
                               >
                                 <option value="">Select Type</option>
                                 {deductionTypes.map((type) => (
-                                  <option key={type.value} value={type.value}>
+                                  <option key={type.index} value={type.value}>
                                     {type.label}
                                   </option>
                                 ))}
