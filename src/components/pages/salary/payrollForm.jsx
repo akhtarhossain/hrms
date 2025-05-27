@@ -801,10 +801,10 @@ const PayrollForm = () => {
           <div
             style={{
               background: '#F5EFFF',
-              padding: "20px 30px",
+              padding: "30px 40px",
               borderRadius: "8px",
               width: "100%",
-              maxWidth: "1000px",
+              maxWidth: "1200px",
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
@@ -844,94 +844,97 @@ const PayrollForm = () => {
                           </button>
                         </div>
 
-                        {formData.allowances.map((allowance, index) => (
-                          <div key={`allowance-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Type</label>
-                              <select
-                                name="type"
-                                value={allowance.type}
+                     {formData.allowances.map((allowance, index) => (
+                        <div
+                          key={`allowance-${index}`}
+                          className="flex flex-wrap md:flex-nowrap items-end gap-3 mb-3 p- rounded-md"
+                        >
+                          <div className="flex-1 min-w-[150px]">
+                            <label className="block text-sm text-gray-600 mb-1">Type</label>
+                            <select
+                              name="type"
+                              value={allowance.type}
+                              onChange={(e) => handleAllowanceChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              required
+                            >
+                              <option value="">Select Type</option>
+                              {allowanceTypes.map((type) => (
+                                <option key={type.index} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">Current Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="currentSalary"
+                                value={allowance.currentSalary}
+                                placeholder="Current Salary"
                                 onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                 required
-                              >
-                                <option value="">Select Type</option>
-                                {allowanceTypes.map((type) => (
-                                  <option key={type.index} value={type.value}>
-                                    {type.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Current Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="currentSalary"
-                                  value={allowance.currentSalary}
-                                  placeholder="currentSalary"
-                                  onChange={(e) => handleAllowanceChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">New Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="newSalary"
-                                  value={allowance.newSalary}
-                                  placeholder="New Salary"
-                                  onChange={(e) => handleAllowanceChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                              <input
-                                type="date"
-                                name="startDate"
-                                value={allowance.startDate}
-                                onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                               />
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                              <input
-                                type="date"
-                                name="endDate"
-                                value={allowance.endDate}
-                                onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="md:col-span-5 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => removeAllowance(index)}
-                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
-                              >
-                                <FaTrash className="text-white" />
-                              </button>
                             </div>
                           </div>
-                        ))}
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">New Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="newSalary"
+                                value={allowance.newSalary}
+                                placeholder="New Salary"
+                                onChange={(e) => handleAllowanceChange(index, e)}
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                            <input
+                              type="date"
+                              name="startDate"
+                              value={allowance.startDate}
+                              onChange={(e) => handleAllowanceChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                            <input
+                              type="date"
+                              name="endDate"
+                              value={allowance.endDate}
+                              onChange={(e) => handleAllowanceChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => removeAllowance(index)}
+                              className="p-2 mb-1 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                            >
+                              <FaTrash className="text-white" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
 
                         {formData.allowances.length > 0 && (
                           <div className="flex justify-end mt-2">
@@ -955,94 +958,96 @@ const PayrollForm = () => {
                           </button>
                         </div>
 
-                        {formData.deductions.map((deduction, index) => (
-                          <div key={`deduction-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Type</label>
-                              <select
-                                name="type"
-                                value={deduction.type}
+                      {formData.deductions.map((deduction, index) => (
+                        <div key={`deduction-${index}`} 
+                        className="flex flex-wrap md:flex-nowrap items-end gap-3 mb-3 p- rounded-md">
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">Type</label>
+                            <select
+                              name="type"
+                              value={deduction.type}
+                              onChange={(e) => handleDeductionChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              required
+                            >
+                              <option value="">Select Type</option>
+                              {deductionTypes.map((type) => (
+                                <option key={type.index} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">Current Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="currentSalary"
+                                value={deduction.currentSalary}
+                                placeholder="Amount"
                                 onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                 required
-                              >
-                                <option value="">Select Type</option>
-                                {deductionTypes.map((type) => (
-                                  <option key={type.index} value={type.value}>
-                                    {type.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Current Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="currentSalary"
-                                  value={deduction.currentSalary}
-                                  placeholder="Amount"
-                                  onChange={(e) => handleDeductionChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">New Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="newSalary"
-                                  value={deduction.newSalary}
-                                  placeholder="New Salary"
-                                  onChange={(e) => handleDeductionChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                              <input
-                                type="date"
-                                name="startDate"
-                                value={deduction.startDate}
-                                onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                               />
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                              <input
-                                type="date"
-                                name="endDate"
-                                value={deduction.endDate}
-                                onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="md:col-span-5 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => removeDeduction(index)}
-                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
-                              >
-                                <FaTrash className="text-white" />
-                              </button>
                             </div>
                           </div>
-                        ))}
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">New Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="newSalary"
+                                value={deduction.newSalary}
+                                placeholder="New Salary"
+                                onChange={(e) => handleDeductionChange(index, e)}
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                            <input
+                              type="date"
+                              name="startDate"
+                              value={deduction.startDate}
+                              onChange={(e) => handleDeductionChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                            <input
+                              type="date"
+                              name="endDate"
+                              value={deduction.endDate}
+                              onChange={(e) => handleDeductionChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="md:col-span-1 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeDeduction(index)}
+                              className="p-2  mb-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                            >
+                              <FaTrash className="text-white" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
 
                         {formData.deductions.length > 0 && (
                           <div className="flex justify-end mt-2">
