@@ -329,7 +329,6 @@ const PayrollForm = () => {
       });
 
       const allEmployees = response?.list || [];
-
       const allSelectedEmployees = allEmployees.filter(emp =>
         selectedEmployees.includes(emp._id)
       );
@@ -348,8 +347,8 @@ const PayrollForm = () => {
           endDate: endDate ? new Date(endDate).toISOString() : null
         }));
 
+      // Prepare employee objects for the payload
       const selectedEmployeeObjects = allSelectedEmployees.map(emp => {
-
         let payrollEmployeeData = null;
         if (existingPayroll) {
           payrollEmployeeData = existingPayroll.employees.find(e =>
@@ -360,7 +359,8 @@ const PayrollForm = () => {
         const allowances = payrollEmployeeData?.allowances || emp.allowances || [];
         const deductions = payrollEmployeeData?.deductions || emp.deductions || [];
 
-        return {
+        // Create base employee object
+        const employeeObj = {
           employeeId: emp._id,
           name: `${emp.firstName} ${emp.lastName}`,
           totalAllowance: calculateTotalAllowances(emp),
@@ -369,6 +369,17 @@ const PayrollForm = () => {
           allowances: cleanAllowances(allowances),
           deductions: cleanAllowances(deductions)
         };
+
+        // For updates, preserve existing fields if they exist
+        if (existingPayroll && payrollEmployeeData) {
+          employeeObj.status = payrollEmployeeData.status || "DRAFT";
+          employeeObj.totalPaid = payrollEmployeeData.totalPaid || 0;
+          if (payrollEmployeeData.payments) {
+            employeeObj.payments = payrollEmployeeData.payments;
+          }
+        }
+
+        return employeeObj;
       });
 
       const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
@@ -377,19 +388,31 @@ const PayrollForm = () => {
         totalSalary: acc.totalSalary + emp.totalSalary
       }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
 
+      // Prepare the payroll data
       const payrollData = {
         employees: selectedEmployeeObjects,
         month: monthNum.toString(),
         year: year.toString(),
         payrollDate: new Date().toISOString(),
-        status: "DRAFT",
+        status: existingPayroll ? existingPayroll.status : "DRAFT", // Preserve status if updating
         summary: {
           totalAllowance: totals.totalAllowance,
           totalDeduction: totals.totalDeduction,
           totalSalary: totals.totalSalary,
-          selectedEmployees
+          selectedEmployees: existingPayroll
+            ? existingPayroll.summary.selectedEmployees.map(emp =>
+              emp._id || emp // Handle both object and ID cases
+            )
+            : selectedEmployees
         }
       };
+
+      // For updates, preserve any existing fields that should remain unchanged
+      // if (existingPayroll) {
+      //   payrollData._id = existingPayroll._id;
+      //   payrollData.createdAt = existingPayroll.createdAt;
+      //   payrollData.__v = existingPayroll.__v;
+      // }
 
       console.log("Payroll payload being sent:", payrollData);
       const result = isExistingPayroll
