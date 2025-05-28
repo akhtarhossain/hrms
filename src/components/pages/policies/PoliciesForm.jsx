@@ -26,35 +26,29 @@ const PoliciesForm = () => {
     status: "Draft",
     effectiveDate: "",
     description: "",
-    // lastUpdateDate field yahan frontend se nahi bheja jayega,
-    // balki backend khud manage karega aur fetch hone par milega.
   });
 
   useEffect(() => {
     if (id) {
-      // Agar ID hai, toh edit mode hai, policy data fetch karo
       PolicyService.getPolicyById(id)
         .then((response) => {
           if (response) {
-            // Backend se mili hui response mein id aur lastUpdateDate bhi honge.
-            // effectiveDate ko format karna zaroori hai agar backend se alag format mein aaye.
             setFormData({
               ...response,
               effectiveDate: response.effectiveDate ? new Date(response.effectiveDate).toISOString().split('T')[0] : '',
             });
           } else {
             toast.error("Policy not found");
-            // Agar policy nahi mili, toh navigate back kar sakte hain ya error state dikha sakte hain
             navigate("/policies-list");
           }
         })
         .catch((error) => {
           console.error("Error fetching policy:", error);
           toast.error("Failed to load policy");
-          navigate("/policies-list"); // Error hone par list par wapas bhej do
+          navigate("/policies-list");
         });
     }
-  }, [id, navigate]); // navigate ko dependency array mein add kiya
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,8 +58,6 @@ const PoliciesForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // policyData mein sirf woh fields jo frontend se bheje jayenge.
-    // ID aur lastUpdateDate backend handle karega.
     const policyData = {
       title: formData.title,
       category: formData.category,
@@ -76,17 +68,15 @@ const PoliciesForm = () => {
 
     let action;
     if (id) {
-      // Edit mode: existing policy ko update karo
       action = PolicyService.updatePolicy(id, policyData);
     } else {
-      // Add mode: naya policy create karo
       action = PolicyService.createPolicy(policyData);
     }
 
     action
       .then(() => {
         toast.success(`Policy ${id ? "updated" : "created"} successfully`);
-        navigate("/policies-list"); // Success hone par list page par navigate karo
+        navigate("/policies-list");
       })
       .catch((error) => {
         console.error("Error saving policy:", error);
@@ -95,7 +85,7 @@ const PoliciesForm = () => {
   };
 
   return (
-    <div className="p-6 bg-[#F5EFFF] min-h-screen font-inter">
+    <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold text-gray-800">
           {id ? "Edit Policy" : "Add Policy"}
@@ -103,38 +93,39 @@ const PoliciesForm = () => {
         <button
           onClick={() => navigate("/policies-list")}
           title="List"
-          className="p-2 bg-[#A294F9] rounded-lg shadow-md hover:bg-[#8e7be0] transition-colors duration-200"
+          className="p-2 bg-[#A294F9] rounded shadow"
         >
-          <FiList className="text-white text-xl" />
+          <FiList className="text-white" />
         </button>
       </div>
 
       <div className="flex justify-center">
-        <div className="w-full max-w-5xl bg-white p-8 rounded-lg shadow-lg">
+        <div className="w-full max-w-5xl">
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label htmlFor="title" className="block mb-2 font-semibold text-[#333]">Policy Title</label>
+            {/* Pehla pair: Title aur Category */}
+            <div className="flex gap-4 mb-4 w-full">
+              <div className="w-1/2">
+                <label htmlFor="title" className="block mb-1 font-semibold text-[#333]">Policy Title</label>
                 <input
                   type="text"
                   id="title"
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#A294F9] focus:outline-none transition-all duration-200"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                   placeholder="Enter policy title"
                   required
                 />
               </div>
 
-              <div>
-                <label htmlFor="category" className="block mb-2 font-semibold text-[#333]">Category</label>
+              <div className="w-1/2">
+                <label htmlFor="category" className="block mb-1 font-semibold text-[#333]">Category</label>
                 <select
                   id="category"
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#A294F9] focus:outline-none appearance-none bg-white transition-all duration-200"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none appearance-none"
                   required
                 >
                   {policyCategories.map((cat, idx) => (
@@ -142,15 +133,18 @@ const PoliciesForm = () => {
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div>
-                <label htmlFor="status" className="block mb-2 font-semibold text-[#333]">Status</label>
+            {/* Dusra pair: Status aur Effective Date */}
+            <div className="flex gap-4 mb-4 w-full">
+              <div className="w-1/2">
+                <label htmlFor="status" className="block mb-1 font-semibold text-[#333]">Status</label>
                 <select
                   id="status"
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#A294F9] focus:outline-none appearance-none bg-white transition-all duration-200"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none appearance-none"
                   required
                 >
                   {statusOptions.map((status, idx) => (
@@ -159,45 +153,46 @@ const PoliciesForm = () => {
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="effectiveDate" className="block mb-2 font-semibold text-[#333]">Effective Date</label>
+              <div className="w-1/2">
+                <label htmlFor="effectiveDate" className="block mb-1 font-semibold text-[#333]">Effective Date</label>
                 <input
                   type="date"
                   id="effectiveDate"
                   name="effectiveDate"
                   value={formData.effectiveDate}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#A294F9] focus:outline-none transition-all duration-200"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                   required
                 />
               </div>
+            </div>
 
-              <div className="md:col-span-2">
-                <label htmlFor="description" className="block mb-2 font-semibold text-[#333]">Policy Description</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows="6"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#A294F9] focus:outline-none resize-y transition-all duration-200"
-                  placeholder="Enter policy description"
-                  required
-                ></textarea>
-              </div>
+            {/* Description field (full width) */}
+            <div className="w-full mb-4">
+              <label htmlFor="description" className="block mb-1 font-semibold text-[#333]">Policy Description</label>
+              <textarea
+                id="description"
+                name="description"
+                rows="6"
+                value={formData.description}
+                onChange={handleChange}
+                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none resize-y"
+                placeholder="Enter policy description"
+                required
+              ></textarea>
             </div>
 
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="button"
                 onClick={() => navigate("/policies-list")}
-                className="px-6 py-3 rounded-lg shadow-md text-white bg-gray-500 hover:bg-gray-600 transition-colors duration-200 font-semibold"
+                className="px-4 py-2 rounded shadow text-white bg-gray-500"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 rounded-lg shadow-md text-white bg-[#A294F9] hover:bg-[#8e7be0] transition-colors duration-200 font-semibold"
+                className="px-4 py-2 rounded shadow text-white bg-[#A294F9]"
               >
                 {id ? "Update" : "Save"}
               </button>
