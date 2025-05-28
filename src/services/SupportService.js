@@ -7,9 +7,8 @@ class SupportService extends HttpService {
     super();
   }
 
-  getSupport(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return this.get(`/Support${queryString ? `?${queryString}` : ''}`)
+  getSupport(data) {
+    return this.get(`/Support` , data)
       .then((response) => response.data)
       .catch((error) => {
         console.error('Error fetching salary data:', error);
@@ -17,6 +16,10 @@ class SupportService extends HttpService {
         throw error;
       });
   }
+  filterSupportTickets(params = {}) {
+  const queryString = new URLSearchParams(params).toString();
+  return this.get(`/Support${queryString ? `?${queryString}` : ''}`);
+}
   
 
   getSupportById(id) {

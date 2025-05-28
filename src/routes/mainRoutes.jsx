@@ -30,6 +30,8 @@ import PayrollList from '../components/pages/salary/payrollList';
 import PaymentForm from '../components/pages/salary/payments';
 import PoliciesList from '../components/pages/policies/PoliciesList';
 import PoliciesForm from '../components/pages/policies/PoliciesForm';
+import LeavePolicyForm from '../components/pages/Request/leavePolicyForm';
+import LeavePolicyList from '../components/pages/Request/leavePolicyList';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -70,11 +72,16 @@ const router = createBrowserRouter([
           { path: 'transaction', element: <TransactionList /> },
           { path: 'transaction', element: <TransactionList /> },
           { path: 'request-form', element: <RequestForm /> },
+          { path: 'request-form/:id', element: <RequestForm /> },
           { path: 'request-list', element: <RequestList /> },
           { path: 'support-form', element: <SupportForm /> },
           { path: 'support-form/:id', element: <SupportForm /> },
 
           { path: 'support-list', element: <Support/> },
+          { path: 'leave-policy-form', element:<LeavePolicyForm/>},
+          { path: 'leave-policy-List', element:<LeavePolicyList/>},
+          { path: 'leave-policy-form/:id', element:<LeavePolicyForm/>},
+
 
 
 

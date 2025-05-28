@@ -15,7 +15,7 @@ const Employees = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // 10 records per page
+  const [pageSize, setPageSize] = useState(10);
  const [isLoading, setIsLoading] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -70,7 +70,7 @@ const fetchEmployees = () => {
       });
   };
 
-   const handleFilterChange = (e) => {
+  const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
@@ -173,7 +173,7 @@ const fetchEmployees = () => {
             </button>
           </div>
         </div>
-      </div>
+        </div>
 
         <div className="overflow-x-auto p-3 border-radius-100px">
            <div className="flex justify-between items-center mb-3">

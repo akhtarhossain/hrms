@@ -7,15 +7,24 @@ class PayrollService extends HttpService {
     super();
   }
 
-  getPayroll(params = {}) {
-    const queryString = new URLSearchParams(params).toString();
-    return this.get(`/payroll${queryString ? `?${queryString}` : ''}`)
-      .then((response) => response.data)
-      .catch((error) => {
-        console.error('Error fetching payroll data:', error);
-        toast.error(`${error}`);
-        throw error;
-      });
+  // getPayroll(params = {}) {
+  //   const queryString = new URLSearchParams(params).toString();
+  //   return this.get(`/payroll`)
+  //     .then((response) => response.data)
+  //     .catch((error) => {
+  //       console.error('Error fetching payroll data:', error);
+  //       toast.error(`${error}`);
+  //       throw error;
+  //     });
+  // }
+
+getPayroll(PayrollData) {
+return this.get('/payroll', PayrollData).then((response) => response.data)
+  .catch((error) => {
+    console.error('Error fetching license rights:', error);
+    toast.error(`${error}`);
+    throw error;
+  });
   }
   
 

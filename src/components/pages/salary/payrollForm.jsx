@@ -18,7 +18,6 @@ const PayrollForm = () => {
   const navigate = useNavigate();
   const { monthYear } = useParams();
 
-  // Parse month and year from URL (e.g., "June-2025")
   const [month, year] = monthYear ? monthYear.split('-') : [];
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
@@ -30,7 +29,6 @@ const PayrollForm = () => {
   const [totalDeductions, setTotalDeductions] = useState(0);
   const [totalSalary, setTotalSalary] = useState(0);
   const [salaries, setSalaries] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedSalaryId, setSelectedSalaryId] = useState(null);
@@ -41,6 +39,9 @@ const PayrollForm = () => {
   const [editIndex, setEditIndex] = useState(null);
   const [existingPayroll, setExistingPayroll] = useState(null);
   const [isExistingPayroll, setIsExistingPayroll] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [formData, setFormData] = useState({
     type: '',
@@ -89,16 +90,18 @@ const PayrollForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-
-        // Fetch both payroll and employees in parallel
-        const [allPayrolls, employees] = await Promise.all([
+        const [payrollResponse, employees] = await Promise.all([
           PayrollService.getPayroll(),
-          employeeService.getEmployee()
+          employeeService.getEmployee({
+            firstName: filters.employeeName,
+            l: pageSize,
+            o: (currentPage - 1) * pageSize,
+          }),
         ]);
 
-        setSalaries(employees || []);
-
+        const allPayrolls = payrollResponse?.list || [];
+        setSalaries(employees?.list || []);
+        setTotalCount(employees?.count || 0);
         const payrollForThisMonth = allPayrolls.find(p =>
           `${monthNames[p.month - 1]}-${p.year}` === monthYear
         );
@@ -107,7 +110,7 @@ const PayrollForm = () => {
           setExistingPayroll(payrollForThisMonth);
           setIsExistingPayroll(true);
           const employeeIds = payrollForThisMonth.employees
-            ?.filter(e => e?.employeeId) // Filter out null/undefined employeeId
+            ?.filter(e => e?.employeeId)
             ?.map(e => e.employeeId._id || e.employeeId) || [];
 
           setSelectedEmployees(employeeIds);
@@ -115,17 +118,15 @@ const PayrollForm = () => {
           setTotalDeductions(payrollForThisMonth.summary.totalDeduction);
           setTotalSalary(payrollForThisMonth.summary.totalSalary);
         }
-
-        // Fetch transaction types
         const transactions = await TransactionTypeService.getTransactionTypes();
-        const formattedAllowances = transactions
+        const formattedAllowances = transactions?.list
           .filter(item => item.transactionType === "allowance")
           .map(item => ({
             value: item.name,
             label: item.name,
           }));
 
-        const formattedDeductions = transactions
+        const formattedDeductions = transactions?.list
           .filter(item => item.transactionType === "deduction")
           .map(item => ({
             value: item.name,
@@ -139,16 +140,26 @@ const PayrollForm = () => {
         console.error("Error fetching data:", error);
         toast.error("Failed to load data");
       } finally {
-        setLoading(false);
       }
     };
 
     if (month && year) {
       fetchData();
     }
-  }, [monthYear]);
+  }, [monthYear, currentPage, filters.employeeName]);
 
   const calculateTotalAllowances = (employee) => {
+    if (existingPayroll) {
+      const payrollEmployee = existingPayroll.employees.find(e =>
+        (e.employeeId._id || e.employeeId) === employee._id
+      );
+      if (payrollEmployee && payrollEmployee.allowances?.length > 0) {
+        return payrollEmployee.allowances.reduce((total, allowance) => {
+          return total + (Number(allowance?.newSalary) || 0);
+        }, 0);
+      }
+    }
+
     if (!employee || !Array.isArray(employee.allowances)) return 0;
     return employee.allowances.reduce((total, allowance) => {
       return total + (Number(allowance?.newSalary) || 0);
@@ -156,6 +167,18 @@ const PayrollForm = () => {
   };
 
   const calculateTotalDeductions = (employee) => {
+
+    if (existingPayroll) {
+      const payrollEmployee = existingPayroll.employees.find(e =>
+        (e.employeeId._id || e.employeeId) === employee._id
+      );
+      if (payrollEmployee && payrollEmployee.deductions?.length > 0) {
+        return payrollEmployee.deductions.reduce((total, deduction) => {
+          return total + (Number(deduction?.newSalary) || 0);
+        }, 0);
+      }
+    }
+
     if (!employee || !Array.isArray(employee.deductions)) return 0;
     return employee.deductions.reduce((total, deduction) => {
       return total + (Number(deduction?.newSalary) || 0);
@@ -168,31 +191,26 @@ const PayrollForm = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
-
   const applyFilters = () => {
-    setLoading(true);
-    EmploySalaryService.getSalary(filters)
-      .then((response) => {
-        setSalaries(response.data || []);
-        setSelectedEmployees([]);
-        setSelectAll(false);
-      })
-      .catch((error) => {
-        console.error('Error filtering salaries:', error);
-        toast.error('Failed to filter salary records');
-      })
-      .finally(() => {
-        setLoading(false);
-        setShowFilter(false);
-      });
+    setCurrentPage(1);
+    fetchData();
   };
 
   const closeFilter = () => {
     setShowFilter(false);
-    setFilters({ employeeName: '', month: '', year: '' });
-    fetchSalaries();
+    setFilters({
+      employeeName: '',
+    });
+    fetchData();
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const handleDeleteClick = (salaryId) => {
@@ -222,19 +240,38 @@ const PayrollForm = () => {
         ? prev.filter(id => id !== employeeId)
         : [...prev, employeeId]
     );
+    console.log(employeeId, "record");
+
   };
+
   const toggleSelectAll = () => {
-    if (selectAll || selectedEmployees.length === salaries.length) {
-      setSelectedEmployees([]);
+    if (selectAll) {
+      // Deselect all employees from current page only
+      const currentPageIds = salaries.map(emp => emp._id);
+      setSelectedEmployees(prev =>
+        prev.filter(id => !currentPageIds.includes(id))
+      );
     } else {
-      setSelectedEmployees(salaries.map(employee => employee._id));
+      // Select all employees on current page (add to existing selection)
+      const currentPageIds = salaries.map(emp => emp._id);
+      setSelectedEmployees(prev => {
+        const newSelection = [...prev];
+        currentPageIds.forEach(id => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
     }
     setSelectAll(!selectAll);
   };
   useEffect(() => {
-    // Update selectAll when all employees are selected or deselected
-    setSelectAll(selectedEmployees.length > 0 && selectedEmployees.length === salaries.length);
-  }, [selectedEmployees, salaries.length]);
+    // Check if all employees on current page are selected
+    const allCurrentPageSelected = salaries.length > 0 &&
+      salaries.every(emp => selectedEmployees.includes(emp._id));
+    setSelectAll(allCurrentPageSelected);
+  }, [selectedEmployees, salaries]);
 
   const calculateSelectedTotals = () => {
     const selected = salaries.filter(employee => selectedEmployees.includes(employee._id));
@@ -253,9 +290,21 @@ const PayrollForm = () => {
       return date.toISOString().split('T')[0];
     };
 
-    // Calculate initial totals
-    const initialAllowances = employee.allowances?.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0) || 0;
-    const initialDeductions = employee.deductions?.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0) || 0;
+    // First try to get data from payroll if exists
+    let payrollEmployeeData = null;
+    if (existingPayroll) {
+      payrollEmployeeData = existingPayroll.employees.find(e =>
+        (e.employeeId._id || e.employeeId) === employee._id
+      );
+    }
+
+    // Use payroll data if available, otherwise fall back to employee data
+    const allowances = payrollEmployeeData?.allowances || employee.allowances || [];
+    const deductions = payrollEmployeeData?.deductions || employee.deductions || [];
+
+    // Calculate initial totals based on the source we're using
+    const initialAllowances = allowances.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0);
+    const initialDeductions = deductions.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0);
     const initialNet = initialAllowances - initialDeductions;
 
     setCurrentEmployee(employee);
@@ -266,12 +315,12 @@ const PayrollForm = () => {
       newSalary: employee?.newSalary?.toString() || '',
       startDate: employee?.startDate || '',
       endDate: employee?.endDate || '',
-      allowances: employee.allowances?.map(a => ({
+      allowances: allowances.map(a => ({
         ...a,
         startDate: formatDateForInput(a.startDate),
         endDate: formatDateForInput(a.endDate)
       })) || [],
-      deductions: employee.deductions?.map(d => ({
+      deductions: deductions.map(d => ({
         ...d,
         startDate: formatDateForInput(d.startDate),
         endDate: formatDateForInput(d.endDate)
@@ -290,72 +339,106 @@ const PayrollForm = () => {
     );
   };
 
-  const handleCreatePayroll = () => {
+  const handleCreatePayroll = async () => {
     if (selectedEmployees.length === 0) {
       toast.warning("Please select at least one employee");
       return;
     }
 
-    const selectedEmployeeObjects = salaries
-      .filter(emp => selectedEmployees.includes(emp._id))
-      .map(emp => ({
-        employeeId: emp._id,  // Ensure this is the MongoDB ObjectId
-        name: `${emp.firstName} ${emp.lastName}`,
-        totalAllowance: calculateTotalAllowances(emp),
-        totalDeduction: calculateTotalDeductions(emp),
-        totalSalary: calculateTotalSalary(emp)
-      }));
-
-    const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
-      totalAllowance: acc.totalAllowance + emp.totalAllowance,
-      totalDeduction: acc.totalDeduction + emp.totalDeduction,
-      totalSalary: acc.totalSalary + emp.totalSalary
-    }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
-
-    // Create payload according to API requirements
-    const payrollData = {
-      employees: selectedEmployeeObjects,
-      month: monthNum.toString(), // Convert to string
-      year: year.toString(), // Convert to string
-      payrollDate: new Date().toISOString(), // Or use month/year date
-      status: "DRAFT",
-      summary: {
-        totalAllowance: totals.totalAllowance,
-        totalDeduction: totals.totalDeduction,
-        totalSalary: totals.totalSalary,
-        selectedEmployees: selectedEmployees // This should already be an array of ObjectIds
-      }
-    };
-
-    // Debug: Log the payload before sending
-    console.log("Payload:", JSON.stringify(payrollData, null, 2));
-
-    const payrollAction = isExistingPayroll
-      ? PayrollService.updatePayroll(existingPayroll._id, payrollData)
-      : PayrollService.createPayroll(payrollData);
-
-    payrollAction
-      .then(() => {
-        toast.success(
-          isExistingPayroll
-            ? `Payroll updated for ${month} ${year}`
-            : `Payroll created for ${month} ${year}`
-        );
-        navigate('/payroll');
-      })
-      .catch(error => {
-        console.error("Error saving payroll:", error);
-        toast.error(error.response?.data?.message || "Failed to save payroll");
+    try {
+      // First fetch ALL employees (without pagination)
+      const response = await employeeService.getEmployee({
+        l: 1000, // Large number to get all employees
+        o: 0
       });
+
+      const allEmployees = response?.list || [];
+
+      // Filter to only selected employees
+      const allSelectedEmployees = allEmployees.filter(emp =>
+        selectedEmployees.includes(emp._id)
+      );
+
+      if (allSelectedEmployees.length === 0) {
+        toast.error("No employee data found for selected employees");
+        return;
+      }
+
+      // Rest of your existing code...
+      const cleanAllowances = (arr) =>
+        arr.map(({ type, currentSalary, newSalary, startDate, endDate }) => ({
+          type,
+          currentSalary: Number(currentSalary),
+          newSalary: Number(newSalary),
+          startDate: startDate ? new Date(startDate).toISOString() : null,
+          endDate: endDate ? new Date(endDate).toISOString() : null
+        }));
+
+      // Process each selected employee with their complete data
+      const selectedEmployeeObjects = allSelectedEmployees.map(emp => {
+        // Check if this employee exists in existing payroll data
+        let payrollEmployeeData = null;
+        if (existingPayroll) {
+          payrollEmployeeData = existingPayroll.employees.find(e =>
+            (e.employeeId._id || e.employeeId) === emp._id
+          );
+        }
+
+        // Use payroll data if available, otherwise fall back to employee data
+        const allowances = payrollEmployeeData?.allowances || emp.allowances || [];
+        const deductions = payrollEmployeeData?.deductions || emp.deductions || [];
+
+        return {
+          employeeId: emp._id,
+          name: `${emp.firstName} ${emp.lastName}`,
+          totalAllowance: calculateTotalAllowances(emp),
+          totalDeduction: calculateTotalDeductions(emp),
+          totalSalary: calculateTotalSalary(emp),
+          allowances: cleanAllowances(allowances),
+          deductions: cleanAllowances(deductions)
+        };
+      });
+
+      // Calculate totals for all selected employees
+      const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
+        totalAllowance: acc.totalAllowance + emp.totalAllowance,
+        totalDeduction: acc.totalDeduction + emp.totalDeduction,
+        totalSalary: acc.totalSalary + emp.totalSalary
+      }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
+
+      // Prepare final payroll data
+      const payrollData = {
+        employees: selectedEmployeeObjects,
+        month: monthNum.toString(),
+        year: year.toString(),
+        payrollDate: new Date().toISOString(),
+        status: "DRAFT",
+        summary: {
+          totalAllowance: totals.totalAllowance,
+          totalDeduction: totals.totalDeduction,
+          totalSalary: totals.totalSalary,
+          selectedEmployees
+        }
+      };
+
+      console.log("Payroll payload being sent:", payrollData);
+      const result = isExistingPayroll
+        ? await PayrollService.updatePayroll(existingPayroll._id, payrollData)
+        : await PayrollService.createPayroll(payrollData);
+
+      toast.success(
+        isExistingPayroll
+          ? `Payroll updated for ${month} ${year}`
+          : `Payroll created for ${month} ${year}`
+      );
+      navigate('/payroll');
+
+    } catch (error) {
+      console.error("Error in handleCreatePayroll:", error);
+      toast.error(error.response?.data?.message || "Failed to process payroll");
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading salary records...</div>
-      </div>
-    );
-  }
 
   const calculateTotals = (data) => {
     let allowancesTotal = 0;
@@ -440,46 +523,45 @@ const PayrollForm = () => {
       deductions: updatedDeductions
     }));
   };
-  const handleSubmit = () => {
-    const updatedSalaries = [...salaries];
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
     const updatedEmployee = {
-      ...updatedSalaries[editIndex],
-      allowances: formData.allowances,
-      deductions: formData.deductions,
-      currentSalary: formData.currentSalary,
-      newSalary: formData.newSalary,
+      ...currentEmployee,
+      allowances: formData.allowances.map(allowance => ({
+        ...allowance,
+        currentSalary: Number(allowance.currentSalary),
+        newSalary: Number(allowance.newSalary)
+      })),
+      deductions: formData.deductions.map(deduction => ({
+        ...deduction,
+        currentSalary: Number(deduction.currentSalary),
+        newSalary: Number(deduction.newSalary)
+      })),
+      currentSalary: Number(formData.currentSalary),
+      newSalary: Number(formData.newSalary),
       startDate: formData.startDate,
-      endDate: formData.endDate,
+      endDate: formData.endDate
     };
 
-    updatedSalaries[editIndex] = updatedEmployee;
+    const updatedSalaries = salaries.map(emp =>
+      emp._id === currentEmployee._id ? updatedEmployee : emp
+    );
     setSalaries(updatedSalaries);
-
-    // Save to localStorage
-    localStorage.setItem("salaries", JSON.stringify(updatedSalaries));
-
-    // Reset form
     setShowEditForm(false);
-    setFormData({
-      type: '',
-      currentSalary: '',
-      newSalary: '',
-      startDate: '',
-      endDate: '',
-      allowances: [],
-      deductions: [],
-    });
 
-    setCurrentEmployee(null);
-    setEditIndex(null);
+    toast.success("Salary details saved successfully");
   };
+
+  const closeEditModal = () =>{
+    setShowEditForm(false)
+  }
 
   return (
     <>
       <div className="px-6 pt-6 min-h-screen" style={{ backgroundColor: '#F5EFFF' }}>
         <div className="py-4 px-2 flex justify-between items-center mb-3">
-          <h2 className="text-3xl font-bold text-gray-800">Salary Records</h2>
+          <h2 className="text-3xl font-bold text-gray-800">Create Payroll</h2>
           <div className="flex space-x-2">
             <button
               title="filter"
@@ -566,10 +648,21 @@ const PayrollForm = () => {
         <div className="overflow-x-auto p-3">
           <div className="flex justify-between items-center mb-3">
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
-              Showing <span className="font-semibold text-gray-800">{salaries.length}</span> salary records
+              Showing <span className="font-semibold text-gray-800">
+                {(currentPage - 1) * pageSize + 1}
+              </span> to <span className="font-semibold text-gray-800">
+                {Math.min(currentPage * pageSize, totalCount)}
+              </span> of <span className="font-semibold text-gray-800">
+                {totalCount}
+              </span> entries
             </div>
             <div className="mt-4 flex justify-end">
-              <Pagination />
+              <Pagination
+                currentPage={currentPage}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+              />
             </div>
           </div>
 
@@ -632,7 +725,7 @@ const PayrollForm = () => {
                             title="Edit"
                             className="p-2 rounded shadow cursor-pointer"
                             style={{ backgroundColor: '#A294F9' }}
-                            onClick={() => handleEditClick(employee, index)} // or 'deduction' depending on context
+                            onClick={() => handleEditClick(employee, index)}
                           >
                             <FaEdit className="text-white" />
                           </button>
@@ -670,7 +763,7 @@ const PayrollForm = () => {
                 >
                   Cancel
                 </button>
-                  <button
+                <button
                   onClick={handleCreatePayroll}
                   className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
                   style={{ backgroundColor: '#A294F9' }}
@@ -708,12 +801,12 @@ const PayrollForm = () => {
           <div
             style={{
               background: '#F5EFFF',
-              padding: "20px 30px",
+              padding: "30px 40px",
               borderRadius: "8px",
               width: "100%",
-              maxWidth: "1000px", // Optional: limit max width for better UX
-              maxHeight: "90vh", // Limit height to 80% of the viewport height
-              overflowY: "auto", // Enable vertical scroll
+              maxWidth: "1200px",
+              maxHeight: "90vh",
+              overflowY: "auto",
               boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
             }}
           >
@@ -736,7 +829,7 @@ const PayrollForm = () => {
 
               <div className="flex justify-center">
                 <div className="p-8 w-full max-w-6xl">
-                  <form onSubmit={handleSubmit}>
+                  <form>
                     <div className="mb-8">
                       <div className="mb-6">
                         <div className="flex justify-between items-center mb-4">
@@ -751,94 +844,97 @@ const PayrollForm = () => {
                           </button>
                         </div>
 
-                        {formData.allowances.map((allowance, index) => (
-                          <div key={`allowance-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Type</label>
-                              <select
-                                name="type"
-                                value={allowance.type}
+                     {formData.allowances.map((allowance, index) => (
+                        <div
+                          key={`allowance-${index}`}
+                          className="flex flex-wrap md:flex-nowrap items-end gap-3 mb-3 p- rounded-md"
+                        >
+                          <div className="flex-1 min-w-[150px]">
+                            <label className="block text-sm text-gray-600 mb-1">Type</label>
+                            <select
+                              name="type"
+                              value={allowance.type}
+                              onChange={(e) => handleAllowanceChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              required
+                            >
+                              <option value="">Select Type</option>
+                              {allowanceTypes.map((type) => (
+                                <option key={type.index} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">Current Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="currentSalary"
+                                value={allowance.currentSalary}
+                                placeholder="Current Salary"
                                 onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                 required
-                              >
-                                <option value="">Select Type</option>
-                                {allowanceTypes.map((type) => (
-                                  <option key={type.value} value={type.value}>
-                                    {type.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Current Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="currentSalary"
-                                  value={allowance.currentSalary}
-                                  placeholder="currentSalary"
-                                  onChange={(e) => handleAllowanceChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">New Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="newSalary"
-                                  value={allowance.newSalary}
-                                  placeholder="New Salary"
-                                  onChange={(e) => handleAllowanceChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                              <input
-                                type="date"
-                                name="startDate"
-                                value={allowance.startDate}
-                                onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                               />
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                              <input
-                                type="date"
-                                name="endDate"
-                                value={allowance.endDate}
-                                onChange={(e) => handleAllowanceChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="md:col-span-5 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => removeAllowance(index)}
-                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
-                              >
-                                <FaTrash className="text-white" />
-                              </button>
                             </div>
                           </div>
-                        ))}
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">New Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="newSalary"
+                                value={allowance.newSalary}
+                                placeholder="New Salary"
+                                onChange={(e) => handleAllowanceChange(index, e)}
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                            <input
+                              type="date"
+                              name="startDate"
+                              value={allowance.startDate}
+                              onChange={(e) => handleAllowanceChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-[130px]">
+                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                            <input
+                              type="date"
+                              name="endDate"
+                              value={allowance.endDate}
+                              onChange={(e) => handleAllowanceChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => removeAllowance(index)}
+                              className="p-2 mb-1 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                            >
+                              <FaTrash className="text-white" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
 
                         {formData.allowances.length > 0 && (
                           <div className="flex justify-end mt-2">
@@ -862,94 +958,96 @@ const PayrollForm = () => {
                           </button>
                         </div>
 
-                        {formData.deductions.map((deduction, index) => (
-                          <div key={`deduction-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Type</label>
-                              <select
-                                name="type"
-                                value={deduction.type}
+                      {formData.deductions.map((deduction, index) => (
+                        <div key={`deduction-${index}`} 
+                        className="flex flex-wrap md:flex-nowrap items-end gap-3 mb-3 p- rounded-md">
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">Type</label>
+                            <select
+                              name="type"
+                              value={deduction.type}
+                              onChange={(e) => handleDeductionChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              required
+                            >
+                              <option value="">Select Type</option>
+                              {deductionTypes.map((type) => (
+                                <option key={type.index} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">Current Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="currentSalary"
+                                value={deduction.currentSalary}
+                                placeholder="Amount"
                                 onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                 required
-                              >
-                                <option value="">Select Type</option>
-                                {deductionTypes.map((type) => (
-                                  <option key={type.value} value={type.value}>
-                                    {type.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Current Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="currentSalary"
-                                  value={deduction.currentSalary}
-                                  placeholder="Amount"
-                                  onChange={(e) => handleDeductionChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">New Value</label>
-                              <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                  <BsCurrencyDollar className="text-gray-400" />
-                                </div>
-                                <input
-                                  type="number"
-                                  name="newSalary"
-                                  value={deduction.newSalary}
-                                  placeholder="New Salary"
-                                  onChange={(e) => handleDeductionChange(index, e)}
-                                  className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                />
-                              </div>
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                              <input
-                                type="date"
-                                name="startDate"
-                                value={deduction.startDate}
-                                onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                               />
-                            </div>
-
-                            <div className="md:col-span-1">
-                              <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                              <input
-                                type="date"
-                                name="endDate"
-                                value={deduction.endDate}
-                                onChange={(e) => handleDeductionChange(index, e)}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="md:col-span-5 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => removeDeduction(index)}
-                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
-                              >
-                                <FaTrash className="text-white" />
-                              </button>
                             </div>
                           </div>
-                        ))}
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">New Value</label>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <BsCurrencyDollar className="text-gray-400" />
+                              </div>
+                              <input
+                                type="number"
+                                name="newSalary"
+                                value={deduction.newSalary}
+                                placeholder="New Salary"
+                                onChange={(e) => handleDeductionChange(index, e)}
+                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                            <input
+                              type="date"
+                              name="startDate"
+                              value={deduction.startDate}
+                              onChange={(e) => handleDeductionChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="md:col-span-1">
+                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                            <input
+                              type="date"
+                              name="endDate"
+                              value={deduction.endDate}
+                              onChange={(e) => handleDeductionChange(index, e)}
+                              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="md:col-span-1 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeDeduction(index)}
+                              className="p-2  mb-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                            >
+                              <FaTrash className="text-white" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
 
                         {formData.deductions.length > 0 && (
                           <div className="flex justify-end mt-2">
@@ -981,6 +1079,7 @@ const PayrollForm = () => {
                       <button
                         type="submit"
                         className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                        onClick={handleSubmit}
                       >
                         Save Salary Details
                       </button>
