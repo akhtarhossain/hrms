@@ -28,6 +28,8 @@ import AttendenceEmployees from '../components/pages/attendence/AttendenceEmploy
 import AdminAttendanceView from '../components/pages/attendence/AdminAttendanceView';
 import PayrollList from '../components/pages/salary/payrollList';
 import PaymentForm from '../components/pages/salary/payments';
+import PoliciesList from '../components/pages/policies/PoliciesList';
+import PoliciesForm from '../components/pages/policies/PoliciesForm';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -80,7 +82,10 @@ const router = createBrowserRouter([
           { path: 'attendence', element: <AttendenceEmployees /> },
           { path: 'admin-attendence', element: <AdminAttendanceView /> },
           { path: 'payroll', element: <PayrollList /> },
-          { path: 'payroll-form/:monthYear', element: <PayrollForm /> }
+          { path: 'payroll-form/:monthYear', element: <PayrollForm /> },
+          { path: 'policies-list', element: <PoliciesList /> },
+          { path: 'policy-form', element: <PoliciesForm /> },
+          { path: 'policy-form/:id', element: <PoliciesForm /> }
         ],
       },
     ],
