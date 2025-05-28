@@ -24,21 +24,39 @@ const PaymentForm = () => {
   const initializePayments = (payrollData) => {
     if (!payrollData?.employees) return [];
 
-    return payrollData.employees.map(employee => ({
-      employeeId: employee.employeeId?._id || employee.employeeId,
-      name: employee.name || `${employee.employeeId?.firstName || ''} ${employee.employeeId?.lastName || ''}`.trim(),
-      profilePicture: employee.employeeId?.profilePicture,
-      department: employee.employeeId?.department || 'N/A',
-      designation: employee.employeeId?.designation || 'N/A',
-      totalPayable: employee.totalSalary || 0,
-      totalPaid: employee.totalSalary || 0, // Default to full payment
-      payments: [{
-        date: new Date().toISOString().split('T')[0],
-        type: 'cash',
-        amount: employee.totalSalary || 0,
-        notes: 'Initial payment'
-      }]
-    }));
+    return payrollData.employees.map(employee => {
+      // Use existing payments if available, otherwise create initial payment
+      const hasExistingPayments = employee.payments && employee.payments.length > 0;
+
+      const initialPayments = hasExistingPayments
+        ? employee.payments.map(p => ({
+          date: p.date || new Date().toISOString().split('T')[0],
+          type: p.type || 'cash',
+          amount: Number(p.amount) || 0,
+          notes: p.notes || 'Payment'
+        }))
+        : [{
+          date: new Date().toISOString().split('T')[0],
+          type: 'cash',
+          amount: employee.totalSalary || 0,
+          notes: 'Initial payment'
+        }];
+
+      const totalPaid = hasExistingPayments
+        ? initialPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0)
+        : employee.totalSalary || 0;
+
+      return {
+        employeeId: employee.employeeId?._id || employee.employeeId,
+        name: employee.name || `${employee.employeeId?.firstName || ''} ${employee.employeeId?.lastName || ''}`.trim(),
+        profilePicture: employee.employeeId?.profilePicture,
+        department: employee.employeeId?.department || 'N/A',
+        designation: employee.employeeId?.designation || 'N/A',
+        totalPayable: employee.totalSalary || 0,
+        totalPaid: totalPaid,
+        payments: initialPayments
+      };
+    });
   };
 
   useEffect(() => {
@@ -144,16 +162,21 @@ const PaymentForm = () => {
           0
         );
 
+        // Set status to "PAID" only if total paid equals total payable, otherwise "UNPAID"
         const status = totalPaid === employee.totalSalary ? 'PAID' : 'PENDING';
 
         return {
           ...employee,
-          employeeId: employee.employeeId?._id || employee.employeeId, // Ensure employeeId is just the _id
+          employeeId: employee.employeeId?._id || employee.employeeId,
           totalPaid: totalPaid,
           payments: cleanedPayments,
           status: status
         };
       });
+
+      // Check if all employees are paid to determine payroll status
+      const allEmployeesPaid = updatedEmployees.every(emp => emp.status === 'PAID');
+      const payrollStatus = allEmployeesPaid ? 'PAID' : 'DRAFT';
 
       const cleanedSummary = {
         ...payroll.summary,
@@ -165,7 +188,7 @@ const PaymentForm = () => {
         summary: cleanedSummary,
         month: payroll.month,
         year: payroll.year,
-        status: payroll.status
+        status: payrollStatus // Updated payroll status based on employee payments
       };
 
       await PayrollService.updatePayroll(id, payload);
