@@ -75,16 +75,25 @@ const PaymentForm = () => {
   const handlePaymentChange = (employeeIndex, paymentIndex, field, value) => {
     const updatedPayments = [...payments];
 
-    if (paymentIndex === undefined) {
-      // Update main payment fields
-      updatedPayments[employeeIndex][field] = value;
-    } else {
-      // Update individual payment details
-      updatedPayments[employeeIndex].payments[paymentIndex][field] = value;
+    if (paymentIndex !== undefined) {
+      const paymentList = updatedPayments[employeeIndex].payments;
+      const newAmount = Number(value);
 
-      // Recalculate total paid
-      const totalPaid = updatedPayments[employeeIndex].payments.reduce(
-        (sum, payment) => sum + Number(payment.amount || 0), 0
+      const otherPaymentsTotal = paymentList.reduce((sum, p, idx) => (
+        idx === paymentIndex ? sum : sum + Number(p.amount || 0)
+      ), 0);
+
+      const totalPayable = updatedPayments[employeeIndex].totalPayable;
+
+      if ((otherPaymentsTotal + newAmount) > totalPayable) {
+        toast.warning("Amount exceeds total payable");
+        return;
+      }
+
+      paymentList[paymentIndex][field] = value;
+
+      const totalPaid = paymentList.reduce(
+        (sum, p) => sum + Number(p.amount || 0), 0
       );
       updatedPayments[employeeIndex].totalPaid = totalPaid;
     }
@@ -120,49 +129,45 @@ const PaymentForm = () => {
     try {
       setLoading(true);
 
-      // 1. Create a new employees array with only allowed fields
       const updatedEmployees = payroll.employees.map(employee => {
-        // Find corresponding payment data
         const paymentData = payments.find(p =>
           p.employeeId === (employee.employeeId?._id || employee.employeeId)
         );
 
-        // Clean payments array to ensure amount is string if required
         const cleanedPayments = (paymentData?.payments || []).map(payment => ({
           ...payment,
-          amount: payment.amount.toString() // Convert amount to string if required
+          amount: payment.amount.toString()
         }));
 
+        const totalPaid = cleanedPayments.reduce(
+          (sum, payment) => sum + Number(payment.amount || 0),
+          0
+        );
+
+        const status = totalPaid === employee.totalSalary ? 'PAID' : 'PENDING';
+
         return {
-          employeeId: employee.employeeId?._id || employee.employeeId, // Just the ID string
-          name: employee.name,
-          totalAllowance: employee.totalAllowance,
-          totalDeduction: employee.totalDeduction,
-          totalSalary: employee.totalSalary,
-          payments: cleanedPayments
-          // Remove totalPaid and totalPayable as per error
+          ...employee,
+          employeeId: employee.employeeId?._id || employee.employeeId, // Ensure employeeId is just the _id
+          totalPaid: totalPaid,
+          payments: cleanedPayments,
+          status: status
         };
       });
 
-      // 2. Clean the summary.selectedEmployees to be just IDs
       const cleanedSummary = {
         ...payroll.summary,
-        selectedEmployees: payroll.summary.selectedEmployees.map(emp =>
-          emp._id // Just the ID string
-        )
+        selectedEmployees: payroll.summary.selectedEmployees.map(emp => emp._id)
       };
 
-      // 3. Create the final payload
       const payload = {
         employees: updatedEmployees,
         summary: cleanedSummary,
         month: payroll.month,
         year: payroll.year,
-        status: 'PAID'
-        // Remove _id, createdAt, updatedAt, __v as per error
+        status: payroll.status
       };
 
-      // 4. Send the payload
       await PayrollService.updatePayroll(id, payload);
       toast.success("Payments saved successfully");
       navigate('/payroll');
@@ -173,6 +178,7 @@ const PaymentForm = () => {
       setLoading(false);
     }
   };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
