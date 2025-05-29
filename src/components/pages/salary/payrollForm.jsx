@@ -44,7 +44,7 @@ const PayrollForm = () => {
 
   const [formData, setFormData] = useState({
     type: '',
-    currentSalary: '',
+    currentSalary: '0',
     newSalary: '',
     startDate: '',
     endDate: '',
@@ -460,7 +460,7 @@ const PayrollForm = () => {
       ...prev,
       allowances: [...prev.allowances, {
         type: "",
-        currentSalary: "",
+        currentSalary: "0",
         newSalary: "",
         startDate: "",
         endDate: ""
@@ -473,7 +473,7 @@ const PayrollForm = () => {
       ...prev,
       deductions: [...prev.deductions, {
         type: "",
-        currentSalary: "",
+        currentSalary: "0",
         newSalary: "",
         startDate: "",
         endDate: ""
