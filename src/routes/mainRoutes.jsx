@@ -32,6 +32,7 @@ import PoliciesList from '../components/pages/policies/PoliciesList';
 import PoliciesForm from '../components/pages/policies/PoliciesForm';
 import LeavePolicyForm from '../components/pages/Request/leavePolicyForm';
 import LeavePolicyList from '../components/pages/Request/leavePolicyList';
+import PayrollDetailTable from '../components/pages/salary/payrollSlip';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -92,7 +93,8 @@ const router = createBrowserRouter([
           { path: 'payroll-form/:monthYear', element: <PayrollForm /> },
           { path: 'policies-list', element: <PoliciesList /> },
           { path: 'policy-form', element: <PoliciesForm /> },
-          { path: 'policy-form/:id', element: <PoliciesForm /> }
+          { path: 'policy-form/:id', element: <PoliciesForm /> },
+          { path: 'payrollslip/:id', element: <PayrollDetailTable /> }
         ],
       },
     ],
