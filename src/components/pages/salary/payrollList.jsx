@@ -323,6 +323,14 @@ const PayrollList = () => {
                           <MdPayments className="text-white" />
                         </button>
                         <button
+                          title="payrollslip"
+                          style={{ backgroundColor: '#A294F9' }}
+                          className="p-2 rounded shadow cursor-pointer"
+                          onClick={() => navigate(`/payrollslip/${payroll._id}`)}
+                        >
+                          <FaEye className="text-white" />
+                        </button>
+                        <button
                           title="Delete"
                           className="p-2 rounded shadow cursor-pointer bg-red-500"
                           onClick={() => handleDeleteClick(payroll._id)}

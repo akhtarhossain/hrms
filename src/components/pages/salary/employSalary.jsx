@@ -31,7 +31,7 @@ const EmployeeSalaryForm = () => {
   const fetchTransactions = () => {
     TransactionTypeService.getTransactionTypes()
       .then((data) => {
-        const transactions = data || [];
+        const transactions = data.list || [];
         const formattedAllowances = transactions
           .filter((item) => item.transactionType === "allowance")
           .map((item) => ({
