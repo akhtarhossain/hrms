@@ -38,6 +38,7 @@ const EmployeeForm = () => {
   const [allowanceTypes, setAllowanceTypes] = useState([]);
   const [deductionTypes, setDeductionTypes] = useState([]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -286,6 +287,7 @@ const isStepValid = () => {
 
 const handleSubmit = (e) => {
   e.preventDefault();
+  setIsSubmitting(true);
 
   const fields = requiredFields[step] || [];
   let valid = true;
@@ -343,6 +345,7 @@ const handleSubmit = (e) => {
         console.error('Error updating employee:', error);
         toast.error('Error updating employee. Please check fields.');
         toast.error('EmployeeId already exist');
+        setIsSubmitting(false);
       });
   } else {
     employeeService.createEmployee(finalData)
@@ -350,6 +353,7 @@ const handleSubmit = (e) => {
         console.log('Employee created successfully:', response);
         toast.success('Employee created successfully!');
         navigate('/employees');
+        setIsSubmitting(false);
       })
       .catch((error) => {
         console.error('Error creating employee:', error);
@@ -1571,9 +1575,10 @@ const removeDeduction = (index) => {
               <button
                 type="submit"
                 onClick={handleSubmit}
-                className="bg-[#A294F9]  text-white px-5 py-2 rounded-md transition cursor-pointer"
-              >
-                Submit
+                disabled={isSubmitting}
+                className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                >
+                {isSubmitting ? 'Saving...' :id ? "Update" : "Submit"}
               </button>
             )}
           </div>

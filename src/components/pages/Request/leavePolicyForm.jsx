@@ -7,7 +7,7 @@ import LeavePolicyService from '../../../services/LeavePolicyService';
 const LeavePolicyForm = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         annualLeave: '',
@@ -28,28 +28,28 @@ const LeavePolicyForm = () => {
 
     useEffect(() => {
         if (id) {
-            LeavePolicyService.getLeavePolicyById(id)
-                .then(response => {
-                    const {
-                        title,
-                        annualLeave,
-                        sickLeave,
-                        maternityLeave,
-                        paternityLeave,
-                        unpaidLeave
-                    } = response;
-                    setFormData({
-                        title,
-                        annualLeave,
-                        sickLeave,
-                        maternityLeave,
-                        paternityLeave,
-                        unpaidLeave
-                    });
-                })
-                .catch(() => {
-                    toast.error("Error loading leave policy");
+        LeavePolicyService.getLeavePolicyById(id)
+            .then(response => {
+                const {
+                    title,
+                    annualLeave,
+                    sickLeave,
+                    maternityLeave,
+                    paternityLeave,
+                    unpaidLeave
+                } = response;
+                setFormData({
+                    title,
+                    annualLeave,
+                    sickLeave,
+                    maternityLeave,
+                    paternityLeave,
+                    unpaidLeave
                 });
+            })
+            .catch(() => {
+                toast.error("Error loading leave policy");
+            });
         }
     }, [id]);
 
@@ -63,7 +63,7 @@ const LeavePolicyForm = () => {
 
  const handleSubmit = (e) => {
   e.preventDefault();
-
+  setIsSubmitting(true);
   // Convert leave values to numbers before sending
   const payload = {
     ...formData,
@@ -82,6 +82,7 @@ const LeavePolicyForm = () => {
       })
       .catch(() => {
         toast.error('Error updating leave policy');
+        setIsSubmitting(false);
       });
   } else {
     LeavePolicyService.createLeavePolicy(payload)
@@ -91,6 +92,7 @@ const LeavePolicyForm = () => {
       })
       .catch(() => {
         toast.error("Error submitting leave policy");
+        setIsSubmitting(false);
       });
   }
 };
@@ -167,12 +169,13 @@ const LeavePolicyForm = () => {
                             >
                                 Cancel
                             </button>
-                            <button
+                             <button
                                 type="submit"
+                                disabled={isSubmitting}
                                 className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
-                            >
-                                {id ? "Update" : "Submit"}
-                            </button>
+                                >
+                                {isSubmitting ? 'Saving...' :id ? "Update" : "Submit"}
+                             </button>
                         </div>
                     </form>
                 </div>

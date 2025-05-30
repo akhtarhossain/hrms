@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiFilter, FiPlus } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
-import { FaEdit, FaTrashAlt, FaEye } from 'react-icons/fa';
+import { FaEdit, FaTrashAlt, FaEye, FaSearch } from 'react-icons/fa';
 import { Pagination } from '../../../shared/common/Pagination';
 import { toast } from 'react-toastify';
 import DeleteModal from '../../../shared/common/DeleteConfirmation';
@@ -16,12 +16,12 @@ const Employees = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
- const [isLoading, setIsLoading] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams(); 
   const [filters, setFilters] = useState({
-    firstName: '',
-    department: '',
-    designation: ''
+    firstName: searchParams.get('firstName') || '',
+    department: searchParams.get('department') || '',
+    designation: searchParams.get('designation') || ''
   });
  useEffect(() => {
     fetchEmployees();
@@ -77,19 +77,31 @@ const fetchEmployees = () => {
       [name]: value
     }));
   };
+    useEffect(() => {
+    // When component mounts, check if there are filters in URL
+    if (searchParams.toString()) {
+      fetchEmployees();
+    }
+  }, []);
   const applyFilters = () => {
     setCurrentPage(1); // Reset to first page when filters change
     // setShowFilter(false);
+       const params = new URLSearchParams();
+    if (filters.firstName) params.set('firstName', filters.firstName);
+    if (filters.department) params.set('department', filters.department);
+    if (filters.designation) params.set('designation', filters.designation);
+    setSearchParams(params);
     fetchEmployees();
   };
 
   const closeFilter = () => {
-    setShowFilter(false);
     setFilters({
       firstName: '',
       department: '',
       designation: ''
     });
+    fetchEmployees(); 
+    setSearchParams(new URLSearchParams());
   };
 
   const handlePageChange = (page) => {
@@ -160,15 +172,16 @@ const fetchEmployees = () => {
           <div className="flex justify-end space-x-2">
             <button
               onClick={closeFilter}
-              className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow cursor-pointer"
             >
               Close
             </button>
             <button
               onClick={applyFilters}
-              className="px-4 py-2 rounded shadow text-white cursor-pointer"
+              className="px-4 py-2 rounded shadow text-white cursor-pointer flex items-center"
               style={{ backgroundColor: '#A294F9' }}
             >
+              <FaSearch className="mr-2" />
               Search
             </button>
           </div>
@@ -245,6 +258,14 @@ const fetchEmployees = () => {
                       >
                         <FaEdit className="text-white" />
                       </button>
+                       <button
+                        title="Preview"
+                        className="p-2 rounded shadow cursor-pointer"
+                        style={{ backgroundColor: '#34D399' }}
+                        onClick={() => navigate(`/employee-preview/${employee._id}`)}
+                      >
+                        <FaEye className="text-white" />
+                      </button>
                       <button
                         title="Delete"
                         className="p-2 rounded shadow cursor-pointer"
@@ -252,14 +273,6 @@ const fetchEmployees = () => {
                         onClick={() => handleDeleteClick(employee._id)}
                       >
                         <FaTrashAlt className="text-white" />
-                      </button>
-                      <button
-                        title="Preview"
-                        className="p-2 rounded shadow cursor-pointer"
-                        style={{ backgroundColor: '#34D399' }}
-                        onClick={() => navigate(`/employee-preview/${employee._id}`)}
-                      >
-                        <FaEye className="text-white" />
                       </button>
                     </div>
                   </td>
