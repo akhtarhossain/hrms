@@ -42,6 +42,7 @@ const PayrollForm = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: '',
     currentSalary: '0',
@@ -322,6 +323,7 @@ const PayrollForm = () => {
       toast.warning("Please select at least one employee");
       return;
     }
+    setIsSubmitting(true); 
     try {
       const response = await employeeService.getEmployee({
         l: 1000,
@@ -335,6 +337,7 @@ const PayrollForm = () => {
 
       if (allSelectedEmployees.length === 0) {
         toast.error("No employee data found for selected employees");
+        setIsSubmitting(false);
         return;
       }
 
@@ -429,7 +432,9 @@ const PayrollForm = () => {
     } catch (error) {
       console.error("Error in handleCreatePayroll:", error);
       toast.error(error.response?.data?.message || "Failed to process payroll");
-    }
+    } finally {
+    setIsSubmitting(false); // Re-enable button
+  }
   };
 
 
@@ -782,11 +787,15 @@ const PayrollForm = () => {
                 </button>
                 <button
                   onClick={handleCreatePayroll}
+                  disabled={isSubmitting}
                   className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
                   style={{ backgroundColor: '#A294F9' }}
                 >
-                  {isExistingPayroll ? 'Update' : 'Create'} Payroll for {month} {year}
+                  {isSubmitting
+                    ? `${isExistingPayroll ? 'Updating' : 'Creating'}...`
+                    : `${isExistingPayroll ? 'Update' : 'Create'} Payroll for ${month} ${year}`}
                 </button>
+
               </div>
             )}
           </div>

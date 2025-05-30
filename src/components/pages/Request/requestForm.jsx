@@ -13,7 +13,7 @@ const LeaveRequestForm = () => {
     const [allEmployees, setAllEmployees] = useState([]);
     const [employeeData, setEmployeeData] = useState(null);
     const [files, setFiles] = useState([]);
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         employeeId: '',
         employeeName: '',
@@ -26,7 +26,7 @@ const LeaveRequestForm = () => {
     });
 
     const GetUser = () => {
-        return SessionService.getLoggedIn();
+    return SessionService.getLoggedIn();
     };
 
     useEffect(() => {
@@ -110,29 +110,31 @@ const LeaveRequestForm = () => {
     };
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-     console.log(formData , "datatt");
-     
+    e.preventDefault();
+    setIsSubmitting(true);
         if (id) {
-            LeaveService.updateLeave(id, formData)
-                .then(() => {
-                    toast.success('Leave request updated successfully!');
-                    navigate('/request-list');
-                })
-                .catch(error => {
-                    console.error('Update error:', error);
-                    toast.error('Error updating leave request');
-                });
+        LeaveService.updateLeave(id, formData)
+          .then(() => {
+            toast.success('Leave request updated successfully!');
+            navigate('/request-list');
+            })
+            .catch(error => {
+            console.error('Update error:', error);
+            toast.error('Error updating leave request');
+            setIsSubmitting(false);
+
+            });
         } else {
-            LeaveService.createLeave(formData)
-                .then(() => {
-                    toast.success('Leave request submitted successfully!');
-                    navigate('/request-list');
-                })
-                .catch(error => {
-                    console.error('Create error:', error);
-                    toast.error('Error submitting leave request');
-                });
+        LeaveService.createLeave(formData)
+            .then(() => {
+             toast.success('Leave request submitted successfully!');
+             navigate('/request-list');
+            })
+            .catch(error => {
+             console.error('Create error:', error);
+             toast.error('Error submitting leave request');
+             setIsSubmitting(false);
+            });
         }
     };
 
@@ -306,11 +308,12 @@ const LeaveRequestForm = () => {
                             >
                                 Cancel
                             </button>
-                            <button
-                                type="submit"   
-                                className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                             <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
                             >
-                                {id ? 'Update Request' : 'Submit Request'}
+                            {isSubmitting ? 'Saving...' :id ? "Update" : "Submit"}
                             </button>
                         </div>
                     </form>
