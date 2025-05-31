@@ -101,15 +101,13 @@ const SupportForm = () => {
                             <div className="w-full">
                                 <label className="block text-sm text-gray-600 mb-1">Your Name</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <FiUser className="text-gray-400" />
-                                    </div>
+                                   
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className="w-full pl-10 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                        className="w-full pl-4 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                         placeholder="Enter your full name"
                                         required
                                         disabled
@@ -120,15 +118,12 @@ const SupportForm = () => {
                             <div className="w-full">
                                 <label className="block text-sm text-gray-600 mb-1">Subject</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <FiMail className="text-gray-400" />
-                                    </div>
-                                    <input
+                                        <input
                                         type="text"
                                         name="subject"
                                         value={formData.subject}
                                         onChange={handleChange}
-                                        className="w-full pl-10 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                        className="w-full pl-4 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                         placeholder="What's this about?"
                                         required
                                     />
@@ -139,14 +134,11 @@ const SupportForm = () => {
                         <div className="mb-6">
                             <label className="block text-sm text-gray-600 mb-1">Description</label>
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-start pointer-events-none">
-                                    <FiMessageSquare className="text-gray-400" />
-                                </div>
-                                <textarea
+                                    <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
-                                    className="w-full pl-10 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                    className="w-full pl-4 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                     rows="5"
                                     placeholder="Please describe your issue in detail..."
                                     required
