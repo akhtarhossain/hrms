@@ -16,25 +16,22 @@ const TransactionList = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10); // 10 records per page
-
-  const [filters, setFilters] = useState({
-    name: '',
-    transactionType: ''
-  });
+  const [filters, setFilters] = useState({ name: '', transactionType: '' });
+  const [appliedFilters, setAppliedFilters] = useState({ name: '', transactionType: '' });
 
   useEffect(() => {
     fetchTransactions();
-  }, [currentPage]);
+  }, [currentPage, appliedFilters]);
 
   const fetchTransactions = () => {
     const params = {
-      name: filters.name,
+      name: appliedFilters.name,
       l: pageSize,
       o: (currentPage - 1) * pageSize,
     };
 
-    if (filters.transactionType === 'allowance' || filters.transactionType === 'deduction') {
-      params.transactionType = filters.transactionType;
+    if (appliedFilters.transactionType) {
+      params.transactionType = appliedFilters.transactionType;
     }
 
     TransactionTypeService.getTransactionTypes(params)
@@ -43,7 +40,7 @@ const TransactionList = () => {
         setTotalCount(response.count);
       })
       .catch((error) => {
-        console.error('Error fetching employee data:', error);
+        console.error('Error fetching data:', error);
       });
   };
 
@@ -56,17 +53,15 @@ const TransactionList = () => {
     }));
   };
   const applyFilters = () => {
+    setAppliedFilters(filters);
     setCurrentPage(1);
-    fetchTransactions();
   };
 
   const closeFilter = () => {
     setShowFilter(false);
-    setFilters({
-      name: '',
-      transactionType: ''
-    });
-    fetchTransactions();
+    setFilters({ name: '', transactionType: '' });
+    setAppliedFilters({ name: '', transactionType: '' });
+    setCurrentPage(1);
   };
 
   const handleDeleteClick = (transactionId) => {
