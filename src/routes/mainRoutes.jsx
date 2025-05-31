@@ -32,6 +32,8 @@ import PoliciesList from '../components/pages/policies/PoliciesList';
 import PoliciesForm from '../components/pages/policies/PoliciesForm';
 import LeavePolicyForm from '../components/pages/Request/leavePolicyForm';
 import LeavePolicyList from '../components/pages/Request/leavePolicyList';
+import EventsForm from '../components/pages/events/EventsForm';
+import EventsList from '../components/pages/events/EventsList';
 import PayrollDetailTable from '../components/pages/salary/payrollSlip';
 // import PageNotFound from '../components/pages/PageNotFound';
 
@@ -94,6 +96,9 @@ const router = createBrowserRouter([
           { path: 'policies-list', element: <PoliciesList /> },
           { path: 'policy-form', element: <PoliciesForm /> },
           { path: 'policy-form/:id', element: <PoliciesForm /> },
+          { path: 'events-list', element: <EventsList /> },
+          { path: 'events-form', element: <EventsForm /> },
+          { path: 'events-form/:id', element: <EventsForm /> },
           { path: 'payrollslip/:id', element: <PayrollDetailTable /> }
         ],
       },
