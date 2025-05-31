@@ -209,7 +209,7 @@ const PoliciesList = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeAndResetFilters}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+                className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white border border-gray-300 cursor-pointer"
               >
                 Close
               </button>
