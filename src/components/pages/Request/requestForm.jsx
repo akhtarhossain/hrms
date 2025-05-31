@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
 import LeaveService from '../../../services/LeaveService';
 import SessionService from '../../../services/SessionService';
+import LeavePolicyService from '../../../services/LeavePolicyService';
 
 const LeaveRequestForm = () => {
     const { id } = useParams();
@@ -13,54 +14,81 @@ const LeaveRequestForm = () => {
     const [allEmployees, setAllEmployees] = useState([]);
     const [employeeData, setEmployeeData] = useState(null);
     const [files, setFiles] = useState([]);
+    const [leavePoliciesData, setLeavePoliciesData] = useState([]);
+    const [currentEmployeeLeavePolicy, setCurrentEmployeeLeavePolicy] = useState(null);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         employeeId: '',
         employeeName: '',
         subject: '',
         status: 'pending',
-        leaveType: 'casual',
+        leaveType: 'sick',
         startDate: '',
         endDate: '',
         leaveReason: '',
     });
 
     const GetUser = () => {
-        return SessionService.getLoggedIn();
+    return SessionService.getLoggedIn();
     };
 
-    useEffect(() => {
+   useEffect(() => {
+        let isMounted = true; // To prevent state updates on unmounted component
+
+        LeavePolicyService.getLeavePolicies()
+            .then(response => {
+                if (isMounted) {
+                    console.log("Leave Policies Response:", response.list);
+                    setLeavePoliciesData(response.list || []);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching leave policies:', error);
+                toast.error('Failed to load leave policies');
+            });
+
         employeeService.getEmployee()
             .then(response => {
-                const employees = response.list || response;
-                setAllEmployees(Array.isArray(employees) ? employees : []);
+                if (isMounted) {
+                    const employees = response.list || response;
+                    setAllEmployees(Array.isArray(employees) ? employees : []);
+                }
             })
             .catch(error => {
                 console.error('Error fetching employees:', error);
                 toast.error('Failed to load employee list');
             });
 
-                  const formatDateForInput = (dateString) => {
-          if (!dateString) return '';
-          const date = new Date(dateString);
-          return date.toISOString().split('T')[0];
+        const formatDateForInput = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
         };
 
         if (id) {
             LeaveService.getLeaveById(id)
                 .then(response => {
-                    const data = response.data || response;
-                    setFormData({
-                        employeeId: data.employeeId,
-                        employeeName: data.employeeName,
-                        subject: data.subject,
-                        status: data.status,
-                        leaveType: data.leaveType,
-                        startDate: formatDateForInput(data.endDate),
-                        endDate:formatDateForInput(data.endDate),
-                        leaveReason: data.leaveReason,
-                    }); 
-                    setIsHalfDay(Boolean(data.isHalfDay));
+                    if (isMounted) {
+                        const data = response.data || response;
+                        setFormData({
+                            employeeId: data.employeeId,
+                            employeeName: data.employeeName,
+                            subject: data.subject,
+                            status: data.status,
+                            leaveType: data.leaveType,
+                            startDate: formatDateForInput(data.endDate),
+                            endDate: formatDateForInput(data.endDate),
+                            leaveReason: data.leaveReason,
+                        });
+                        setIsHalfDay(Boolean(data.isHalfDay));
+                        // Fetch leave policy for the editing employee
+                        const employee = allEmployees.find(emp => emp._id === data.employeeId);
+                        if (employee?.leavePolicyId) {
+                            const policy = leavePoliciesData.find(lp => lp._id === employee.leavePolicyId);
+                            setCurrentEmployeeLeavePolicy(policy);
+                        }
+                    }
                 })
                 .catch(error => {
                     console.error('Error loading leave request:', error);
@@ -68,16 +96,23 @@ const LeaveRequestForm = () => {
                 });
         } else {
             const user = GetUser();
-            if (user?.data) {
-                const { _id, firstName, lastName } = user.data;
+            if (isMounted && user?.data) {
+                const { _id, firstName, lastName, leavePolicyId } = user.data;
                 setFormData(prev => ({
                     ...prev,
                     employeeId: _id,
                     employeeName: `${firstName} ${lastName}`
                 }));
+                // Fetch leave policy for the logged-in user
+                const policy = leavePoliciesData.find(lp => lp._id === leavePolicyId);
+                setCurrentEmployeeLeavePolicy(policy);
             }
         }
-    }, [id]);
+
+        return () => {
+            isMounted = false; // Cleanup function to prevent state updates on unmounted component
+        };
+    }, [id]); // Added dependencies
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -90,49 +125,48 @@ const LeaveRequestForm = () => {
     const handleEmployeeSelect = (e) => {
         const selectedId = e.target.value;
         const selectedEmployee = allEmployees.find(emp => emp._id === selectedId);
-        
+
         setFormData(prev => ({
             ...prev,
             employeeId: selectedId,
             employeeName: selectedEmployee ? `${selectedEmployee.firstName} ${selectedEmployee.lastName}` : ''
         }));
-    };
 
-    const handleHalfDayChange = (e) => {
-        const checked = Boolean(e.target.checked);
-        setIsHalfDay(checked);
-        if (checked) {
-            setFormData(prev => ({
-                ...prev,
-                endDate: prev.startDate
-            }));
+        // Find and set the leave policy for the selected employee
+        if (selectedEmployee?.leavePolicy) {
+            const policy = leavePoliciesData.find(lp => lp._id === selectedEmployee.leavePolicy);
+            setCurrentEmployeeLeavePolicy(policy);
+        } else {
+            setCurrentEmployeeLeavePolicy(null);
         }
     };
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-     console.log(formData , "datatt");
-     
+    e.preventDefault();
+    setIsSubmitting(true);
         if (id) {
-            LeaveService.updateLeave(id, formData)
-                .then(() => {
-                    toast.success('Leave request updated successfully!');
-                    navigate('/request-list');
-                })
-                .catch(error => {
-                    console.error('Update error:', error);
-                    toast.error('Error updating leave request');
-                });
+        LeaveService.updateLeave(id, formData)
+          .then(() => {
+            toast.success('Leave request updated successfully!');
+            navigate('/request-list');
+            })
+            .catch(error => {
+            console.error('Update error:', error);
+            toast.error('Error updating leave request');
+            setIsSubmitting(false);
+
+            });
         } else {
-            LeaveService.createLeave(formData)
-                .then(() => {
-                    toast.success('Leave request submitted successfully!');
-                    navigate('/request-list');
-                })
-                .catch(error => {
-                    console.error('Create error:', error);
-                    toast.error('Error submitting leave request');
-                });
+        LeaveService.createLeave(formData)
+            .then(() => {
+             toast.success('Leave request submitted successfully!');
+             navigate('/request-list');
+            })
+            .catch(error => {
+             console.error('Create error:', error);
+             toast.error('Error submitting leave request');
+             setIsSubmitting(false);
+            });
         }
     };
 
@@ -146,7 +180,8 @@ const LeaveRequestForm = () => {
                     <button
                         onClick={() => navigate('/request-list')}
                         title="List"
-                        className="p-2 bg-[#A294F9] rounded shadow">
+                        className="p-2 bg-[#A294F9] rounded shadow"
+                    >
                         <FiList className="text-white" />
                     </button>
                 </div>
@@ -174,7 +209,7 @@ const LeaveRequestForm = () => {
                                     ))}
                                 </select>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-sm text-gray-600 mb-1">Subject</label>
                                 <input
@@ -199,89 +234,70 @@ const LeaveRequestForm = () => {
                                         className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                         required
                                     >
-                                        <option value="casual">Casual Leave</option>
-                                        <option value="sick">Sick Leave</option>
-                                        <option value="annual">Annual Leave</option>
-                                        <option value="maternity">Maternity Leave</option>
-                                        <option value="paternity">Paternity Leave</option>
-                                        <option value="unpaid">Unpaid Leave</option>
+                                        <option value="">Select Leave Type</option>
+                                        {currentEmployeeLeavePolicy ? (
+                                            <>
+                                                {currentEmployeeLeavePolicy.sickLeave !== undefined && (
+                                                    <option value="sick">
+                                                        Sick Leave - {currentEmployeeLeavePolicy.sickLeave}
+                                                    </option>
+                                                )}
+                                                {currentEmployeeLeavePolicy.annualLeave !== undefined && (
+                                                    <option value="annual">
+                                                        Annual Leave - {currentEmployeeLeavePolicy.annualLeave}
+                                                    </option>
+                                                )}
+                                                {currentEmployeeLeavePolicy.maternityLeave !== undefined && (
+                                                    <option value="maternity">
+                                                        Maternity Leave - {currentEmployeeLeavePolicy.maternityLeave}
+                                                    </option>
+                                                )}
+                                                {currentEmployeeLeavePolicy.paternityLeave !== undefined && (
+                                                    <option value="paternity">
+                                                        Paternity Leave - {currentEmployeeLeavePolicy.paternityLeave}
+                                                    </option>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <option disabled>Please select an employee</option>
+                                        )}
                                     </select>
                                 </div>
-                                
-                                <div className="flex items-center mt-5">
-                                    <input
-                                        type="checkbox"
-                                        id="halfDay"
-                                        checked={isHalfDay}
-                                        onChange={handleHalfDayChange}
-                                        className="h-4 w-4 text-[#A294F9] focus:ring-[#A294F9] border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="halfDay" className="ml-2 block text-sm text-gray-600">
-                                        Half Day Leave
-                                    </label>
-                                </div>
-                                
-                                {isHalfDay ? (
+                                <>
                                     <div>
-                                        <label className="block text-sm text-gray-600 mb-1">Leave Date</label>
+                                        <label className="block text-sm text-gray-600 mb-1">Start Date</label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <FiCalendar className="text-gray-400" />
-                                            </div> 
+                                            </div>
                                             <input
                                                 type="date"
                                                 name="startDate"
                                                 value={formData.startDate}
-                                                onChange={(e) => {
-                                                    handleChange(e);
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        endDate: e.target.value
-                                                    }));
-                                                }}
+                                                onChange={handleChange}
                                                 className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                                 required
                                             />
                                         </div>
                                     </div>
-                                ) : (
-                                    <>
-                                        <div>
-                                            <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <FiCalendar className="text-gray-400" />
-                                                </div>
-                                                <input
-                                                    type="date"
-                                                    name="startDate"
-                                                    value={formData.startDate}
-                                                    onChange={handleChange}
-                                                    className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                                    required
-                                                />
+
+                                    <div>
+                                        <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <FiCalendar className="text-gray-400" />
                                             </div>
+                                            <input
+                                                type="date"
+                                                name="endDate"
+                                                value={formData.endDate}
+                                                onChange={handleChange}
+                                                className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                                required
+                                            />
                                         </div>
-                                        
-                                        <div>
-                                            <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <FiCalendar className="text-gray-400" />
-                                                </div>
-                                                <input
-                                                    type="date"
-                                                    name="endDate"
-                                                    value={formData.endDate}
-                                                    onChange={handleChange}
-                                                    className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                                
+                                    </div>
+                                </>
                                 <div className="md:col-span-2">
                                     <label className="block text-sm text-gray-600 mb-1">Reason for Leave</label>
                                     <textarea
@@ -293,8 +309,6 @@ const LeaveRequestForm = () => {
                                         required
                                     />
                                 </div>
-                                
-                    
                             </div>
                         </div>
 
@@ -306,11 +320,12 @@ const LeaveRequestForm = () => {
                             >
                                 Cancel
                             </button>
-                            <button
-                                type="submit"   
-                                className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                             <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
                             >
-                                {id ? 'Update Request' : 'Submit Request'}
+                            {isSubmitting ? 'Saving...' :id ? "Update" : "Submit"}
                             </button>
                         </div>
                     </form>

@@ -8,7 +8,7 @@ import SupportService from '../../../services/SupportService';
 const SupportForm = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         subject: '',
@@ -53,27 +53,29 @@ const SupportForm = () => {
     };
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-
-    if (id) {
+     e.preventDefault();
+        setIsSubmitting(true);
+        if (id) {
         SupportService.updateSupport(id, formData)
-            .then(() => {
-                toast.success('Support request updated!');
-                navigate('/support-list');
-            })
-            .catch(() => {
-                toast.error('Error updating support request');
-            });
-    } else {
+        .then(() => {
+            toast.success('Support request updated!');
+            navigate('/support-list');
+            setIsSubmitting(false);
+        })
+        .catch(() => {
+            toast.error('Error updating support request');
+        });
+        } else {
         SupportService.createSupport(formData)
-            .then(() => {
-                toast.success("Support request submitted!");
-                navigate('/support-list');
-            })
-            .catch(() => {
-                toast.error("Error submitting support request");
-            });
-    }
+        .then(() => {
+            toast.success("Support request submitted!");
+            navigate('/support-list');
+            setIsSubmitting(false);
+        })
+        .catch(() => {
+            toast.error("Error submitting support request");
+        });
+        }
     };
 
     return (
@@ -167,10 +169,11 @@ const SupportForm = () => {
                                 Cancel
                             </button>
                             <button
-                                type="submit"
-                                className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="bg-[#A294F9] text-white px-5 py-2 rounded-md hover:bg-[#8a7ce0] transition"
                             >
-                                {id ? "Update Request" : "Submit Request"}
+                            {isSubmitting ? 'Saving...' :id ? "Update" : "Submit"}
                             </button>
                         </div>
                     </form>

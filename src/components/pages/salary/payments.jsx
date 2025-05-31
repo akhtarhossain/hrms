@@ -23,22 +23,46 @@ const PaymentForm = () => {
 
   const initializePayments = (payrollData) => {
     if (!payrollData?.employees) return [];
+    return payrollData.employees.map(employee => {
+      const hasExistingPayments = employee.payments && employee.payments.length > 0;
+      let initialPayments = [];
+      let totalPaidFromExisting = 0;
 
-    return payrollData.employees.map(employee => ({
-      employeeId: employee.employeeId?._id || employee.employeeId,
-      name: employee.name || `${employee.employeeId?.firstName || ''} ${employee.employeeId?.lastName || ''}`.trim(),
-      profilePicture: employee.employeeId?.profilePicture,
-      department: employee.employeeId?.department || 'N/A',
-      designation: employee.employeeId?.designation || 'N/A',
-      totalPayable: employee.totalSalary || 0,
-      totalPaid: employee.totalSalary || 0, // Default to full payment
-      payments: [{
-        date: new Date().toISOString().split('T')[0],
-        type: 'cash',
-        amount: employee.totalSalary || 0,
-        notes: 'Initial payment'
-      }]
-    }));
+      if (hasExistingPayments) {
+        initialPayments = employee.payments.map(p => {
+          const amount = Number(p.amount) || 0;
+          totalPaidFromExisting += amount;
+          return {
+            date: p.date || new Date().toISOString().split('T')[0],
+            type: p.type || 'cash',
+            amount: amount,
+            notes: p.notes || 'Payment',
+            isDisabled: true
+          };
+        });
+      } else {
+        initialPayments.push({
+          date: new Date().toISOString().split('T')[0],
+          type: 'cash',
+          amount: employee.totalSalary || 0,
+          notes: 'Initial payment',
+          isDisabled: false
+        });
+      }
+
+      const totalPaid = initialPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+      return {
+        employeeId: employee.employeeId?._id || employee.employeeId,
+        name: employee.name || `${employee.employeeId?.firstName || ''} ${employee.employeeId?.lastName || ''}`.trim(),
+        profilePicture: employee.employeeId?.profilePicture,
+        department: employee.employeeId?.department || 'N/A',
+        designation: employee.employeeId?.designation || 'N/A',
+        totalPayable: employee.totalSalary || 0,
+        totalPaid: totalPaid,
+        payments: initialPayments
+      };
+    });
   };
 
   useEffect(() => {
@@ -74,37 +98,68 @@ const PaymentForm = () => {
 
   const handlePaymentChange = (employeeIndex, paymentIndex, field, value) => {
     const updatedPayments = [...payments];
+    const paymentToUpdate = updatedPayments[employeeIndex].payments[paymentIndex];
 
-    if (paymentIndex === undefined) {
-      // Update main payment fields
-      updatedPayments[employeeIndex][field] = value;
-    } else {
-      // Update individual payment details
-      updatedPayments[employeeIndex].payments[paymentIndex][field] = value;
+    if (paymentToUpdate.isDisabled) {
+      toast.info("This is an existing payment and cannot be edited.");
+      return;
+    }
 
-      // Recalculate total paid
-      const totalPaid = updatedPayments[employeeIndex].payments.reduce(
-        (sum, payment) => sum + Number(payment.amount || 0), 0
+    if (paymentIndex !== undefined) {
+      const paymentList = updatedPayments[employeeIndex].payments;
+      let newAmount = Number(value);
+
+      const otherPaymentsTotal = paymentList.reduce((sum, p, idx) => (
+        idx === paymentIndex ? sum : sum + Number(p.amount || 0)
+      ), 0);
+
+      const totalPayable = updatedPayments[employeeIndex].totalPayable;
+
+      if ((otherPaymentsTotal + newAmount) > totalPayable) {
+        toast.warning("Amount exceeds total payable. Please enter a lower amount.");
+        newAmount = totalPayable - otherPaymentsTotal;
+        if (newAmount < 0) newAmount = 0;
+      }
+
+      paymentList[paymentIndex][field] = newAmount;
+
+      const totalPaid = paymentList.reduce(
+        (sum, p) => sum + Number(p.amount || 0), 0
       );
       updatedPayments[employeeIndex].totalPaid = totalPaid;
     }
-
     setPayments(updatedPayments);
   };
 
   const addPayment = (employeeIndex) => {
     const updatedPayments = [...payments];
+    const employeePayments = updatedPayments[employeeIndex].payments;
+    const totalPayable = updatedPayments[employeeIndex].totalPayable;
+    const currentTotalPaid = employeePayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+    if (currentTotalPaid >= totalPayable && employeePayments.length > 0) {
+      toast.info("This employee's total payable is already covered. Adding a new payment will increase the paid amount.");
+    }
+
     updatedPayments[employeeIndex].payments.push({
       date: new Date().toISOString().split('T')[0],
       type: 'cash',
       amount: 0,
-      notes: ''
+      notes: 'New payment',
+      isDisabled: false
     });
     setPayments(updatedPayments);
   };
 
   const removePayment = (employeeIndex, paymentIndex) => {
     const updatedPayments = [...payments];
+    const paymentToRemove = updatedPayments[employeeIndex].payments[paymentIndex];
+
+    if (paymentToRemove.isDisabled) {
+      toast.info("Existing payments cannot be removed.");
+      return;
+    }
+
     updatedPayments[employeeIndex].payments.splice(paymentIndex, 1);
 
     // Recalculate total paid
@@ -119,50 +174,51 @@ const PaymentForm = () => {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-
-      // 1. Create a new employees array with only allowed fields
       const updatedEmployees = payroll.employees.map(employee => {
-        // Find corresponding payment data
         const paymentData = payments.find(p =>
           p.employeeId === (employee.employeeId?._id || employee.employeeId)
         );
 
-        // Clean payments array to ensure amount is string if required
-        const cleanedPayments = (paymentData?.payments || []).map(payment => ({
-          ...payment,
-          amount: payment.amount.toString() // Convert amount to string if required
-        }));
+        const cleanedPayments = (paymentData?.payments || []).map(payment => {
+          const { isDisabled, ...restOfPayment } = payment;
+          return {
+            ...restOfPayment,
+            amount: restOfPayment.amount.toString()
+          };
+        });
+
+        const totalPaid = cleanedPayments.reduce(
+          (sum, payment) => sum + Number(payment.amount || 0),
+          0
+        );
+
+        const status = totalPaid === employee.totalSalary ? 'PAID' : 'PENDING';
 
         return {
-          employeeId: employee.employeeId?._id || employee.employeeId, // Just the ID string
-          name: employee.name,
-          totalAllowance: employee.totalAllowance,
-          totalDeduction: employee.totalDeduction,
-          totalSalary: employee.totalSalary,
-          payments: cleanedPayments
-          // Remove totalPaid and totalPayable as per error
+          ...employee,
+          employeeId: employee.employeeId?._id || employee.employeeId,
+          totalPaid: totalPaid,
+          payments: cleanedPayments,
+          status: status
         };
       });
 
-      // 2. Clean the summary.selectedEmployees to be just IDs
+      const allEmployeesPaid = updatedEmployees.every(emp => emp.status === 'PAID');
+      const payrollStatus = allEmployeesPaid ? 'PAID' : 'DRAFT';
+
       const cleanedSummary = {
         ...payroll.summary,
-        selectedEmployees: payroll.summary.selectedEmployees.map(emp =>
-          emp._id // Just the ID string
-        )
+        selectedEmployees: payroll.summary.selectedEmployees.map(emp => emp._id)
       };
 
-      // 3. Create the final payload
       const payload = {
         employees: updatedEmployees,
         summary: cleanedSummary,
         month: payroll.month,
         year: payroll.year,
-        status: 'PAID'
-        // Remove _id, createdAt, updatedAt, __v as per error
+        status: payrollStatus
       };
 
-      // 4. Send the payload
       await PayrollService.updatePayroll(id, payload);
       toast.success("Payments saved successfully");
       navigate('/payroll');
@@ -173,6 +229,7 @@ const PaymentForm = () => {
       setLoading(false);
     }
   };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -311,18 +368,18 @@ const PaymentForm = () => {
                             {payment.payments.map((pmt, pmtIndex) => (
                               <div
                                 key={pmtIndex}
-                                className="grid grid-cols-12 gap-3 items-center p-3 rounded"
+                                className={`grid grid-cols-12 gap-3 items-center p-3 rounded ${pmt.isDisabled ? 'opacity-70' : ''}`}
                               >
                                 {/* Date */}
                                 <div className="col-span-3">
                                   <label className="block text-xs text-gray-500 mb-1">Date</label>
                                   <input
                                     type="date"
-                                    name={name}
-                                    placeholder="Year of Passing"
+                                    name="date" // Use a meaningful name attribute
                                     value={pmt.date}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'date', e.target.value)}
-                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 ${pmt.isDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}`}
+                                    disabled={pmt.isDisabled}
                                   />
                                 </div>
 
@@ -332,7 +389,8 @@ const PaymentForm = () => {
                                   <select
                                     value={pmt.type}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'type', e.target.value)}
-                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 ${pmt.isDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}`}
+                                    disabled={pmt.isDisabled}
                                   >
                                     {paymentTypes.map(type => (
                                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -344,12 +402,12 @@ const PaymentForm = () => {
                                 <div className="col-span-3">
                                   <label className="block text-xs text-gray-500 mb-1">Amount</label>
                                   <div className="relative">
-
                                     <input
                                       type="number"
                                       value={pmt.amount}
                                       onChange={(e) => handlePaymentChange(index, pmtIndex, 'amount', e.target.value)}
-                                      className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+                                      className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 ${pmt.isDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}`}
+                                      disabled={pmt.isDisabled}
                                     />
                                   </div>
                                 </div>
@@ -361,20 +419,22 @@ const PaymentForm = () => {
                                     type="text"
                                     value={pmt.notes}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'notes', e.target.value)}
-                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+                                    className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 ${pmt.isDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}`}
+                                    disabled={pmt.isDisabled}
                                   />
                                 </div>
 
-                                {/* Delete Button */}
+                                {/* Delete Button - only show for editable payments */}
                                 <div className="col-span-1 flex justify-end">
-                                  <button
-                                    onClick={() => removePayment(index, pmtIndex)}
-                                    // style={{ backgroundColor: '#A294F9' }}
-                                    className="p-2 rounded shadow cursor-pointer bg-red-500 hover:bg-red-200 mt-3"
-                                    title="Remove payment"
-                                  >
-                                    <FaTrash className="text-white" />
-                                  </button>
+                                  {!pmt.isDisabled && ( // Only render if not disabled
+                                    <button
+                                      onClick={() => removePayment(index, pmtIndex)}
+                                      className="p-2 rounded shadow cursor-pointer bg-red-500 hover:bg-red-200 mt-3"
+                                      title="Remove payment"
+                                    >
+                                      <FaTrash className="text-white" />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))}

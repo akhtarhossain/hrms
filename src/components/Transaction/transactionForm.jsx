@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 const TransactionTypeForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     transactionType: "allowance",
     name: "",
@@ -38,7 +38,8 @@ const TransactionTypeForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+    setIsSubmitting(true);
+
     const transactionTypeData = {
       transactionType: formData.transactionType,
       name: formData.name,
@@ -52,6 +53,7 @@ const TransactionTypeForm = () => {
         })
         .catch((error) => {
           toast.error('Error updating transaction type');
+          setIsSubmitting(false);
         });
     } else {
       TransactionTypeService.createTransactionType(transactionTypeData)
@@ -61,6 +63,7 @@ const TransactionTypeForm = () => {
         })
         .catch(error => {
           toast.error("Error saving transaction type");
+          setIsSubmitting(false);
         });
     }
   };
@@ -120,9 +123,10 @@ const TransactionTypeForm = () => {
               </button>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="px-4 py-2 rounded shadow text-white bg-[#A294F9]"
               >
-                {id ? 'Update' : 'Save'}
+                {isSubmitting ? 'Saving...' : id ? 'Update' : 'Save'}
               </button>
             </div>
           </form>
