@@ -6,6 +6,8 @@ import { FiDollarSign } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
+import bitsbuffer from "../../../assets/bitsbuffer.jpeg";
+
 
 
 const PayrollDetailTable = () => {
@@ -38,21 +40,20 @@ const PayrollDetailTable = () => {
     const remainingBalance = totalSalary - totalPaid;
     const status = remainingBalance > 0 ? 'PENDING' : 'PAID';
 
-    const payMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' }); // e.g., May 2025
+    const payMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
 
-    // Header: Company + Payslip Title
-    doc.setFontSize(20);
-    doc.setTextColor(54, 69, 79);
-    doc.text('BITS BUFFER', 105, 15, { align: 'center' });
+    // Add Company Logo
+    doc.addImage(bitsbuffer, 'JPEG', 85, 15, 42, 8); // Adjusted position and size
 
+    // Header: Payslip Title
     doc.setFontSize(16);
     doc.setTextColor(33, 33, 33);
-    doc.text(`Payslip – ${payMonth}`, 105, 25, { align: 'center' });
+    doc.text(`Payslip – ${payMonth}`, 105, 35, { align: 'center' });
 
     // Employee Info
     doc.setFontSize(12);
     autoTable(doc, {
-      startY: 35,
+      startY: 45,
       body: [
         ['Employee Name', fullName],
         ['Department', department || 'N/A'],
@@ -65,18 +66,16 @@ const PayrollDetailTable = () => {
       margin: { left: 20 }
     });
 
-    // Allowances
+    // Allowances (simplified)
     doc.text('Allowances', 20, doc.lastAutoTable.finalY + 10);
-    const allowanceData = emp.allowances.map(item => [
+    const allowanceData = emp.allowances?.map(item => [
       item.type,
-      `$${item.newSalary?.toFixed(2) || 0}`,
-      item.startDate ? new Date(item.startDate).toLocaleDateString() : '—',
-      item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'
-    ]);
-    allowanceData.push(['Total Allowance', `$${emp.totalAllowance?.toFixed(2) || 0}`, '', '']);
+      `$${(item.newSalary || 0).toFixed(2)}`
+    ]) || [];
+    allowanceData.push(['Total Allowance', `$${(emp.totalAllowance || 0).toFixed(2)}`]);
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 15,
-      head: [['Type', 'Amount', 'Start Date', 'End Date']],
+      head: [['Type', 'Amount']],
       body: allowanceData,
       theme: 'grid',
       styles: { fontSize: 10 },
@@ -84,18 +83,16 @@ const PayrollDetailTable = () => {
       margin: { left: 20 }
     });
 
-    // Deductions
+    // Deductions (simplified)
     doc.text('Deductions', 20, doc.lastAutoTable.finalY + 10);
-    const deductionData = emp.deductions.map(item => [
+    const deductionData = emp.deductions?.map(item => [
       item.type,
-      `$${item.newSalary?.toFixed(2) || 0}`,
-      item.startDate ? new Date(item.startDate).toLocaleDateString() : '—',
-      item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'
-    ]);
-    deductionData.push(['Total Deduction', `$${emp.totalDeduction?.toFixed(2) || 0}`, '', '']);
+      `$${(item.newSalary || 0).toFixed(2)}`
+    ]) || [];
+    deductionData.push(['Total Deduction', `$${(emp.totalDeduction || 0).toFixed(2)}`]);
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 15,
-      head: [['Type', 'Amount', 'Start Date', 'End Date']],
+      head: [['Type', 'Amount']],
       body: deductionData,
       theme: 'grid',
       styles: { fontSize: 10 },
@@ -105,12 +102,12 @@ const PayrollDetailTable = () => {
 
     // Payments
     doc.text('Payments Made', 20, doc.lastAutoTable.finalY + 10);
-    const paymentData = emp.payments.map(p => [
+    const paymentData = emp.payments?.map(p => [
       new Date(p.date).toLocaleDateString(),
       p.type,
-      `$${parseFloat(p.amount).toFixed(2)}`,
+      `$${parseFloat(p.amount || 0).toFixed(2)}`,
       p.notes || '—'
-    ]);
+    ]) || [];
     paymentData.push(['Total Paid', '', `$${totalPaid.toFixed(2)}`, '']);
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 15,
