@@ -17,6 +17,7 @@ const LeavePolicyList = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [leaveBalances, setLeaveBalances] = useState({});
 
   const [filters, setFilters] = useState({
     title: '',
