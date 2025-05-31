@@ -113,14 +113,14 @@ const EmployeeForm = () => {
 
 useEffect(() => {
  LeavePolicyService.getLeavePolicies()
-            .then(response => {
-                console.log("Leave Policies Response:", response.list);
-                setLeavePoliciesData(response.list || []);
-            })
-            .catch(error => {
-                console.error('Error fetching leave policies:', error);
-                toast.error('Failed to load leave policies');
-            });
+    .then(response => {
+        console.log("Leave Policies Response:", response.list);
+        setLeavePoliciesData(response.list || []);
+    })
+    .catch(error => {
+        console.error('Error fetching leave policies:', error);
+        toast.error('Failed to load leave policies');
+    });
 
   if (id) {
     employeeService.getEmployeeById(id)
@@ -158,6 +158,9 @@ useEffect(() => {
           employeeStatus: employeeData.employeeStatus || '',
           leavePolicy: employeeData.leavePolicy || '',
           degreeTitle: employeeData.degreeTitle || '',
+          bankName: employeeData.bankName || '',
+          accountType: employeeData.accountType || '',
+          accountNumber: employeeData.accountNumber || '',
           certificates: employeeData.certificates || [],
           educations: employeeData.educations || [],
           dateOfBirth: formatDateForInput(employeeData.dateOfBirth),
@@ -208,7 +211,8 @@ useEffect(() => {
   const requiredFields = {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
-    3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus','leavePolicy'],
+    3: ['employeeId', 'department', 'designation', 'dateOfJoining',
+      'employmentType', 'employeeStatus','leavePolicy','bankName' , 'accountType' , 'accountNumber'],
     4: ['educations'],
     6: ['certificates'],
   };
@@ -1161,6 +1165,7 @@ const removeDeduction = (index) => {
               </div>
             )}
             {step === 3 && (
+              <div>
               <div className="flex flex-wrap -mx-2">
                 {renderInput('Employee ID', 'employeeId')}
                 {renderInput('Department', 'department')}
@@ -1169,7 +1174,14 @@ const removeDeduction = (index) => {
                 {renderInput('Employment Type', 'employmentType')}
                 {renderInput('Employee Status', 'employeeStatus')}
                 {renderInput('Leave Policy', 'leavePolicy')}
-
+                </div>
+               {/* Bank Information */}
+                <h2 className="text-xl font-semibold mt-2 mb-4 text-gray-800">Bank Information</h2>
+                <div className="flex flex-wrap -mx-2">
+                  {renderInput('Bank Name', 'bankName')}
+                  {renderInput('Account Type', 'accountType')}
+                  {renderInput('Account Number', 'accountNumber')}
+                </div>
               </div>
             )}
             {step === 4 && (
