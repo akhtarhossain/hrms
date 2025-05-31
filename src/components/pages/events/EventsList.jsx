@@ -116,12 +116,11 @@ const EventsList = () => {
   const applyFilters = () => {
     setFilters(pendingFilters); // pendingFilters ko actual filters mein update karein
     setCurrentPage(1); // Filters apply karne par page ko 1 par reset karein
-    // fetchEvents ab useEffect ki wajah se automatically run hoga jab 'filters' state change hogi
-    setShowFilter(false); // Filters ko hide karein
+    // showFilter ko true hi rehne denge takay filter section open rahe
   };
 
-  // Filters reset karne ka function
-  const resetFilters = () => {
+  // Filters reset aur filter section close karne ka function
+  const closeAndResetFilters = () => { // Function ka naam change kiya
     const initialFilters = {
       eventTitle: "",
       eventType: "",
@@ -130,7 +129,6 @@ const EventsList = () => {
     setPendingFilters(initialFilters); // Pending filters ko reset karein
     setFilters(initialFilters); // Applied filters ko bhi reset karein
     setCurrentPage(1); // Page ko 1 par reset karein
-    // fetchEvents ab useEffect ki wajah se automatically run hoga
     setShowFilter(false); // Filters ko hide karein
   };
 
@@ -241,10 +239,10 @@ const EventsList = () => {
             </div>
             <div className="flex justify-end space-x-2">
               <button
-                onClick={resetFilters}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={closeAndResetFilters}
+                className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white border-gray-300 cursor-pointer transition-colors"
               >
-                Reset
+                Close 
               </button>
               <button
                 onClick={applyFilters}
@@ -369,5 +367,4 @@ const EventsList = () => {
     </>
   );
 };
-
 export default EventsList;
