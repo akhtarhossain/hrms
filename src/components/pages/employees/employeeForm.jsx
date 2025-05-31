@@ -11,6 +11,7 @@ import { FaEdit, FaTrashAlt } from 'react-icons/fa';
 import countries from 'i18n-iso-countries';
 import enLocale from 'i18n-iso-countries/langs/en.json';
 import TransactionTypeService from '../../../services/TransactionTypeService';
+import LeavePolicyService from '../../../services/LeavePolicyService';
 
 const EmployeeForm = () => {
   const [step, setStep] = useState(1);
@@ -37,6 +38,8 @@ const EmployeeForm = () => {
   const [totalSalary, setTotalSalary] = useState(0);
   const [allowanceTypes, setAllowanceTypes] = useState([]);
   const [deductionTypes, setDeductionTypes] = useState([]);
+  const [leavePoliciesData, setLeavePoliciesData] = useState([]); 
+  
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -61,6 +64,7 @@ const EmployeeForm = () => {
     dateOfJoining: '',
     employmentType: '',
     employeeStatus: '',
+    leavePolicy:'', 
     degreeTitle: '',
     certificates: [],
     educations: [],
@@ -108,6 +112,16 @@ const EmployeeForm = () => {
   }, []);
 
 useEffect(() => {
+ LeavePolicyService.getLeavePolicies()
+            .then(response => {
+                console.log("Leave Policies Response:", response.list);
+                setLeavePoliciesData(response.list || []);
+            })
+            .catch(error => {
+                console.error('Error fetching leave policies:', error);
+                toast.error('Failed to load leave policies');
+            });
+
   if (id) {
     employeeService.getEmployeeById(id)
       .then((response) => {
@@ -142,6 +156,7 @@ useEffect(() => {
           dateOfJoining: formatDateForInput(employeeData.dateOfJoining),
           employmentType: employeeData.employmentType || '',
           employeeStatus: employeeData.employeeStatus || '',
+          leavePolicy: employeeData.leavePolicy || '',
           degreeTitle: employeeData.degreeTitle || '',
           certificates: employeeData.certificates || [],
           educations: employeeData.educations || [],
@@ -193,7 +208,7 @@ useEffect(() => {
   const requiredFields = {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
-    3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus'],
+    3: ['employeeId', 'department', 'designation', 'dateOfJoining', 'employmentType', 'employeeStatus','leavePolicy'],
     4: ['educations'],
     6: ['certificates'],
   };
@@ -515,7 +530,29 @@ const renderInput = (label, name, type = 'text', placeholder = '', onChangeHandl
       </div>
     );
   }
-
+if (name === 'leavePolicy') {
+  return (
+    <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <select
+        name={name}
+        value={formData[name]} // This should store the selected _id
+        onChange={handleChange}
+        className={`w-full px-4 py-2 border ${errors[name] ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300`}
+      >
+        <option value="">Select Leave Policy</option>
+        {leavePoliciesData.map(policy => (
+          <option key={policy._id} value={policy._id}>
+            {policy.title}
+          </option>
+        ))}
+      </select>
+      {errors[name] && <p className="text-sm text-red-500 mt-1">{errors[name]}</p>}
+    </div>
+  );
+}
   if (name === 'employeeStatus') {
     return (
       <div className="w-full md:w-1/2 px-2 mb-4" key={name}>
@@ -1131,6 +1168,8 @@ const removeDeduction = (index) => {
                 {renderInput('Date of Joining', 'dateOfJoining', 'date')}
                 {renderInput('Employment Type', 'employmentType')}
                 {renderInput('Employee Status', 'employeeStatus')}
+                {renderInput('Leave Policy', 'leavePolicy')}
+
               </div>
             )}
             {step === 4 && (
