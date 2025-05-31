@@ -7,7 +7,7 @@ const mockEmployees = [
   {
     id: 1,
     name: 'John Doe',
-    date: '2025-05-20',
+    date: '2025-05-28',
     status: 'Present',
     checkIn: '09:05 AM',
     checkOut: '06:00 PM',
@@ -15,7 +15,7 @@ const mockEmployees = [
   {
     id: 2,
     name: 'Jane Smith',
-    date: '2025-05-20',
+    date: '2025-05-28',
     status: 'Absent',
     checkIn: '',
     checkOut: '',
@@ -23,7 +23,7 @@ const mockEmployees = [
   {
     id: 3,
     name: 'Ali Khan',
-    date: '2025-05-20',
+    date: '2025-05-28',
     status: 'Leave',
     checkIn: '',
     checkOut: '',

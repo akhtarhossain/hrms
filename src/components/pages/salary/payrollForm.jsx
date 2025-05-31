@@ -7,7 +7,6 @@ import { toast } from 'react-toastify';
 import DeleteModal from '../../../shared/common/DeleteConfirmation';
 import EmploySalaryService from '../../../services/EmploySalaryService';
 import employeeService from '../../../services/employeeService';
-import EmployeeSalaryForm from '../salary/employSalary';
 import PayrollService from '../../../services/PayrollService';
 import { BsCurrencyDollar } from 'react-icons/bs';
 import { FaTrash } from 'react-icons/fa6';
@@ -43,9 +42,10 @@ const PayrollForm = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: '',
-    currentSalary: '',
+    currentSalary: '0',
     newSalary: '',
     startDate: '',
     endDate: '',
@@ -69,13 +69,10 @@ const PayrollForm = () => {
     const allowancesTotal = formData.allowances.reduce((total, allowance) => {
       return total + (Number(allowance.newSalary) || 0);
     }, 0);
-
     const deductionsTotal = formData.deductions.reduce((total, deduction) => {
       return total + (Number(deduction.newSalary) || 0);
     }, 0);
-
     const netSalary = allowancesTotal - deductionsTotal;
-
     setModalTotals({
       totalAllowances: allowancesTotal,
       totalDeductions: deductionsTotal,
@@ -105,14 +102,12 @@ const PayrollForm = () => {
         const payrollForThisMonth = allPayrolls.find(p =>
           `${monthNames[p.month - 1]}-${p.year}` === monthYear
         );
-
         if (payrollForThisMonth) {
           setExistingPayroll(payrollForThisMonth);
           setIsExistingPayroll(true);
           const employeeIds = payrollForThisMonth.employees
             ?.filter(e => e?.employeeId)
             ?.map(e => e.employeeId._id || e.employeeId) || [];
-
           setSelectedEmployees(employeeIds);
           setTotalAllowances(payrollForThisMonth.summary.totalAllowance);
           setTotalDeductions(payrollForThisMonth.summary.totalDeduction);
@@ -153,21 +148,16 @@ const PayrollForm = () => {
       const payrollEmployee = existingPayroll.employees.find(e =>
         (e.employeeId._id || e.employeeId) === employee._id
       );
-      if (payrollEmployee && payrollEmployee.allowances?.length > 0) {
-        return payrollEmployee.allowances.reduce((total, allowance) => {
-          return total + (Number(allowance?.newSalary) || 0);
-        }, 0);
+      if (payrollEmployee) {
+        return payrollEmployee.allowances?.reduce((total, allowance) =>
+          total + (Number(allowance?.newSalary) || 0), 0) || 0;
       }
     }
-
-    if (!employee || !Array.isArray(employee.allowances)) return 0;
-    return employee.allowances.reduce((total, allowance) => {
-      return total + (Number(allowance?.newSalary) || 0);
-    }, 0);
+    return employee.allowances?.reduce((total, allowance) =>
+      total + (Number(allowance?.newSalary) || 0), 0) || 0;
   };
 
   const calculateTotalDeductions = (employee) => {
-
     if (existingPayroll) {
       const payrollEmployee = existingPayroll.employees.find(e =>
         (e.employeeId._id || e.employeeId) === employee._id
@@ -178,7 +168,6 @@ const PayrollForm = () => {
         }, 0);
       }
     }
-
     if (!employee || !Array.isArray(employee.deductions)) return 0;
     return employee.deductions.reduce((total, deduction) => {
       return total + (Number(deduction?.newSalary) || 0);
@@ -188,7 +177,6 @@ const PayrollForm = () => {
   const calculateTotalSalary = (employee) => {
     return calculateTotalAllowances(employee) - calculateTotalDeductions(employee);
   };
-
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
@@ -240,19 +228,15 @@ const PayrollForm = () => {
         ? prev.filter(id => id !== employeeId)
         : [...prev, employeeId]
     );
-    console.log(employeeId, "record");
-
   };
 
   const toggleSelectAll = () => {
     if (selectAll) {
-      // Deselect all employees from current page only
       const currentPageIds = salaries.map(emp => emp._id);
       setSelectedEmployees(prev =>
         prev.filter(id => !currentPageIds.includes(id))
       );
     } else {
-      // Select all employees on current page (add to existing selection)
       const currentPageIds = salaries.map(emp => emp._id);
       setSelectedEmployees(prev => {
         const newSelection = [...prev];
@@ -267,7 +251,7 @@ const PayrollForm = () => {
     setSelectAll(!selectAll);
   };
   useEffect(() => {
-    // Check if all employees on current page are selected
+
     const allCurrentPageSelected = salaries.length > 0 &&
       salaries.every(emp => selectedEmployees.includes(emp._id));
     setSelectAll(allCurrentPageSelected);
@@ -289,20 +273,15 @@ const PayrollForm = () => {
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
     };
-
-    // First try to get data from payroll if exists
     let payrollEmployeeData = null;
     if (existingPayroll) {
       payrollEmployeeData = existingPayroll.employees.find(e =>
         (e.employeeId._id || e.employeeId) === employee._id
       );
     }
-
-    // Use payroll data if available, otherwise fall back to employee data
     const allowances = payrollEmployeeData?.allowances || employee.allowances || [];
     const deductions = payrollEmployeeData?.deductions || employee.deductions || [];
 
-    // Calculate initial totals based on the source we're using
     const initialAllowances = allowances.reduce((sum, a) => sum + (Number(a.newSalary) || 0), 0);
     const initialDeductions = deductions.reduce((sum, d) => sum + (Number(d.newSalary) || 0), 0);
     const initialNet = initialAllowances - initialDeductions;
@@ -344,27 +323,24 @@ const PayrollForm = () => {
       toast.warning("Please select at least one employee");
       return;
     }
-
+    setIsSubmitting(true); 
     try {
-      // First fetch ALL employees (without pagination)
       const response = await employeeService.getEmployee({
-        l: 1000, // Large number to get all employees
+        l: 1000,
         o: 0
       });
 
       const allEmployees = response?.list || [];
-
-      // Filter to only selected employees
       const allSelectedEmployees = allEmployees.filter(emp =>
         selectedEmployees.includes(emp._id)
       );
 
       if (allSelectedEmployees.length === 0) {
         toast.error("No employee data found for selected employees");
+        setIsSubmitting(false);
         return;
       }
 
-      // Rest of your existing code...
       const cleanAllowances = (arr) =>
         arr.map(({ type, currentSalary, newSalary, startDate, endDate }) => ({
           type,
@@ -374,9 +350,8 @@ const PayrollForm = () => {
           endDate: endDate ? new Date(endDate).toISOString() : null
         }));
 
-      // Process each selected employee with their complete data
+      // Prepare employee objects for the payload
       const selectedEmployeeObjects = allSelectedEmployees.map(emp => {
-        // Check if this employee exists in existing payroll data
         let payrollEmployeeData = null;
         if (existingPayroll) {
           payrollEmployeeData = existingPayroll.employees.find(e =>
@@ -384,11 +359,11 @@ const PayrollForm = () => {
           );
         }
 
-        // Use payroll data if available, otherwise fall back to employee data
         const allowances = payrollEmployeeData?.allowances || emp.allowances || [];
         const deductions = payrollEmployeeData?.deductions || emp.deductions || [];
 
-        return {
+        // Create base employee object
+        const employeeObj = {
           employeeId: emp._id,
           name: `${emp.firstName} ${emp.lastName}`,
           totalAllowance: calculateTotalAllowances(emp),
@@ -397,29 +372,50 @@ const PayrollForm = () => {
           allowances: cleanAllowances(allowances),
           deductions: cleanAllowances(deductions)
         };
+
+        // For updates, preserve existing fields if they exist
+        if (existingPayroll && payrollEmployeeData) {
+          employeeObj.status = payrollEmployeeData.status || "DRAFT";
+          employeeObj.totalPaid = payrollEmployeeData.totalPaid || 0;
+          if (payrollEmployeeData.payments) {
+            employeeObj.payments = payrollEmployeeData.payments;
+          }
+        }
+
+        return employeeObj;
       });
 
-      // Calculate totals for all selected employees
       const totals = selectedEmployeeObjects.reduce((acc, emp) => ({
         totalAllowance: acc.totalAllowance + emp.totalAllowance,
         totalDeduction: acc.totalDeduction + emp.totalDeduction,
         totalSalary: acc.totalSalary + emp.totalSalary
       }), { totalAllowance: 0, totalDeduction: 0, totalSalary: 0 });
 
-      // Prepare final payroll data
+      // Prepare the payroll data
       const payrollData = {
         employees: selectedEmployeeObjects,
         month: monthNum.toString(),
         year: year.toString(),
         payrollDate: new Date().toISOString(),
-        status: "DRAFT",
+        status: existingPayroll ? existingPayroll.status : "DRAFT", // Preserve status if updating
         summary: {
           totalAllowance: totals.totalAllowance,
           totalDeduction: totals.totalDeduction,
           totalSalary: totals.totalSalary,
-          selectedEmployees
+          selectedEmployees: existingPayroll
+            ? existingPayroll.summary.selectedEmployees.map(emp =>
+              emp._id || emp // Handle both object and ID cases
+            )
+            : selectedEmployees
         }
       };
+
+      // For updates, preserve any existing fields that should remain unchanged
+      // if (existingPayroll) {
+      //   payrollData._id = existingPayroll._id;
+      //   payrollData.createdAt = existingPayroll.createdAt;
+      //   payrollData.__v = existingPayroll.__v;
+      // }
 
       console.log("Payroll payload being sent:", payrollData);
       const result = isExistingPayroll
@@ -436,7 +432,9 @@ const PayrollForm = () => {
     } catch (error) {
       console.error("Error in handleCreatePayroll:", error);
       toast.error(error.response?.data?.message || "Failed to process payroll");
-    }
+    } finally {
+    setIsSubmitting(false); // Re-enable button
+  }
   };
 
 
@@ -467,7 +465,7 @@ const PayrollForm = () => {
       ...prev,
       allowances: [...prev.allowances, {
         type: "",
-        currentSalary: "",
+        currentSalary: "0",
         newSalary: "",
         startDate: "",
         endDate: ""
@@ -480,7 +478,7 @@ const PayrollForm = () => {
       ...prev,
       deductions: [...prev.deductions, {
         type: "",
-        currentSalary: "",
+        currentSalary: "0",
         newSalary: "",
         startDate: "",
         endDate: ""
@@ -526,6 +524,7 @@ const PayrollForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Update the local state only
     const updatedEmployee = {
       ...currentEmployee,
       allowances: formData.allowances.map(allowance => ({
@@ -544,14 +543,41 @@ const PayrollForm = () => {
       endDate: formData.endDate
     };
 
+    // Update salaries list
     const updatedSalaries = salaries.map(emp =>
       emp._id === currentEmployee._id ? updatedEmployee : emp
     );
     setSalaries(updatedSalaries);
-    setShowEditForm(false);
 
-    toast.success("Salary details saved successfully");
+    // Also update existingPayroll if it exists
+    if (existingPayroll) {
+      const updatedEmployees = existingPayroll.employees.map(emp => {
+        if ((emp.employeeId._id || emp.employeeId) === currentEmployee._id) {
+          return {
+            ...emp,
+            allowances: formData.allowances,
+            deductions: formData.deductions,
+            totalAllowance: modalTotals.totalAllowances,
+            totalDeduction: modalTotals.totalDeductions,
+            totalSalary: modalTotals.totalSalary
+          };
+        }
+        return emp;
+      });
+
+      setExistingPayroll({
+        ...existingPayroll,
+        employees: updatedEmployees
+      });
+    }
+
+    setShowEditForm(false);
+    toast.success("Salary details updated successfully");
   };
+
+  const closeEditModal = () => {
+    setShowEditForm(false)
+  }
 
   return (
     <>
@@ -761,11 +787,15 @@ const PayrollForm = () => {
                 </button>
                 <button
                   onClick={handleCreatePayroll}
+                  disabled={isSubmitting}
                   className="px-6 py-3 rounded-md shadow text-white font-medium flex items-center"
                   style={{ backgroundColor: '#A294F9' }}
                 >
-                  {isExistingPayroll ? 'Update' : 'Create'} Payroll for {month} {year}
+                  {isSubmitting
+                    ? `${isExistingPayroll ? 'Updating' : 'Creating'}...`
+                    : `${isExistingPayroll ? 'Update' : 'Create'} Payroll for ${month} ${year}`}
                 </button>
+
               </div>
             )}
           </div>
@@ -797,10 +827,10 @@ const PayrollForm = () => {
           <div
             style={{
               background: '#F5EFFF',
-              padding: "20px 30px",
+              padding: "30px 40px",
               borderRadius: "8px",
               width: "100%",
-              maxWidth: "1000px",
+              maxWidth: "1200px",
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
@@ -841,8 +871,11 @@ const PayrollForm = () => {
                         </div>
 
                         {formData.allowances.map((allowance, index) => (
-                          <div key={`allowance-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
-                            <div className="md:col-span-1">
+                          <div
+                            key={`allowance-${index}`}
+                            className="flex flex-wrap md:flex-nowrap items-end gap-3 mb-3 p- rounded-md"
+                          >
+                            <div className="flex-1 min-w-[150px]">
                               <label className="block text-sm text-gray-600 mb-1">Type</label>
                               <select
                                 name="type"
@@ -860,7 +893,7 @@ const PayrollForm = () => {
                               </select>
                             </div>
 
-                            <div className="md:col-span-1">
+                            <div className="flex-1 min-w-[130px]">
                               <label className="block text-sm text-gray-600 mb-1">Current Value</label>
                               <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -870,7 +903,7 @@ const PayrollForm = () => {
                                   type="number"
                                   name="currentSalary"
                                   value={allowance.currentSalary}
-                                  placeholder="currentSalary"
+                                  placeholder="Current Salary"
                                   onChange={(e) => handleAllowanceChange(index, e)}
                                   className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                   required
@@ -878,7 +911,7 @@ const PayrollForm = () => {
                               </div>
                             </div>
 
-                            <div className="md:col-span-1">
+                            <div className="flex-1 min-w-[130px]">
                               <label className="block text-sm text-gray-600 mb-1">New Value</label>
                               <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -895,7 +928,7 @@ const PayrollForm = () => {
                               </div>
                             </div>
 
-                            <div className="md:col-span-1">
+                            <div className="flex-1 min-w-[130px]">
                               <label className="block text-sm text-gray-600 mb-1">Start Date</label>
                               <input
                                 type="date"
@@ -906,7 +939,7 @@ const PayrollForm = () => {
                               />
                             </div>
 
-                            <div className="md:col-span-1">
+                            <div className="flex-1 min-w-[130px]">
                               <label className="block text-sm text-gray-600 mb-1">End Date</label>
                               <input
                                 type="date"
@@ -917,11 +950,11 @@ const PayrollForm = () => {
                               />
                             </div>
 
-                            <div className="md:col-span-5 flex justify-end">
+                            <div className="flex-shrink-0">
                               <button
                                 type="button"
                                 onClick={() => removeAllowance(index)}
-                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                                className="p-2 mb-1 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
                               >
                                 <FaTrash className="text-white" />
                               </button>
@@ -952,7 +985,8 @@ const PayrollForm = () => {
                         </div>
 
                         {formData.deductions.map((deduction, index) => (
-                          <div key={`deduction-${index}`} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4 items-end p-3">
+                          <div key={`deduction-${index}`}
+                            className="flex flex-wrap md:flex-nowrap items-end gap-3 mb-3 p- rounded-md">
                             <div className="md:col-span-1">
                               <label className="block text-sm text-gray-600 mb-1">Type</label>
                               <select
@@ -1028,17 +1062,18 @@ const PayrollForm = () => {
                               />
                             </div>
 
-                            <div className="md:col-span-5 flex justify-end">
+                            <div className="md:col-span-1 flex justify-center">
                               <button
                                 type="button"
                                 onClick={() => removeDeduction(index)}
-                                className="p-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
+                                className="p-2  mb-2 rounded-md shadow cursor-pointer bg-[#F87171] hover:bg-[#ef4444] transition"
                               >
                                 <FaTrash className="text-white" />
                               </button>
                             </div>
                           </div>
                         ))}
+
 
                         {formData.deductions.length > 0 && (
                           <div className="flex justify-end mt-2">

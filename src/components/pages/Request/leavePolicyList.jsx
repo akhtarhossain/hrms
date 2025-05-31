@@ -56,7 +56,7 @@ const LeavePolicyList = () => {
   };
 
   const confirmDelete = () => {
-    LeavePolicyService.deletePolicy(selectedPolicyId)
+    LeavePolicyService.deleteLeavePolicy(selectedPolicyId)
       .then(() => {
         toast.success("Leave policy deleted successfully");
         setPolicies(prev => prev.filter(p => p._id !== selectedPolicyId));

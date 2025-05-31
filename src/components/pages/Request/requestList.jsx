@@ -183,7 +183,7 @@ const applyFilters = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeFilter}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow cursor-pointer"
               >
                 Close
               </button>
@@ -264,20 +264,20 @@ const applyFilters = () => {
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
-                          title="View"
-                          className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#A294F9' }}
-                          onClick={() => navigate(`/leave-details/${leave._id}`)}
-                        >
-                          <FaEye className="text-white" />
-                        </button>
-                        <button
                           title="Edit"
                           className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#FFC107' }}
+                          style={{ backgroundColor: '#A294F9' }}
                           onClick={() => navigate(`/request-form/${leave._id}`)}
                         >
                           <FaEdit className="text-white" />
+                        </button>
+                           <button
+                          title="View"
+                          className="p-2 rounded shadow cursor-pointer"
+                          style={{ backgroundColor: '#34D399' }}
+                          onClick={() => navigate(`/leave-details/${leave._id}`)}
+                        >
+                          <FaEye className="text-white" />
                         </button>
                         <button
                           title="Delete"

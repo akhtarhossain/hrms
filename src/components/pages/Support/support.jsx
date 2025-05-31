@@ -114,7 +114,6 @@ const Support = () => {
     setFilters({
       name: '',
       subject: '',
-
     });
     // setCurrentPage(1);
     fetchSupportTickets();
@@ -176,22 +175,22 @@ const Support = () => {
               </div>
 
             </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={closeFilter}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
-              >
-                Close
-              </button>
-              <button
-                onClick={applyFilters}
-                className="px-4 py-2 rounded shadow text-white cursor-pointer flex items-center"
-                style={{ backgroundColor: '#A294F9' }}
-              >
-                <FaSearch className="mr-2" />
-                Search
-              </button>
-            </div>
+           <div className="flex justify-end space-x-2">
+            <button
+              onClick={closeFilter}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              onClick={applyFilters}
+              className="px-4 py-2 rounded shadow text-white cursor-pointer flex items-center"
+              style={{ backgroundColor: '#A294F9' }}
+            >
+              <FaSearch className="mr-2" />
+              Search
+            </button>
+          </div>
           </div>
         </div>
 
@@ -232,9 +231,8 @@ const Support = () => {
                   <tr key={ticket._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
                     <td className="px-4 py-3">{ticket.name}</td>
                     <td className="px-4 py-3">{ticket.subject}</td>
-                    <td className="px-4 py-3">
-                      {new Date(ticket.createdAt).toISOString().split('T')[0]}
-                    </td>                    <td className="px-4 py-3">  {getStatusIcon(ticket.status)}</td>
+                    <td className="px-4 py-3">{new Date(ticket.createdAt).toISOString().split('T')[0]}</td>                   
+                    <td className="px-4 py-3">  {getStatusIcon(ticket.status)}</td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
