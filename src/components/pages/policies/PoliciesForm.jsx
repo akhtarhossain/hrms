@@ -20,6 +20,7 @@ const PoliciesForm = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // URL se ID lenge
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     category: "All Categories",
@@ -57,7 +58,6 @@ const PoliciesForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     const policyData = {
       title: formData.title,
       category: formData.category,
@@ -65,13 +65,11 @@ const PoliciesForm = () => {
       effectiveDate: formData.effectiveDate,
       description: formData.description,
     };
-
-    let action;
-    if (id) {
-      action = PolicyService.updatePolicy(id, policyData);
-    } else {
-      action = PolicyService.createPolicy(policyData);
-    }
+      setIsSubmitting(true);
+    
+    const action = id 
+      ? PolicyService.updatePolicy(id, policyData)
+      : PolicyService.createPolicy(policyData);
 
     action
       .then(() => {
@@ -81,6 +79,9 @@ const PoliciesForm = () => {
       .catch((error) => {
         console.error("Error saving policy:", error);
         toast.error("Failed to save policy");
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
 
@@ -192,9 +193,10 @@ const PoliciesForm = () => {
               </button>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="px-4 py-2 rounded shadow text-white bg-[#A294F9]"
               >
-                {id ? "Update" : "Save"}
+              {isSubmitting ? 'Saving.....' : id ? "Update" : "Submit"}
               </button>
             </div>
           </form>
