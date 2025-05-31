@@ -14,7 +14,6 @@ const LeavePolicyForm = () => {
         sickLeave: '',
         maternityLeave: '',
         paternityLeave: '',
-        unpaidLeave: ''
     });
 
     const payload = {
@@ -23,7 +22,6 @@ const LeavePolicyForm = () => {
   sickLeave: Number(formData.sickLeave),
   maternityLeave: Number(formData.maternityLeave),
   paternityLeave: Number(formData.paternityLeave),
-  unpaidLeave: Number(formData.unpaidLeave),
 };
 
     useEffect(() => {
@@ -36,7 +34,6 @@ const LeavePolicyForm = () => {
                     sickLeave,
                     maternityLeave,
                     paternityLeave,
-                    unpaidLeave
                 } = response;
                 setFormData({
                     title,
@@ -44,7 +41,6 @@ const LeavePolicyForm = () => {
                     sickLeave,
                     maternityLeave,
                     paternityLeave,
-                    unpaidLeave
                 });
             })
             .catch(() => {
@@ -119,15 +115,12 @@ const LeavePolicyForm = () => {
                             <div>
                                 <label className="block text-sm text-gray-600 mb-1">Title</label>
                                 <div className="relative">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <FiUser className="text-gray-400" />
-                                    </div>
                                     <input
                                         type="text"
                                         name="title"
                                         value={formData.title}
                                         onChange={handleChange}
-                                        className="w-full pl-10 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                        className="w-full pl-4  p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                         placeholder="Enter Title"
                                         required
                                     />
@@ -139,20 +132,16 @@ const LeavePolicyForm = () => {
                                 { label: 'Sick Leave', name: 'sickLeave' },
                                 { label: 'Maternity Leave', name: 'maternityLeave' },
                                 { label: 'Paternity Leave', name: 'paternityLeave' },
-                                { label: 'Unpaid Leave', name: 'unpaidLeave' }
                             ].map(({ label, name }) => (
                                 <div key={name}>
                                     <label className="block text-sm text-gray-600 mb-1">{label}</label>
                                     <div className="relative">
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <FiMail className="text-gray-400" />
-                                        </div>
                                         <input
                                             type="number"
                                             name={name}
                                             value={formData[name]}
                                             onChange={handleChange}
-                                            className="w-full pl-10 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                                            className="w-full pl-4 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                                             placeholder={`Enter ${label}`}
                                             required
                                         />
