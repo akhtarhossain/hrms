@@ -144,11 +144,11 @@ const EventsList = () => {
   const confirmDelete = async () => {
     try {
       await EventService.deleteEvent(selectedEventId);
-      toast.success("Event kamyabi se delete ho gaya.");
+      toast.success("Event Deleted Successfully.");
       fetchEvents(filters, currentPage, pageSize); // Delete ke baad list ko refresh karein
     } catch (error) {
-      console.error("Event delete karne mein error:", error);
-      toast.error("Event delete nahi ho saka.");
+      console.error("Event Can't be deleted.", error);
+      toast.error("Event Can't be deleted.");
     } finally {
       setShowDeleteModal(false);
       setSelectedEventId(null);

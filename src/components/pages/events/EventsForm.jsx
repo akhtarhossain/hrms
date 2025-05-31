@@ -31,8 +31,9 @@ const EventsForm = () => {
     description: "",
     isRecurring: false,
     sendReminder: false,
-    // status field ko yahan se hata diya gaya hai
   });
+
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (id) {
@@ -50,13 +51,13 @@ const EventsForm = () => {
               attendees: response.attendees || "",
             });
           } else {
-            toast.error("Event nahi mila.");
+            toast.error("Event not found.");
             navigate("/events-list");
           }
         })
         .catch((error) => {
-          console.error("Event fetch karne mein error:", error);
-          toast.error("Event data load karne mein nakam rahe.");
+          console.error("Error fetching event:", error);
+          toast.error("Failed to load event data.");
           navigate("/events-list");
         });
     }
@@ -68,10 +69,54 @@ const EventsForm = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    // Clear error when user starts typing
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+  };
+
+  const validate = () => {
+    let tempErrors = {};
+    let isValid = true;
+
+    if (!formData.eventTitle.trim()) {
+      tempErrors.eventTitle = "Event Title is required.";
+      isValid = false;
+    }
+    if (!formData.eventDate) {
+      tempErrors.eventDate = "Event Date is required.";
+      isValid = false;
+    }
+    if (!formData.startTime) {
+      tempErrors.startTime = "Start Time is required.";
+      isValid = false;
+    }
+    if (!formData.location.trim()) {
+      tempErrors.location = "Location is required.";
+      isValid = false;
+    }
+    if (!formData.organizer.trim()) {
+      tempErrors.organizer = "Organizer/Host is required.";
+      isValid = false;
+    }
+    if (!formData.description.trim()) {
+      tempErrors.description = "Event Description is required.";
+      isValid = false;
+    }
+
+    setErrors(tempErrors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate before submitting
+    if (!validate()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
 
     const eventData = {
       eventTitle: formData.eventTitle,
@@ -85,7 +130,6 @@ const EventsForm = () => {
       description: formData.description,
       isRecurring: formData.isRecurring,
       sendReminder: formData.sendReminder,
-      // status field ko yahan se hata diya gaya hai
     };
 
     try {
@@ -96,17 +140,17 @@ const EventsForm = () => {
         response = await EventService.createEvent(eventData);
       }
       if (response) {
-        toast.success(`Event ${id ? "update" : "create"} hogaya!`);
+        toast.success(`Event ${id ? "updated" : "created"} successfully!`);
         navigate("/events-list");
       } else {
-        toast.success(`Event ${id ? "update" : "create"} successful!`);
+        toast.success(`Event ${id ? "update" : "create"} successful!`); // This might be redundant, check API response handling
         navigate("/events-list");
       }
     } catch (error) {
-      console.error("Event save karne mein error:", error);
+      console.error("Error saving event:", error);
       const errorMessage =
         error.response?.data?.message || error.message || "Unknown error";
-      toast.error(`Event save nahi ho saka: ${errorMessage}`);
+      toast.error(`Failed to save event: ${errorMessage}`);
     }
   };
 
@@ -128,8 +172,6 @@ const EventsForm = () => {
       <div className="flex justify-center">
         <div className="w-full max-w-5xl">
           <form onSubmit={handleSubmit}>
-            {/* ... other form fields ... */}
-
             <div className="flex gap-4 mb-4 w-full">
               <div className="w-1/2">
                 <label
@@ -144,10 +186,16 @@ const EventsForm = () => {
                   name="eventTitle"
                   value={formData.eventTitle}
                   onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  className={`w-full p-2 border ${
+                    errors.eventTitle ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
                   placeholder="Enter event title"
-                  required
                 />
+                {errors.eventTitle && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.eventTitle}
+                  </p>
+                )}
               </div>
 
               <div className="w-1/2">
@@ -163,7 +211,6 @@ const EventsForm = () => {
                   value={formData.eventType}
                   onChange={handleChange}
                   className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none appearance-none"
-                  required
                 >
                   {eventTypes.map((type, idx) => (
                     <option key={idx} value={type}>
@@ -188,9 +235,15 @@ const EventsForm = () => {
                   name="eventDate"
                   value={formData.eventDate}
                   onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  required
+                  className={`w-full p-2 border ${
+                    errors.eventDate ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
                 />
+                {errors.eventDate && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.eventDate}
+                  </p>
+                )}
               </div>
 
               <div className="w-1/2">
@@ -206,9 +259,15 @@ const EventsForm = () => {
                   name="startTime"
                   value={formData.startTime}
                   onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                  required
+                  className={`w-full p-2 border ${
+                    errors.startTime ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
                 />
+                {errors.startTime && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.startTime}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -243,10 +302,16 @@ const EventsForm = () => {
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  className={`w-full p-2 border ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
                   placeholder="e.g., Conference Room A, Zoom Link"
-                  required
                 />
+                {errors.location && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.location}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -264,10 +329,16 @@ const EventsForm = () => {
                   name="organizer"
                   value={formData.organizer}
                   onChange={handleChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
+                  className={`w-full p-2 border ${
+                    errors.organizer ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
                   placeholder="e.g., HR Department, John Doe"
-                  required
                 />
+                {errors.organizer && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.organizer}
+                  </p>
+                )}
               </div>
               <div className="w-1/2">
                 <label
@@ -288,8 +359,6 @@ const EventsForm = () => {
               </div>
             </div>
 
-            {/* Status dropdown ko yahan se hata diya gaya hai */}
-
             <div className="w-full mb-4">
               <label
                 htmlFor="description"
@@ -303,10 +372,16 @@ const EventsForm = () => {
                 rows="4"
                 value={formData.description}
                 onChange={handleChange}
-                className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none resize-y"
+                className={`w-full p-2 border ${
+                  errors.description ? "border-red-500" : "border-gray-300"
+                } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none resize-y`}
                 placeholder="Enter event description and details"
-                required
               ></textarea>
+              {errors.description && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.description}
+                </p>
+              )}
             </div>
 
             <div className="flex gap-4 mb-4 w-full items-center">
