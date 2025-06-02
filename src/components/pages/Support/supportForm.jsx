@@ -58,7 +58,7 @@ const SupportForm = () => {
         if (id) {
         SupportService.updateSupport(id, formData)
         .then(() => {
-            toast.success('Support request updated!');
+            toast.success('Support request updated successfully!');
             navigate('/support-list');
             setIsSubmitting(false);
         })
@@ -68,7 +68,7 @@ const SupportForm = () => {
         } else {
         SupportService.createSupport(formData)
         .then(() => {
-            toast.success("Support request submitted!");
+            toast.success("Support request submitted successfully!");
             navigate('/support-list');
             setIsSubmitting(false);
         })

@@ -8,8 +8,6 @@ import autoTable from 'jspdf-autotable';
 import { toast } from 'react-toastify';
 import bitsbuffer from "../../../assets/bitsbuffer.jpeg";
 
-
-
 const PayrollDetailTable = () => {
   const { id } = useParams();
   const navigate = useNavigate();

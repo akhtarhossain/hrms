@@ -18,13 +18,17 @@ const EmploySalaryList = () => {
     employeeName: '',
   });
 
+  const [appliedFilters, setAppliedFilters] = useState({
+    employeeName: '',
+  });
+
   useEffect(() => {
     fetchSalaries();
-  }, [currentPage]);
+  }, [currentPage , appliedFilters]);
 
   const fetchSalaries = () => {
     employeeService.getEmployee({
-      firstName: filters.employeeName,
+      firstName: appliedFilters.employeeName,
       l: pageSize,
       o: (currentPage - 1) * pageSize,
     })
@@ -68,8 +72,8 @@ const EmploySalaryList = () => {
     }));
   };
   const applyFilters = () => {
+    setAppliedFilters(filters)
     setCurrentPage(1);
-    fetchSalaries();
   };
 
   const closeFilter = () => {
@@ -77,7 +81,10 @@ const EmploySalaryList = () => {
     setFilters({
       employeeName: '',
     });
-    fetchSalaries();
+    setAppliedFilters({
+      employeeName:''
+    })
+    setCurrentPage(1)
   };
 
   const handlePageChange = (page) => {
@@ -119,7 +126,7 @@ const EmploySalaryList = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeFilter}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow cursor-pointer"
               >
                 Close
               </button>

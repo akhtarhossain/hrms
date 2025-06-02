@@ -72,7 +72,7 @@ const TransactionList = () => {
   const confirmDelete = () => {
     TransactionTypeService.deleteTransactionType(selectedTransactionId)
       .then(() => {
-        toast.success("Transaction record deleted successfully");
+        toast.success("Transaction type deleted successfully");
         setTransactions(prev => prev.filter(t => t._id !== selectedTransactionId));
       })
       .catch((error) => {
@@ -82,6 +82,7 @@ const TransactionList = () => {
       .finally(() => {
         setShowDeleteModal(false);
         setSelectedTransactionId(null);
+        fetchTransactions()
       });
   };
   const handlePageChange = (page) => {

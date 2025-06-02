@@ -11,7 +11,7 @@ const TransactionTypeForm = () => {
   const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    transactionType: "allowance",
+    transactionType: "",
     name: "",
   });
 
@@ -48,7 +48,7 @@ const TransactionTypeForm = () => {
     if (id) {
       TransactionTypeService.updateTransactionType(id, transactionTypeData)
         .then(() => {
-          toast.success('Transaction type updated!');
+          toast.success('Transaction type updated successfully!');
           navigate('/transaction');
         })
         .catch((error) => {
@@ -58,7 +58,7 @@ const TransactionTypeForm = () => {
     } else {
       TransactionTypeService.createTransactionType(transactionTypeData)
         .then(() => {
-          toast.success("Transaction type saved!");
+          toast.success("Transaction type created successfully!");
           navigate('/transaction');
         })
         .catch(error => {
@@ -96,6 +96,7 @@ const TransactionTypeForm = () => {
                   className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                   required
                 >
+                  <option value="">Select transaction type</option>
                   <option value="allowance">Allowance</option>
                   <option value="deduction">Deduction</option>
                 </select>
@@ -126,7 +127,7 @@ const TransactionTypeForm = () => {
                 disabled={isSubmitting}
                 className="px-4 py-2 rounded shadow text-white bg-[#A294F9]"
               >
-                {isSubmitting ? 'Saving...' : id ? 'Update' : 'Save'}
+                {isSubmitting ? 'Saving...' : id ? 'Update' : 'Submit'}
               </button>
             </div>
           </form>
