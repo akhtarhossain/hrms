@@ -1,25 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiFilter, FiPlus } from "react-icons/fi"; // Filter aur Plus icons
-import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa"; // Edit, Trash, Search icons
-import { toast } from "react-toastify"; // Notifications ke liye
+import { FiFilter, FiPlus } from "react-icons/fi";
+import { FaEdit, FaTrashAlt, FaSearch } from "react-icons/fa";
+import { toast } from "react-toastify";
 
-// Apni EventService ko import karein. Path verify kar lein.
 import EventService from "../../../services/EventService";
-// Pagination component import kiya gaya hai (assuming yeh shared/common mein hai)
 import { Pagination } from "../../../shared/common/Pagination";
-// Delete Confirmation Modal (agar aap isko PoliciesList ki tarah istemal karna chahte hain)
 import DeleteModal from "../../../shared/common/DeleteConfirmation";
 
-// Event Types options
 const eventTypes = [
   "All Types",
   "Meeting",
   "Birthday",
-  "Holiday Party",
-  "Training",
   "Team Building",
-  "Announcement",
+  "Training",
+  "Workshop",
+  "Webinar",
+  "Conference",
   "Other",
 ];
 
@@ -28,106 +25,106 @@ const EventsList = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showFilter, setShowFilter] = useState(false); // Filter section ko toggle karne ke liye
+  const [showFilter, setShowFilter] = useState(false);
 
-  // Delete Modal ke liye states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState(null);
 
-  // Pagination UI ke liye states (yeh ab backend pagination se sync hoga)
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10); // Har page par kitne items dikhane hain
+  const [pageSize, setPageSize] = useState(10); // 10 records per page
 
-  // Filter states
+  // Filters jo user input field mein enter kar raha hai (pending changes)
   const [filters, setFilters] = useState({
     eventTitle: "",
     eventType: "",
     eventDate: "",
   });
 
-  // Jab tak search button click na ho, tab tak filters ko store karne ke liye
-  const [pendingFilters, setPendingFilters] = useState({
+  // Filters jo actually API call mein use honge (applied changes)
+  const [appliedFilters, setAppliedFilters] = useState({
     eventTitle: "",
     eventType: "",
     eventDate: "",
   });
 
-  // Events ko fetch karne ka function
+  // Events ko fetch karne ka function, useCallback ke saath
   const fetchEvents = useCallback(
-    async (currentAppliedFilters, page = 1, limit = pageSize) => {
+    async () => {
       setLoading(true);
-      setError(null);
+      setError(null); // Clear any previous error
 
       try {
-        // Sirf non-empty filters ko parameters mein shamil karein
-        const paramsToSend = Object.keys(currentAppliedFilters).reduce((acc, key) => {
-          const value = currentAppliedFilters[key];
-          if (value !== "" && value !== undefined && value !== null) {
+        const params = {
+          eventTitle: appliedFilters.eventTitle,
+          // "All Types" ko empty string mein convert karein
+          eventType: appliedFilters.eventType === "All Types" ? "" : appliedFilters.eventType,
+          eventDate: appliedFilters.eventDate,
+          l: pageSize, // Limit
+          o: (currentPage - 1) * pageSize, // Offset
+        };
+
+        // Filters mein se empty values remove karein, jaisa PoliciesList mein tha
+        const paramsToSend = Object.keys(params).reduce((acc, key) => {
+          const value = params[key];
+          if (value !== '' && value !== undefined && value !== null) {
             acc[key] = value;
           }
           return acc;
         }, {});
-
-        // Pagination parameters bhi add karein
-        paramsToSend.page = page;
-        paramsToSend.limit = limit;
-
+        
         const response = await EventService.getAllEvents(paramsToSend);
 
         if (response && Array.isArray(response.list)) {
           setEvents(response.list);
-          setTotalCount(response.count || 0); // Backend se total count lenge
+          setTotalCount(response.count || 0);
         } else {
           setEvents([]);
           setTotalCount(0);
           toast.warn("Koi events nahi mile.");
         }
-        setCurrentPage(page);
       } catch (err) {
         console.error("Events fetch karne mein error:", err);
         setError("Events load nahi ho sake. Zara baad mein dobara koshish karein.");
         toast.error("Events load karne mein error.");
-        setEvents([]); // Error par events list khali kar dein
+        setEvents([]);
         setTotalCount(0);
       } finally {
         setLoading(false);
       }
     },
-    [pageSize]
+    [currentPage, appliedFilters, pageSize] // Dependencies for useCallback
   );
 
-  // Component mount hone par aur filters ya page change hone par events fetch karein
+  // useEffect hook jo currentPage aur appliedFilters change hone par data fetch karega
   useEffect(() => {
-    // Shuru mein ya page change par, current applied filters se data fetch karein
-    fetchEvents(filters, currentPage, pageSize);
-  }, [fetchEvents, filters, currentPage, pageSize]); // 'filters' ab woh hain jo 'applyFilters' ke baad set hote hain
+    fetchEvents();
+  }, [fetchEvents]); // fetchEvents itself is a dependency, which is stable due to useCallback
 
-  // Filter input change handler - yeh ab 'pendingFilters' ko update karega
+  // Filter input change handler
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setPendingFilters((prev) => ({
+    setFilters(prev => ({ // set 'filters' state (not appliedFilters)
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
   // Filters apply karne ka function
   const applyFilters = () => {
-    setFilters(pendingFilters); // pendingFilters ko actual filters mein update karein
-    setCurrentPage(1); // Filters apply karne par page ko 1 par reset karein
-    // showFilter ko true hi rehne denge takay filter section open rahe
+    setAppliedFilters(filters); // 'filters' ko 'appliedFilters' mein set karein
+    setCurrentPage(1); // Filters apply hone par page 1 par set karein
   };
 
   // Filters reset aur filter section close karne ka function
-  const closeAndResetFilters = () => { // Function ka naam change kiya
+  const closeAndResetFilters = () => {
     const initialFilters = {
       eventTitle: "",
       eventType: "",
       eventDate: "",
     };
-    setPendingFilters(initialFilters); // Pending filters ko reset karein
-    setFilters(initialFilters); // Applied filters ko bhi reset karein
+    setFilters(initialFilters); // pending filters (filters) ko reset karein
+    setAppliedFilters(initialFilters); // Applied filters ko bhi reset karein
     setCurrentPage(1); // Page ko 1 par reset karein
     setShowFilter(false); // Filters ko hide karein
   };
@@ -143,7 +140,7 @@ const EventsList = () => {
     try {
       await EventService.deleteEvent(selectedEventId);
       toast.success("Event Deleted Successfully.");
-      fetchEvents(filters, currentPage, pageSize); // Delete ke baad list ko refresh karein
+      fetchEvents(); // Delete ke baad list ko refresh karein
     } catch (error) {
       console.error("Event Can't be deleted.", error);
       toast.error("Event Can't be deleted.");
@@ -155,16 +152,24 @@ const EventsList = () => {
 
   // Pagination page change handler
   const handlePageChange = (page) => {
-    setCurrentPage(page); // Current page ko update karein
-    // fetchEvents function automatically re-run hoga useEffect ki wajah se
+    setCurrentPage(page);
+    // fetchEvents function automatically re-run hoga currentPage change hone ki wajah se
   };
 
-  // --- Loading aur Error States ka Render ---
-  if (loading) {
+  // --- Loading State ka Render ---
+  if (loading && events.length === 0 && !error) { // Only show loading if no data and no error
     return (
       <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
         <div className="text-lg text-gray-600">Events load ho rahe hain, intezaar karein...</div>
       </div>
+    );
+  }
+  // --- Error State ka Render ---
+  if (error && events.length === 0) { // Show error if no data and error
+    return (
+        <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
+            <div className="text-lg text-red-600">{error}</div>
+        </div>
     );
   }
 
@@ -203,7 +208,7 @@ const EventsList = () => {
                   type="text"
                   id="filterTitle"
                   name="eventTitle"
-                  value={pendingFilters.eventTitle} // pendingFilters use karein
+                  value={filters.eventTitle} // Ab yeh 'filters' state use kar raha hai
                   onChange={handleFilterChange}
                   className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                   placeholder="Search by event title"
@@ -214,7 +219,7 @@ const EventsList = () => {
                 <select
                   id="filterType"
                   name="eventType"
-                  value={pendingFilters.eventType} // pendingFilters use karein
+                  value={filters.eventType} // Ab yeh 'filters' state use kar raha hai
                   onChange={handleFilterChange}
                   className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none appearance-none"
                 >
@@ -231,7 +236,7 @@ const EventsList = () => {
                   type="date"
                   id="filterDate"
                   name="eventDate"
-                  value={pendingFilters.eventDate} // pendingFilters use karein
+                  value={filters.eventDate} // Ab yeh 'filters' state use kar raha hai
                   onChange={handleFilterChange}
                   className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
                 />
@@ -242,7 +247,7 @@ const EventsList = () => {
                 onClick={closeAndResetFilters}
                 className="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white border-gray-300 cursor-pointer transition-colors"
               >
-                Close 
+                Close
               </button>
               <button
                 onClick={applyFilters}
@@ -262,7 +267,7 @@ const EventsList = () => {
             <div className="text-sm text-gray-600 px-2 py-1 rounded-md">
               Showing{" "}
               <span className="font-semibold text-gray-800">
-                {(currentPage - 1) * pageSize + 1}
+                {events.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} {/* PoliciesList ki tarah */}
               </span>{" "}
               to{" "}
               <span className="font-semibold text-gray-800">
@@ -298,7 +303,12 @@ const EventsList = () => {
               </tr>
             </thead>
             <tbody>
-              {events.length > 0 ? (
+              {/* Conditional rendering for loading, error, and no data */}
+              {loading && events.length === 0 ? (
+                <tr>
+                    <td colSpan="9" className="px-4 py-6 text-center text-gray-500 text-lg">Loading events...</td>
+                </tr>
+              ) : events.length > 0 ? (
                 events.map((event) => (
                   <tr key={event._id} className="border-t hover:bg-[#CDC1FF] text-gray-600">
                     <td className="px-4 py-3 font-medium">{event.eventTitle}</td>
