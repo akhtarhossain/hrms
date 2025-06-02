@@ -81,12 +81,15 @@ const EventsList = () => {
         } else {
           setEvents([]);
           setTotalCount(0);
-          toast.warn("Koi events nahi mile.");
+          // Changed from Urdu to English
+          toast.warn("No events found.");
         }
       } catch (err) {
         console.error("Events fetch karne mein error:", err);
-        setError("Events load nahi ho sake. Zara baad mein dobara koshish karein.");
-        toast.error("Events load karne mein error.");
+        // Changed from Urdu to English
+        setError("Could not load events. Please try again later.");
+        // Changed from Urdu to English
+        toast.error("Error loading events.");
         setEvents([]);
         setTotalCount(0);
       } finally {
@@ -139,11 +142,13 @@ const EventsList = () => {
   const confirmDelete = async () => {
     try {
       await EventService.deleteEvent(selectedEventId);
-      toast.success("Event Deleted Successfully.");
+      // Changed from Urdu to English
+      toast.success("Event deleted successfully.");
       fetchEvents(); // Delete ke baad list ko refresh karein
     } catch (error) {
       console.error("Event Can't be deleted.", error);
-      toast.error("Event Can't be deleted.");
+      // Changed from Urdu to English
+      toast.error("Event cannot be deleted.");
     } finally {
       setShowDeleteModal(false);
       setSelectedEventId(null);
@@ -160,7 +165,8 @@ const EventsList = () => {
   if (loading && events.length === 0 && !error) { // Only show loading if no data and no error
     return (
       <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Events load ho rahe hain, intezaar karein...</div>
+        {/* Changed from Urdu to English */}
+        <div className="text-lg text-gray-600">Events are loading, please wait...</div>
       </div>
     );
   }
@@ -190,7 +196,8 @@ const EventsList = () => {
             <button
               className="p-2 rounded shadow cursor-pointer"
               onClick={() => navigate("/events-form")}
-              title="Naya Event Shamil Karein"
+              // Changed from Urdu to English
+              title="Add New Event"
               style={{ backgroundColor: "#A294F9" }}
             >
               <FiPlus className="text-white text-xl" />
@@ -336,14 +343,16 @@ const EventsList = () => {
                         <button
                           className="p-2 rounded shadow cursor-pointer bg-[#A294F9] hover:bg-[#8D7BE7] transition-colors"
                           onClick={() => navigate(`/events-form/${event._id}`)}
-                          title="Event Edit Karein"
+                          // Changed from Urdu to English
+                          title="Edit Event"
                         >
                           <FaEdit className="text-white text-lg" />
                         </button>
                         <button
                           className="p-2 rounded shadow cursor-pointer bg-red-500 hover:bg-red-600 transition-colors"
                           onClick={() => handleDeleteClick(event._id)}
-                          title="Event Delete Karein"
+                          // Changed from Urdu to English
+                          title="Delete Event"
                         >
                           <FaTrashAlt className="text-white text-lg" />
                         </button>
@@ -354,7 +363,8 @@ const EventsList = () => {
               ) : (
                 <tr>
                   <td colSpan="9" className="px-4 py-6 text-center text-gray-500 text-lg">
-                    {error ? <p className="text-red-600">{error}</p> : "Koi event nahi mila."}
+                    {/* Changed from Urdu to English */}
+                    {error ? <p className="text-red-600">{error}</p> : "No events found."}
                   </td>
                 </tr>
               )}
@@ -362,7 +372,8 @@ const EventsList = () => {
           </table>
           {events.length === 0 && !error && !loading && (
             <div className="px-4 py-6 text-center text-gray-500 text-lg">
-              "Naya Event Shamil Karein" button par click kar ke pehla event banayen.
+              {/* Changed from Urdu to English */}
+              Click on "Add New Event" to create the first event.
             </div>
           )}
         </div>
