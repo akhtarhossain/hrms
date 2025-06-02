@@ -225,7 +225,7 @@ const PayrollList = () => {
                   <option value="APPROVED">APPROVED</option>
                   <option value="PAID">PAID</option>
                   <option value="PENDING">PENDING</option>
-                  <option value="REVIEWONGOING">REVIEWONGOING</option>
+                  <option value="PROCESSING">PROCESSING</option>
                 </select>
               </div>
             </div>
@@ -296,7 +296,7 @@ const PayrollList = () => {
                             ${payroll.status === 'PAID' ? 'bg-green-100 text-green-800 border-green-400' : ''}
                             ${payroll.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : ''}
                             ${payroll.status === 'PENDING' ? 'bg-blue-100 text-blue-800 border-blue-400' : ''}
-                            ${payroll.status === 'reviewOngoing' ? 'bg-red-100 text-red-800 border-red-400' : ''}
+                            ${payroll.status === 'PROCESSING' ? 'bg-red-100 text-red-800 border-red-400' : ''}
                             dark:bg-gray-700 dark:text-white
                           `}
                       >

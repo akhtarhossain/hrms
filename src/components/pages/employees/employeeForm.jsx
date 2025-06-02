@@ -159,7 +159,7 @@ useEffect(() => {
           leavePolicy: employeeData.leavePolicy || '',
           degreeTitle: employeeData.degreeTitle || '',
           bankName: employeeData.bankName || '',
-          accountType: employeeData.accountType || '',
+          accountTitle: employeeData.accountTitle || '',
           accountNumber: employeeData.accountNumber || '',
           certificates: employeeData.certificates || [],
           educations: employeeData.educations || [],
@@ -212,7 +212,7 @@ useEffect(() => {
     1: ['firstName', 'lastName', 'fatherOrHusbandName', 'dateOfBirth', 'gender', 'cnic', 'maritalStatus', 'nationality'],
     2: ['mobileNumber', 'email', 'country', 'permanentAddress', 'city', 'emergencyContactName', 'emergencyContactRelation', 'emergencyContactMobile'],
     3: ['employeeId', 'department', 'designation', 'dateOfJoining',
-      'employmentType', 'employeeStatus','leavePolicy','bankName' , 'accountType' , 'accountNumber'],
+      'employmentType', 'employeeStatus','leavePolicy','bankName' , 'accountTitle' , 'accountNumber'],
     4: ['educations'],
     6: ['certificates'],
   };
@@ -1179,7 +1179,7 @@ const removeDeduction = (index) => {
                 <h2 className="text-xl font-semibold mt-2 mb-4 text-gray-800">Bank Information</h2>
                 <div className="flex flex-wrap -mx-2">
                   {renderInput('Bank Name', 'bankName')}
-                  {renderInput('Account Type', 'accountType')}
+                  {renderInput('Account Type', 'accountTitle')}
                   {renderInput('Account Number', 'accountNumber')}
                 </div>
               </div>

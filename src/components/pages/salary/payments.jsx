@@ -58,6 +58,9 @@ const PaymentForm = () => {
         profilePicture: employee.employeeId?.profilePicture,
         department: employee.employeeId?.department || 'N/A',
         designation: employee.employeeId?.designation || 'N/A',
+        bankName: employee.employeeId?.bankName || 'N/A',
+        accountNumber: employee.employeeId?.accountNumber || 'N/A',
+        accountTitle: employee.employeeId?.accountTitle || 'N/A',
         totalPayable: employee.totalSalary || 0,
         totalPaid: totalPaid,
         payments: initialPayments
@@ -121,7 +124,7 @@ const PaymentForm = () => {
         if (newAmount < 0) newAmount = 0;
       }
 
-      paymentList[paymentIndex][field] = newAmount;
+      paymentList[paymentIndex][field] = field === 'amount' ? newAmount : value;
 
       const totalPaid = paymentList.reduce(
         (sum, p) => sum + Number(p.amount || 0), 0
@@ -375,7 +378,7 @@ const PaymentForm = () => {
                                   <label className="block text-xs text-gray-500 mb-1">Date</label>
                                   <input
                                     type="date"
-                                    name="date" // Use a meaningful name attribute
+                                    name="date"
                                     value={pmt.date}
                                     onChange={(e) => handlePaymentChange(index, pmtIndex, 'date', e.target.value)}
                                     className={`w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 ${pmt.isDisabled ? 'bg-gray-200 cursor-not-allowed' : ''}`}
@@ -424,9 +427,9 @@ const PaymentForm = () => {
                                   />
                                 </div>
 
-                                {/* Delete Button - only show for editable payments */}
+                                {/* Delete Button */}
                                 <div className="col-span-1 flex justify-end">
-                                  {!pmt.isDisabled && ( // Only render if not disabled
+                                  {!pmt.isDisabled && (
                                     <button
                                       onClick={() => removePayment(index, pmtIndex)}
                                       className="p-2 rounded shadow cursor-pointer bg-red-500 hover:bg-red-200 mt-3"
@@ -436,6 +439,41 @@ const PaymentForm = () => {
                                     </button>
                                   )}
                                 </div>
+
+                                {/* Bank Details (shown only when type is bank_transfer) */}
+                                {pmt.type === 'bank_transfer' && (
+                                  <div className="col-span-12 mt-3 space-y-2">
+                                    <div className="grid grid-cols-3 gap-3">
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-1">Bank Name</label>
+                                        <input
+                                          type="text"
+                                          value={payment.bankName}
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-gray-100 cursor-not-allowed"
+                                          disabled
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-1">Account Number</label>
+                                        <input
+                                          type="text"
+                                          value={payment.accountNumber}
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-gray-100 cursor-not-allowed"
+                                          disabled
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-gray-500 mb-1">Account Title</label>
+                                        <input
+                                          type="text"
+                                          value={payment.accountTitle || 'N/A'}
+                                          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm bg-gray-100 cursor-not-allowed"
+                                          disabled
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
