@@ -11,7 +11,6 @@ import { MdPayments } from 'react-icons/md';
 const PayrollList = () => {
   const navigate = useNavigate();
   const [payrolls, setPayrolls] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [selectedPayrollId, setSelectedPayrollId] = useState(null);
@@ -20,9 +19,11 @@ const PayrollList = () => {
   const [pageSize, setPageSize] = useState(10);
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({
-    payrollDate: '',
     status: '',
-    year: '',
+    month: '',
+  });
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: '',
     month: '',
   });
 
@@ -33,30 +34,21 @@ const PayrollList = () => {
 
   useEffect(() => {
     fetchPayrolls();
-  }, [currentPage]);
+  }, [currentPage , appliedFilters]);
 
 
   const fetchPayrolls = () => {
-    setLoading(true);
     const queryParams = {
       l: pageSize,
       o: (currentPage - 1) * pageSize,
     };
-    if (filters.payrollDate) {
-      // Convert to YYYY-MM-DD format that backend expects
-      const date = new Date(filters.payrollDate);
-      const formattedDate = date.toISOString().split('T')[0];
-      queryParams.payrollDate = formattedDate;
+
+    if (appliedFilters.status) {
+      queryParams.status = appliedFilters.status;
     }
 
-    if (filters.status) {
-      queryParams.status = filters.status;
-    }
-    if (filters.year) {
-      queryParams.year = filters.year;
-    }
-    if (filters.month) {
-      queryParams.month = filters.month;
+    if (appliedFilters.month) {
+      queryParams.month = appliedFilters.month;
     }
     PayrollService.getPayroll(queryParams)
       .then((response) => {
@@ -66,11 +58,7 @@ const PayrollList = () => {
       .catch((error) => {
         console.error('Error fetching payrolls:', error);
         toast.error('Failed to load payroll records');
-      })
-      .finally(() => {
-        setLoading(false);
       });
-
   };
 
   const formatDate = (dateString) => {
@@ -102,6 +90,7 @@ const PayrollList = () => {
       .finally(() => {
         setShowDeleteModal(false);
         setSelectedPayrollId(null);
+        fetchPayrolls()
       });
   };
 
@@ -120,43 +109,31 @@ const PayrollList = () => {
     navigate(`/payroll-form/${monthName}-${selectedDate.year}`);
   };
 
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading payroll records...</div>
-      </div>
-    );
-  }
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
 
-    if (name === 'payrollDate') {
-      // Convert to ISO string for backend validation
-      setFilters(prev => ({
-        ...prev,
-        [name]: value ? new Date(value).toISOString() : ''
-      }));
-    } else {
-      setFilters(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+ const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const applyFilters = () => {
-    setCurrentPage(1); // Reset to first page when filters change
-    fetchPayrolls();
+    setAppliedFilters(filters)
+    setCurrentPage(1);
   };
 
-  // Reset filters handler
   const closeFilter = () => {
     setFilters({
-      payrollDate: '',
+      month: '',
+      status: ''
+    });
+    setAppliedFilters({
+      month: '',
       status: ''
     });
     setCurrentPage(1);
-    fetchPayrolls();
+    setShowFilter(false);
   };
 
   const handlePageChange = (page) => {

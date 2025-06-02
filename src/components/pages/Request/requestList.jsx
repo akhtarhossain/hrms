@@ -10,7 +10,6 @@ import LeaveService from '../../../services/LeaveService';
 const requestList = () => {
   const navigate = useNavigate();
   const [leaveRequests, setLeaveRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedLeaveId, setSelectedLeaveId] = useState(null);
@@ -21,19 +20,23 @@ const requestList = () => {
   const [filters, setFilters] = useState({
     employeeName: '',
     subject: '',
-    leaveType: ''
-    
+    leaveType: '' 
+  });
+
+const [appliedFilters, setAppliedFilters] = useState({
+    employeeName: '',
+    subject: '',
+    leaveType: '' 
   });
 
 useEffect(() => {
     fetchLeaveRequests();
-  }, [currentPage]);
+  }, [currentPage , appliedFilters]);
 
 const fetchLeaveRequests = () => {
-  setLoading(true);
   LeaveService.getLeaves({
-    employeeName: filters.employeeName,
-    leaveType: filters.leaveType,
+    employeeName: appliedFilters.employeeName,
+    leaveType: appliedFilters.leaveType,
     l: pageSize,
     o: (currentPage - 1) * pageSize,
   })
@@ -59,18 +62,23 @@ const fetchLeaveRequests = () => {
   };
 
 const applyFilters = () => {
+  setAppliedFilters(filters);
   setCurrentPage(1);
-  fetchLeaveRequests();
 };
 
   const closeFilter = () => {
     setShowFilter(false);
     setFilters({
-    employeeName: '',
-    subject: '',
-    leaveType: '',
-
-  });
+      employeeName: '',
+      subject: '',
+      leaveType: '',
+    });
+    setAppliedFilters({
+      employeeName: '',
+      subject: '',
+      leaveType: '',
+    });
+    setCurrentPage(1);
   };
 
   const handleDeleteClick = (leaveId) => {
@@ -108,14 +116,6 @@ const applyFilters = () => {
         return <FaClock className="text-gray-500" />;
     }
   };
-
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading leave requests...</div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -293,7 +293,7 @@ const applyFilters = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="px-4 py-6 text-center text-gray-500">No leave requests found</td>
+                  <td colSpan="8" className="px-4 py-6 text-center text-gray-500">No leave requests found</td>
                 </tr>
               )}
             </tbody>

@@ -10,7 +10,6 @@ import { Pagination } from '../../../shared/common/Pagination';
 const Support = () => {
   const navigate = useNavigate();
   const [supportTickets, setSupportTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
@@ -23,22 +22,26 @@ const Support = () => {
     subject: '',
     status: ''
   });
+  const [appliedFilters, setAppliedFilters] = useState({ 
+    name: '',
+    subject: '',
+    status: ''
+  });
 
   useEffect(() => {
     fetchSupportTickets();
-  }, [currentPage]);
+  }, [currentPage , appliedFilters]);
 
   const fetchSupportTickets = () => {
-    setLoading(true);
     const queryParams = {
       l: pageSize,
       o: (currentPage - 1) * pageSize,
     };
-    if (filters.name) {
-      queryParams.name = filters.name;
+    if (appliedFilters.name) {
+      queryParams.name = appliedFilters.name;
     }
-    if (filters.subject) {
-      queryParams.subject = filters.subject;
+    if (appliedFilters.subject) {
+      queryParams.subject = appliedFilters.subject;
     }
 
     SupportService.getSupport(queryParams)
@@ -49,9 +52,6 @@ const Support = () => {
       .catch((error) => {
         console.error('Error fetching support tickets:', error);
         toast.error('Failed to load support tickets');
-      })
-      .finally(() => {
-        setLoading(false);
       });
   };
 
@@ -74,6 +74,7 @@ const Support = () => {
       .finally(() => {
         setShowDeleteModal(false);
         setSelectedTicketId(null);
+        fetchSupportTickets()
       });
   };
 
@@ -90,13 +91,6 @@ const Support = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading support tickets...</div>
-      </div>
-    );
-  }
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({
@@ -106,17 +100,22 @@ const Support = () => {
   };
 
   const applyFilters = () => {
+    setAppliedFilters(filters)
     setCurrentPage(1);
-    fetchSupportTickets();
   };
 
   const closeFilter = () => {
+    setShowFilter(false);
     setFilters({
       name: '',
       subject: '',
     });
-    // setCurrentPage(1);
-    fetchSupportTickets();
+    setAppliedFilters({
+    name: '',
+    subject: '',
+    status: ''
+    });
+    setCurrentPage(1);
   };
 
 
@@ -236,20 +235,20 @@ const Support = () => {
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
                         <button
-                          title="View"
-                          className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#A294F9' }}
-                          onClick={() => navigate(`/support-details/${ticket._id}`)}
-                        >
-                          <FaEye className="text-white" />
-                        </button>
-                        <button
                           title="Edit"
                           className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#FFC107' }}
+                          style={{ backgroundColor: '#A294F9' }}
                           onClick={() => navigate(`/support-form/${ticket._id}`)}
                         >
                           <FaEdit className="text-white" />
+                        </button>
+                          <button
+                          title="View"
+                          className="p-2 rounded shadow cursor-pointer"
+                          style={{ backgroundColor: '#34D399' }}
+                          // onClick={() => navigate(`/support-details/${ticket._id}`)}
+                        >
+                          <FaEye className="text-white" />
                         </button>
                         <button
                           title="Delete"

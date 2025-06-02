@@ -10,7 +10,6 @@ import { Pagination } from '../../../shared/common/Pagination';
 const LeavePolicyList = () => {
   const navigate = useNavigate();
   const [policies, setPolicies] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPolicyId, setSelectedPolicyId] = useState(null);
@@ -21,19 +20,20 @@ const LeavePolicyList = () => {
 
   const [filters, setFilters] = useState({
     title: '',
-
+  });
+  const [appliedFilters, setAppliedFilters] = useState({
+    title: '',
   });
 
   useEffect(() => {
     fetchPolicies();
-  }, [currentPage]);
+  }, [currentPage , appliedFilters]);
 
   const fetchPolicies = () => {
-    setLoading(true);
     const queryParams = {
       l: pageSize,
       o: (currentPage - 1) * pageSize,
-      title : filters.title
+      title : appliedFilters.title
     };
 
     LeavePolicyService.getLeavePolicies(queryParams)
@@ -44,9 +44,6 @@ const LeavePolicyList = () => {
       .catch((error) => {
         console.error('Error fetching leave policies:', error);
         toast.error('Failed to load leave policies');
-      })
-      .finally(() => {
-        setLoading(false);
       });
   };
 
@@ -91,29 +88,24 @@ const LeavePolicyList = () => {
   };
 
   const applyFilters = () => {
+    setAppliedFilters(filters);
     setCurrentPage(1);
-    fetchPolicies();
   };
 
   const closeFilter = () => {
+    setShowFilter(false)
     setFilters({
       title: '',
-
+    }); 
+    setAppliedFilters({
+      title: '',
     });
-    fetchPolicies();
+    setCurrentPage(1)
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-
-  if (loading) {
-    return (
-      <div className="px-6 pt-6 min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F5EFFF' }}>
-        <div className="text-lg text-gray-600">Loading leave policies...</div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -179,10 +171,10 @@ const LeavePolicyList = () => {
                 </select>
               </div> */}
             </div>
-            <div className="flex justify-end space-x-2">
+             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeFilter}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow cursor-pointer"
               >
                 Close
               </button>
@@ -236,21 +228,21 @@ const LeavePolicyList = () => {
                     <td className="px-4 py-3">{policy.paternityLeave}</td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
-                        <button
-                          title="View"
-                          className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#A294F9' }}
-                          onClick={() => navigate(`/leave-policy-details/${policy._id}`)}
-                        >
-                          <FaEye className="text-white" />
-                        </button>
-                        <button
+                                      <button
                           title="Edit"
                           className="p-2 rounded shadow cursor-pointer"
-                          style={{ backgroundColor: '#FFC107' }}
+                          style={{ backgroundColor: '#A294F9' }}
                           onClick={() => navigate(`/leave-policy-form/${policy._id}`)}
                         >
                           <FaEdit className="text-white" />
+                        </button>
+                        <button
+                          title="View"
+                          className="p-2 rounded shadow cursor-pointer"
+                          style={{ backgroundColor: '#34D399' }}
+                          // onClick={() => navigate(`/leave-policy-details/${policy._id}`)}
+                        >
+                          <FaEye className="text-white" />
                         </button>
                         <button
                           title="Delete"

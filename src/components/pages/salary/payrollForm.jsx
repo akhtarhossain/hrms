@@ -55,8 +55,10 @@ const PayrollForm = () => {
 
   const [filters, setFilters] = useState({
     employeeName: '',
-    month: '',
-    year: ''
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    employeeName: '',
   });
 
   const [modalTotals, setModalTotals] = useState({
@@ -90,7 +92,7 @@ const PayrollForm = () => {
         const [payrollResponse, employees] = await Promise.all([
           PayrollService.getPayroll(),
           employeeService.getEmployee({
-            firstName: filters.employeeName,
+            firstName: appliedFilters.employeeName,
             l: pageSize,
             o: (currentPage - 1) * pageSize,
           }),
@@ -141,7 +143,7 @@ const PayrollForm = () => {
     if (month && year) {
       fetchData();
     }
-  }, [monthYear, currentPage, filters.employeeName]);
+  }, [monthYear, currentPage, filters.employeeName , appliedFilters]);
 
   const calculateTotalAllowances = (employee) => {
     if (existingPayroll) {
@@ -185,8 +187,8 @@ const PayrollForm = () => {
     }));
   };
   const applyFilters = () => {
+    setAppliedFilters(filters)
     setCurrentPage(1);
-    fetchData();
   };
 
   const closeFilter = () => {
@@ -194,7 +196,10 @@ const PayrollForm = () => {
     setFilters({
       employeeName: '',
     });
-    fetchData();
+    setAppliedFilters({
+      employeeName: '',
+    });
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page) => {
@@ -594,11 +599,11 @@ const PayrollForm = () => {
             </button>
             <button
               title="Create Salary"
-              onClick={() => navigate('/employSalaryform')}
+              onClick={() => navigate('/payroll')}
               className="p-2 rounded shadow cursor-pointer"
               style={{ backgroundColor: '#A294F9' }}
             >
-              <FiPlus className="text-white" />
+              <FiList className="text-white" />
             </button>
           </div>
         </div>
@@ -618,39 +623,11 @@ const PayrollForm = () => {
                   placeholder="Search by name"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
-                <select
-                  name="month"
-                  value={filters.month}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Months</option>
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <option key={i} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <select
-                  name="year"
-                  value={filters.year}
-                  onChange={handleFilterChange}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none"
-                >
-                  <option value="">All Years</option>
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>
-                  ))}
-                </select>
-              </div>
             </div>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={closeFilter}
-                className="px-4 py-2 rounded shadow text-gray-700 border border-gray-300 cursor-pointer"
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow cursor-pointer"
               >
                 Close
               </button>
