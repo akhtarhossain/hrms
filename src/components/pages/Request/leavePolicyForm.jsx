@@ -67,7 +67,6 @@ const LeavePolicyForm = () => {
     sickLeave: Number(formData.sickLeave),
     maternityLeave: Number(formData.maternityLeave),
     paternityLeave: Number(formData.paternityLeave),
-    unpaidLeave: Number(formData.unpaidLeave),
   };
 
   if (id) {
