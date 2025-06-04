@@ -35,6 +35,7 @@ import LeavePolicyList from '../components/pages/Request/leavePolicyList';
 import EventsForm from '../components/pages/events/EventsForm';
 import EventsList from '../components/pages/events/EventsList';
 import PayrollDetailTable from '../components/pages/salary/payrollSlip';
+import LeaveDetail from '../components/pages/Request/leaveDetail';
 // import PageNotFound from '../components/pages/PageNotFound';
 
 // Authentication check
@@ -84,6 +85,8 @@ const router = createBrowserRouter([
           { path: 'leave-policy-form', element:<LeavePolicyForm/>},
           { path: 'leave-policy-List', element:<LeavePolicyList/>},
           { path: 'leave-policy-form/:id', element:<LeavePolicyForm/>},
+          { path: 'leave-details/:id', element:<LeaveDetail/>},
+
 
 
 
