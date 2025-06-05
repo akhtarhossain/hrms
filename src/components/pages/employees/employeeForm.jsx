@@ -1179,7 +1179,7 @@ const removeDeduction = (index) => {
                 <h2 className="text-xl font-semibold mt-2 mb-4 text-gray-800">Bank Information</h2>
                 <div className="flex flex-wrap -mx-2">
                   {renderInput('Bank Name', 'bankName')}
-                  {renderInput('Account Type', 'accountTitle')}
+                  {renderInput('Account Title', 'accountTitle')}
                   {renderInput('Account Number', 'accountNumber')}
                 </div>
               </div>
