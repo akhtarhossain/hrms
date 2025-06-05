@@ -26,12 +26,12 @@ const PayrollDetailTable = () => {
     fetchPayroll();
   }, [id]);
 
-  const handleDownloadPayslip = (emp) => {
+const handleDownloadPayslip = (emp) => {
     if (!emp || !emp.employeeId) return;
 
     const doc = new jsPDF();
 
-    const { firstName, lastName, designation, department } = emp.employeeId;
+    const { firstName, lastName, designation, department, bankName, accountTitle, accountNumber } = emp.employeeId;
     const fullName = `${firstName} ${lastName}`;
     const totalSalary = emp.totalSalary || 0;
     const totalPaid = emp.totalPaid || 0;
@@ -100,19 +100,43 @@ const PayrollDetailTable = () => {
 
     // Payments
     doc.text('Payments Made', 20, doc.lastAutoTable.finalY + 10);
-    const paymentData = emp.payments?.map(p => [
-      new Date(p.date).toLocaleDateString(),
-      p.type,
-      `$${parseFloat(p.amount || 0).toFixed(2)}`,
-      p.notes || '—'
-    ]) || [];
-    paymentData.push(['Total Paid', '', `$${totalPaid.toFixed(2)}`, '']);
+    const paymentData = emp.payments?.map(p => {
+      const row = [
+        new Date(p.date).toLocaleDateString(),
+        p.type,
+        `$${parseFloat(p.amount || 0).toFixed(2)}`,
+        p.notes || '—'
+      ];
+      
+      // Add bank details if payment method is bank_transfer
+      if (p.type === 'bank_transfer') {
+        row.push(
+          `Bank: ${bankName || 'N/A'}\n` +
+          `Account Title: ${accountTitle || 'N/A'}\n` +
+          `Account Number: ${accountNumber || 'N/A'}`
+        );
+      } else {
+        row.push('—');
+      }
+      
+      return row;
+    }) || [];
+    
+    paymentData.push(['Total Paid', '', `$${totalPaid.toFixed(2)}`, '', '']);
+    
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 15,
-      head: [['Date', 'Method', 'Amount', 'Notes']],
+      head: [['Date', 'Method', 'Amount', 'Notes', 'Bank Details']],
       body: paymentData,
       theme: 'grid',
-      styles: { fontSize: 10 },
+      styles: { 
+        fontSize: 10,
+        cellPadding: 3,
+        lineWidth: 0.1
+      },
+      columnStyles: {
+        4: { cellWidth: 40 } // Make bank details column wider
+      },
       headStyles: { fillColor: [162, 148, 249] },
       margin: { left: 20 }
     });
