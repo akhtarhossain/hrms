@@ -57,6 +57,48 @@ const EventService = {
       throw error;
     }
   },
+
+  // In your EventService.js
+//  sendEventNotification: async (eventData) => {
+//     try {
+//       // CORRECTED: use axios instead of api
+//       const response = await axios.post(`${API_BASE_URL}/send-notification`, eventData);
+//       return response.data;
+//     } catch (error) {
+//       throw error;
+//     }
+//   },
+
+  scheduleEventReminder: async (eventData) => {
+    try {
+      // CORRECTED: use axios instead of api
+      const response = await axios.post(`${API_BASE_URL}/schedule-reminder`, eventData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  sendEventNotification: async (eventData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/send-notification` , eventData);
+    
+    toast.success(response.data.message);
+    return true;
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Failed to send notifications');
+    return false;
+  }
+},
+  uploadDocument: async (projectData) => {
+    try {
+      const response = await axios.post(`http://localhost:3000/upload`, projectData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+      throw error;
+    }
+  }
 };
 
 export default EventService;
