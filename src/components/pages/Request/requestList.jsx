@@ -17,41 +17,41 @@ const requestList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+
   const [filters, setFilters] = useState({
     employeeName: '',
     subject: '',
-    leaveType: '' 
+    leaveType: ''
   });
 
-const [appliedFilters, setAppliedFilters] = useState({
+  const [appliedFilters, setAppliedFilters] = useState({
     employeeName: '',
     subject: '',
-    leaveType: '' 
+    leaveType: ''
   });
 
-useEffect(() => {
+  useEffect(() => {
     fetchLeaveRequests();
-  }, [currentPage , appliedFilters]);
+  }, [currentPage, appliedFilters]);
 
-const fetchLeaveRequests = () => {
-  LeaveService.getLeaves({
-    employeeName: appliedFilters.employeeName,
-    leaveType: appliedFilters.leaveType,
-    l: pageSize,
-    o: (currentPage - 1) * pageSize,
-  })
-  .then((response) => {
-    setLeaveRequests(response.list);
-    setTotalCount(response.count);
-  })
-  .catch((error) => {
-    console.error('Error fetching employee data:', error);
-  })
-  .finally(() => {
-    setLoading(false);
-  });
-};
-
+  const fetchLeaveRequests = () => {
+    LeaveService.getLeaves({
+      employeeName: appliedFilters.employeeName,
+      leaveType: appliedFilters.leaveType,
+      l: pageSize,
+      o: (currentPage - 1) * pageSize,
+    })
+      .then((response) => {
+        setLeaveRequests(response.list);
+        setTotalCount(response.count);
+      })
+      .catch((error) => {
+        console.error('Error fetching employee data:', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -61,10 +61,21 @@ const fetchLeaveRequests = () => {
     }));
   };
 
-const applyFilters = () => {
-  setAppliedFilters(filters);
-  setCurrentPage(1);
-};
+  const updateLeaveStatus = async (id, status) => {
+    try {
+      await LeaveService.updateLeave(id, status);
+      toast.success(`Leave ${status.toLowerCase()} successfully`);
+      fetchLeaveRequests();
+    } catch (error) {
+      console.error('Error updating leave status:', error);
+      toast.error(error.response?.data?.message || `Failed to ${status.toLowerCase()} leave`);
+    }
+  };
+
+  const applyFilters = () => {
+    setAppliedFilters(filters);
+    setCurrentPage(1);
+  };
 
   const closeFilter = () => {
     setShowFilter(false);
@@ -101,7 +112,7 @@ const applyFilters = () => {
         setSelectedLeaveId(null);
       });
   };
- const handlePageChange = (page) => {
+  const handlePageChange = (page) => {
     setCurrentPage(page);
   };
   const getStatusIcon = (status) => {
@@ -156,7 +167,7 @@ const applyFilters = () => {
                   placeholder="Search by name"
                 />
               </div>
-                <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
                 <input
                   type="text"
@@ -178,7 +189,7 @@ const applyFilters = () => {
                   placeholder="Search by leave type"
                 />
               </div>
-           
+
             </div>
             <div className="flex justify-end space-x-2">
               <button
@@ -257,9 +268,22 @@ const applyFilters = () => {
                         return `${day}-${month}-${year}`;
                       })()}
                     </td>
-                    <td className="px-4 py-3 flex items-center">
-                      {getStatusIcon(leave.status)}
-                      <span className="ml-2">{leave.status}</span>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center ${leave.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                          }`}>
+                          {leave.status === 'approved' ? (
+                            <FaCheckCircle className="mr-1" />
+                          ) : leave.status === 'pending' ? (
+                            <FaClock className="mr-1" />
+                          ) : (
+                            <FaTimesCircle className="mr-1" />
+                          )}
+                          {leave.status}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex space-x-2">
@@ -271,7 +295,7 @@ const applyFilters = () => {
                         >
                           <FaEdit className="text-white" />
                         </button>
-                           <button
+                        <button
                           title="View"
                           className="p-2 rounded shadow cursor-pointer"
                           style={{ backgroundColor: '#34D399' }}
@@ -306,6 +330,7 @@ const applyFilters = () => {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
       />
+
     </>
   );
 };
