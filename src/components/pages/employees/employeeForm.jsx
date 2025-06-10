@@ -1,13 +1,13 @@
 
-import React, { useEffect, useState } from 'react';
-import { FiDownload, FiUpload, FiPlus, FiList, FiFilter, FiDelete } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { FiUpload, FiPlus, FiList } from 'react-icons/fi';
 import { BsPerson, BsTelephone, BsBriefcase, BsBook, BsFileEarmarkText, BsCurrencyDollar } from 'react-icons/bs';
 import { useNavigate, useParams } from 'react-router-dom';
 import employeeService from '../../../services/employeeService';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { FaDownload, FaTrash } from 'react-icons/fa6';
-import { FaEdit, FaTrashAlt } from 'react-icons/fa';
+import { FaEdit } from 'react-icons/fa';
 import countries from 'i18n-iso-countries';
 import enLocale from 'i18n-iso-countries/langs/en.json';
 import TransactionTypeService from '../../../services/TransactionTypeService';

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiList } from "react-icons/fi";
 import { toast } from "react-toastify";
-
+import axios from 'axios';
 import EventService from "../../../services/EventService";
 
 const eventTypes = [
@@ -23,6 +23,7 @@ const EventsForm = () => {
     eventTitle: "",
     eventType: "Meeting",
     eventDate: "",
+    endDate: "",
     startTime: "",
     endTime: "",
     location: "",
@@ -34,6 +35,9 @@ const EventsForm = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [documentName, setDocumentName] = useState('');
+  const [documentUploadStatus, setDocumentUploadStatus] = useState('idle');
+  const [DocuUrl, setDocuUrl] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -88,6 +92,10 @@ const EventsForm = () => {
       tempErrors.eventDate = "Event Date is required.";
       isValid = false;
     }
+       if (!formData.endDate) {
+      tempErrors.endDate = "End Date is required.";
+      isValid = false;
+    }
     if (!formData.startTime) {
       tempErrors.startTime = "Start Time is required.";
       isValid = false;
@@ -109,51 +117,129 @@ const EventsForm = () => {
     return isValid;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Validate before submitting
-    if (!validate()) {
-      toast.error("Please fill in all required fields.");
+  if (!validate()) {
+    toast.error("Please fill in all required fields.");
+    return;
+  }
+
+  // Prepare the event data
+  const eventData = {
+    eventTitle: formData.eventTitle,
+    eventType: formData.eventType,
+    eventDate: formData.eventDate,
+    endDate: formData.endDate,
+    startTime: formData.startTime,
+    endTime: formData.endTime,
+    location: formData.location,
+    organizer: formData.organizer,
+    description: formData.description,
+    isRecurring: formData.isRecurring,
+    sendReminder: formData.sendReminder,
+    docuAttachment: DocuUrl,
+  };
+
+  try {
+    // Save the event (create or update)
+    let response;
+    if (id) {
+      response = await EventService.updateEvent(id, eventData);
+    } else {
+      response = await EventService.createEvent(eventData);
+    }
+
+    if (response) {
+      toast.success(`Event ${id ? "updated" : "created"} successfully!`);
+
+      try {
+        await EventService.sendEventNotification( eventData);
+        toast.info("Notification emails sent to all employees");
+      } catch (emailError) {
+        console.error("Error sending notifications:", emailError);
+        const emailErrorMessage = emailError.response?.data?.message || 
+        "Failed to send notifications";
+        toast.warning(`Event saved but: ${emailErrorMessage}`);
+      }
+
+      // Schedule reminder if checkbox is checked
+      if (formData.sendReminder) {
+        try {
+          await EventService.scheduleEventReminder(eventData);
+          toast.info("Reminder scheduled for 1 day before the event");
+        } catch (reminderError) {
+          console.error("Error scheduling reminder:", reminderError);
+          const reminderErrorMessage = reminderError.response?.data?.message || 
+                                    "Failed to schedule reminder";
+          toast.warning(`Event saved but: ${reminderErrorMessage}`);
+        }
+      }      
+      navigate("/events-list");
+    }
+  } catch (error) {
+    console.error("Error saving event:", error);
+    const errorMessage = error.response?.data?.message || 
+    error.message || 
+    "Unknown error occurred";
+    toast.error(`Failed to save event: ${errorMessage}`);
+  }
+};
+const handleDocumentUpload = async (e) => {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  setDocumentName('');
+  setDocumentUploadStatus('uploading');
+  const allowedTypes = [
+    'image/jpeg', 'image/png', 'image/webp',
+    'image/jpg', 'video/mp4', 'video/3gpp', 'text/srt',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('File type not supported.');
+    setDocumentUploadStatus('idle');
+    return;
+  }
+
+  try {
+    setDocumentName(file.name);
+    const projectData = { name: file.name, access: "public-read" };
+    const response = await EventService.uploadDocument(projectData);
+
+    if (response?.message && Array.isArray(response.message)) {
+      response.message.forEach((msg) => toast.error(msg));
+      setDocumentUploadStatus('idle');
       return;
     }
 
-    const eventData = {
-      eventTitle: formData.eventTitle,
-      eventType: formData.eventType,
-      eventDate: formData.eventDate,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      location: formData.location,
-      organizer: formData.organizer,
-      attendees: formData.attendees,
-      description: formData.description,
-      isRecurring: formData.isRecurring,
-      sendReminder: formData.sendReminder,
-    };
-
-    try {
-      let response;
-      if (id) {
-        response = await EventService.updateEvent(id, eventData);
-      } else {
-        response = await EventService.createEvent(eventData);
-      }
-      if (response) {
-        toast.success(`Event ${id ? "updated" : "created"} successfully!`);
-        navigate("/events-list");
-      } else {
-        toast.success(`Event ${id ? "update" : "create"} successful!`); // This might be redundant, check API response handling
-        navigate("/events-list");
-      }
-    } catch (error) {
-      console.error("Error saving event:", error);
-      const errorMessage =
-        error.response?.data?.message || error.message || "Unknown error";
-      toast.error(`Failed to save event: ${errorMessage}`);
+    const uploadUrl = response.location;
+    if (!uploadUrl) {
+      toast.error("No upload URL received.");
+      setDocumentUploadStatus('idle');
+      return;
     }
-  };
 
+    await axios.put(uploadUrl, file, {
+      headers: {
+        "Content-Type": file.type,
+        "x-amz-acl": "public-read",
+      }
+    });
+
+    const trimmedDOCUrl = uploadUrl.split("?")[0];
+    setDocuUrl(trimmedDOCUrl);
+    setDocumentUploadStatus('uploaded');
+    toast.success("Document uploaded successfully!");
+  } catch (err) {
+    console.error("Upload failed:", err);
+    setDocumentUploadStatus('idle');
+    toast.error("Upload failed! Please try again.");
+  } finally {
+    e.target.value = '';
+  }
+};
   return (
     <div className="p-6 bg-[#F5EFFF] min-h-screen">
       <div className="py-4 px-2 flex justify-between items-center mb-6">
@@ -245,8 +331,35 @@ const EventsForm = () => {
                   </p>
                 )}
               </div>
-
               <div className="w-1/2">
+                <label
+                  htmlFor="eventDate"
+                  className="block mb-1 font-semibold text-[#333]"
+                >
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  name="endDate"
+                  value={formData.endDate}
+                  onChange={handleChange}
+                  className={`w-full p-2 border ${
+                    errors.endDate ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
+                />
+                {errors.endDate && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.endDate}
+                  </p>
+                )}
+              </div>
+             
+            </div>
+            
+
+            <div className="flex gap-4 mb-4 w-full">
+               <div className="w-1/2">
                 <label
                   htmlFor="startTime"
                   className="block mb-1 font-semibold text-[#333]"
@@ -269,9 +382,6 @@ const EventsForm = () => {
                   </p>
                 )}
               </div>
-            </div>
-
-            <div className="flex gap-4 mb-4 w-full">
               <div className="w-1/2">
                 <label
                   htmlFor="endTime"
@@ -289,30 +399,6 @@ const EventsForm = () => {
                 />
               </div>
 
-              <div className="w-1/2">
-                <label
-                  htmlFor="location"
-                  className="block mb-1 font-semibold text-[#333]"
-                >
-                  Location
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  className={`w-full p-2 border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
-                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
-                  placeholder="e.g., Conference Room A, Zoom Link"
-                />
-                {errors.location && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.location}
-                  </p>
-                )}
-              </div>
             </div>
 
             <div className="flex gap-4 mb-4 w-full">
@@ -385,7 +471,78 @@ const EventsForm = () => {
             </div>
 
             <div className="flex gap-4 mb-4 w-full items-center">
-              <div className="w-1/2 flex items-center">
+              
+              <div className="w-1/2">
+                <label
+                  htmlFor="location"
+                  className="block mb-1 font-semibold text-[#333]"
+                >
+                  Location
+                </label>
+                <input
+                  type="text"
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className={`w-full p-2 border ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
+                  placeholder="e.g., Conference Room A, Zoom Link"
+                />
+                {errors.location && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.location}
+                  </p>
+                )}
+              </div>
+               <div className="w-1/2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Upload Document <span className="text-red-500">*</span>
+                </label>
+                <div
+                  className={`w-full p-2 border ${
+                    errors.location ? "border-red-500" : "border-gray-300"
+                  } rounded focus:ring-2 focus:ring-[#A294F9] focus:outline-none`}
+                  onClick={() => document.getElementById('documentUpload')?.click()}
+                >
+                  {documentName ? (
+                    <div className="flex items-center space-x-2 max-w-full">
+                      <span className="text-sm text-gray-600 truncate max-w-xs">{documentName}</span>
+                      {documentUploadStatus === 'uploading' && (
+                        <div className="relative w-6 h-6 bg-indigo-100 rounded-md flex items-center justify-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-4 h-4 text-indigo-600 animate-bounce"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-500">Please choose document</span>
+                  )}
+                  <input
+                    id="documentUpload"
+                    name="documentUpload"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleDocumentUpload}
+                  />
+                </div>
+              </div>
+          
+            </div>
+            <div className="flex gap-4 mb-4 w-full items-center justify-content-center">
+             <div className="w-1/2 flex items-center">
                 <input
                   type="checkbox"
                   id="isRecurring"
@@ -401,7 +558,6 @@ const EventsForm = () => {
                   Is Recurring Event?
                 </label>
               </div>
-
               <div className="w-1/2 flex items-center">
                 <input
                   type="checkbox"
@@ -418,8 +574,7 @@ const EventsForm = () => {
                   Send Reminder?
                 </label>
               </div>
-            </div>
-
+              </div>
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="button"
